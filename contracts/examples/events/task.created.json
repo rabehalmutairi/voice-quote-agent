@@ -6,11 +6,19 @@
   "data": {
     "task_id": "tsk_01",
     "category": "electronics_repair",
-    "request_text": "أبي أغير شاشة آيفون 15 برو",
-    "slots": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+    "request_text": "أبي أغير شاشة آيفون 15 برو، وأبي أعرف إذا يصلحونه قدامي",
+    "slots": {
+      "device_model": "آيفون 15 برو",
+      "repair_type": "الشاشة"
+    },
+    "custom_questions": [
+      "يصلحونه قدامي ولا أتركه عندهم؟"
+    ],
     "area": null,
     "max_businesses": 3,
-    "missing_slots": ["area"],
+    "missing_slots": [
+      "area"
+    ],
     "created_at": "2026-10-25T18:00:00Z"
   }
 }

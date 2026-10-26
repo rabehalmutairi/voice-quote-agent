@@ -2,42 +2,38 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/quote.schema.json",
   "title": "Quote",
-  "description": "Extraction -> Comparison, UI. What one shop said, every value backed by the shop's own words. Models the electronics_repair template; the car stretch needs a contract-change PR.",
+  "description": "Extraction -> Comparison, UI. What one shop said on one call, every value backed by the shop's own words. Which keys appear in `offers` and `fields` comes from the category template (`offer_fields`, `quote_fields`).",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "call_id",
-    "task_id",
-    "place_id",
-    "options",
-    "turnaround_minutes",
-    "availability",
-    "evidence_issues"
-  ],
+  "required": ["call_id", "task_id", "place_id", "offers", "fields", "answers", "evidence_issues"],
   "properties": {
     "call_id": { "$ref": "common.schema.json#/$defs/call_id" },
     "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
     "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
-    "options": {
+    "offers": {
       "type": "array",
-      "minItems": 1,
-      "description": "One entry per part tier the shop quoted (e.g. original and commercial).",
+      "description": "One entry per option the shop quoted: a part tier (original / commercial), a variant (256 GB, black), new or used. Empty if the shop quoted nothing.",
       "items": {
         "type": "object",
-        "additionalProperties": false,
-        "required": ["part_type", "price_sar", "warranty_days"],
-        "properties": {
-          "part_type": { "$ref": "#/$defs/part_type" },
-          "price_sar": { "$ref": "common.schema.json#/$defs/number_field" },
-          "warranty_days": { "$ref": "#/$defs/whole_number_field" }
-        }
+        "minProperties": 1,
+        "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
+        "additionalProperties": { "$ref": "common.schema.json#/$defs/evidence_field" }
       }
     },
-    "turnaround_minutes": { "$ref": "#/$defs/whole_number_field" },
-    "availability": { "$ref": "#/$defs/availability" },
+    "fields": {
+      "type": "object",
+      "description": "Values that apply to the whole call, not to one offer (e.g. repair time).",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
+      "additionalProperties": { "$ref": "common.schema.json#/$defs/evidence_field" }
+    },
+    "answers": {
+      "type": "array",
+      "description": "One entry per question the user wrote (TaskSpec.custom_questions), in the same order.",
+      "items": { "$ref": "#/$defs/answer" }
+    },
     "evidence_issues": {
       "type": "array",
-      "description": "Values the evidence checker rejected and dropped. Empty when every value passed.",
+      "description": "Values the evidence checker rejected and dropped. Empty when every value passed. For a rejected custom answer, `field` is \"answers\" and `option_index` is its index in `answers`.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -47,7 +43,7 @@
           "option_index": {
             "type": ["integer", "null"],
             "minimum": 0,
-            "description": "Index into `options`; null for top-level fields."
+            "description": "Index into `offers` (or `answers`); null for call-level fields."
           },
           "reason": { "enum": ["quote_not_found", "quote_in_agent_turn", "number_not_in_quote"] }
         }
@@ -55,24 +51,43 @@
     }
   },
   "$defs": {
-    "part_type": {
-      "$ref": "common.schema.json#/$defs/enum_field",
+    "answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_index", "question", "status", "summary_ar", "evidence"],
       "properties": {
-        "value": { "enum": ["original", "pulled_original", "commercial", "unknown", null] }
-      }
-    },
-    "availability": {
-      "$ref": "common.schema.json#/$defs/enum_field",
-      "properties": {
-        "value": { "enum": ["in_stock", "needs_order", null] }
-      }
-    },
-    "whole_number_field": {
-      "$ref": "common.schema.json#/$defs/number_field",
-      "properties": {
-        "value": { "type": ["integer", "null"] },
-        "value_min": { "type": ["integer", "null"] },
-        "value_max": { "type": ["integer", "null"] }
+        "question_index": { "type": "integer", "minimum": 0 },
+        "question": { "type": "string", "minLength": 1, "description": "The user's question as asked." },
+        "status": { "enum": ["found", "not_mentioned", "refused", "unclear"] },
+        "summary_ar": {
+          "type": ["string", "null"],
+          "description": "What the shop said, in one or two short Arabic sentences. Whether it is faithful to the evidence is measured in the eval, not guaranteed by this schema."
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["quote", "turn"],
+            "properties": {
+              "quote": { "type": "string", "minLength": 1 },
+              "turn": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      },
+      "if": { "properties": { "status": { "const": "not_mentioned" } } },
+      "then": {
+        "properties": {
+          "summary_ar": { "type": "null" },
+          "evidence": { "maxItems": 0 }
+        }
+      },
+      "else": {
+        "properties": {
+          "summary_ar": { "type": "string", "minLength": 1 },
+          "evidence": { "minItems": 1 }
+        }
       }
     }
   }

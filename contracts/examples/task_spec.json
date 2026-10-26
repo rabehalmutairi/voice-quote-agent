@@ -1,8 +1,9 @@
 {
   "task_id": "tsk_01",
   "category": "electronics_repair",
-  "request_text": "أبي أغير شاشة آيفون 15 برو",
+  "request_text": "أبي أغير شاشة آيفون 15 برو، وأبي أعرف إذا يصلحونه قدامي",
   "slots": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+  "custom_questions": ["يصلحونه قدامي ولا أتركه عندهم؟"],
   "area": { "label": "حي الملقا", "lat": 24.80, "lng": 46.61, "radius_m": 5000 },
   "max_businesses": 3,
   "missing_slots": [],

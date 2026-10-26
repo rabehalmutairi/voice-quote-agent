@@ -1,0 +1,29 @@
+# Stock check: "do you have an iPhone 16?", "MacBook Air M4؟" (committed, architecture §2).
+# Same phone shops and the same calls as electronics_repair; only the questions differ.
+# Owner R1. Call questions: R2. Fields: R6. Shape: contracts/template.schema.json
+category: stock_check
+
+planner_questions:
+  - { key: item, ask_ar: "وش المنتج اللي تبي تتأكد من توفره؟ (مثال: آيفون ١٦، ماك بوك اير M4)" }
+  - { key: area, ask_ar: "وين تبي المحلات تكون؟" }
+
+fields:
+  availability:  { type: choice, choices: [in_stock, needs_order, out_of_stock] }
+  condition:     { type: choice, choices: [new, used, refurbished, unknown] }
+  variant:       { type: text }                 # color, storage, size: the shop's words
+  price_sar:     { type: number, unit: SAR }
+  warranty_days: { type: number, unit: days }
+offer_fields: [variant, condition, price_sar, availability]
+quote_fields: [warranty_days]
+
+call_questions:
+  - { field: availability,  ask_ar: "عندكم {{item}} متوفر الحين؟" }
+  - { field: variant,       ask_ar: "وش الألوان والسعات الموجودة عندكم؟" }
+  - { field: condition,     ask_ar: "جديد ولا مستعمل؟" }
+  - { field: price_sar,     ask_ar: "كم سعره؟" }
+  - { field: warranty_days, ask_ar: "فيه ضمان؟ وكم مدته؟" }
+
+required_fields: [availability, price_sar]
+compare_on: [condition, price_sar]
+asr_keywords: [متوفر, موجود, جديد, مستعمل, ضمان, آيفون, iPhone, ماك بوك, MacBook, M4]
+places_queries: { ar: [محل جوالات, محل لابتوبات], en: [mobile phone store, laptop store] }

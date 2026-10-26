@@ -29,7 +29,7 @@ R1 drafted these before anyone had built against them. They are a starting point
 3. **Reviewers are R1 and every role that reads the contract** (see the Flow column). Disagree in the PR, not in a side chat.
 4. Merge when CI is green and those roles approve. Small, frequent changes beat one big rewrite.
 
-Known open questions: price ranges (R6, Week 11), how well `Quote` fits real transcripts (R6, R3), and whether `CallResult` carries what Eval needs (R3).
+Known open questions: how well `Quote` and `answers` fit real transcripts (R6, R3), and whether `CallResult` carries what Eval needs (R3).
 
 ## Conventions
 
@@ -37,7 +37,8 @@ Known open questions: price ranges (R6, Week 11), how well `Quote` fits real tra
 - **`additionalProperties: false` everywhere.** A typo like `price_sr` fails validation instead of passing unnoticed.
 - **Timestamps** are RFC 3339 in UTC with a trailing `Z`. **Phones** are E.164 (`+9665…`). **IDs** are prefixed (`tsk_`, `call_`); `place_id` is Google's.
 - **Names** (`category`, slot keys, field names) are `snake_case`.
-- **Evidence-backed fields** (Quote): `value` is set only when `status` is `found`. `found`, `refused` and `unclear` must carry `evidence_quote`, `evidence_turn` and `confidence`; only `not_mentioned` has them all `null`. Numbers hold either an exact `value` or a `value_min`/`value_max` range (e.g. "ساعة لساعتين"), never both.
+- **Evidence-backed fields** (Quote): `value` is set only when `status` is `found`. `found`, `refused` and `unclear` must carry `evidence_quote`, `evidence_turn` and `confidence`; only `not_mentioned` has them all `null`. Numbers hold either an exact `value` or a `value_min`/`value_max` range (e.g. "ساعة لساعتين"), never both. A field's type (number, choice, text, yes/no) and allowed choices come from the category template, not from the schema.
+- **A Quote has `offers`** (one per option the shop quoted: part tier, variant, new or used), **`fields`** (values for the whole call) and **`answers`** (one per question the user wrote, same order as `custom_questions`, at most 2).
 - **No personal data about the user** goes into a `CallJob` (architecture §11).
 
 ## Rules a schema cannot check
@@ -54,10 +55,14 @@ JSON Schema validates shape, not meaning. These rules are enforced in code, and 
 | Events for a task have increasing `seq` with no gaps | Backend (R5) |
 | The ElevenLabs speaker `user` is converted to `shop` | Voice (R2), at the boundary |
 | No call is placed while `TaskSpec.missing_slots` is non-empty | Orchestrator (R1) |
+| Every value matches its field's type in the template, uses only that template's `offer_fields` / `quote_fields`, covers every `required_field`, and has `value_min` ≤ `value_max` | R6 (`template_problems` in `tests/contracts` is a starting point) |
+| Each `answers[i].summary_ar` is faithful to its evidence quotes | R3 measures it in the eval; code can't check it |
+| The agent never denies being an AI when asked (ADR 001) | R2 scenario test |
 
 `tests/contracts/test_contracts.py` applies the evidence rule to the example Quote, so the examples themselves stay honest.
 
 ## Known limits (deliberate)
 
-- `Quote` models the `electronics_repair` template. The car-maintenance stretch needs a `contract-change` PR (new fields such as `part_brand`, `labor_included`).
+- v1 covers electronics repair, stock checks and (stretch) car repair as templates. Anything a template can't express is still open: raise it in a `contract-change` PR.
+- A call is capped at 150 s (`max_duration_s`). With two custom questions that may be tight; R2 reports after the first role-play calls.
 - No `schema_version` field: four weeks, one team; `contract-change` PRs are enough.

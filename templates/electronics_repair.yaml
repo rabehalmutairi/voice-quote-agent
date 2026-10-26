@@ -1,4 +1,4 @@
-# Electronics repair: the committed category (architecture §2, §7).
+# Electronics repair quotes: committed (architecture §2, §7).
 # Owner R1. Call questions: R2. Fields: R6. Shape: contracts/template.schema.json
 category: electronics_repair
 
@@ -6,6 +6,15 @@ planner_questions:            # asked to the USER before calling
   - { key: device_model, ask_ar: "وش نوع الجهاز وموديله بالضبط؟" }
   - { key: repair_type,  ask_ar: "وش تبي تصلّح؟ الشاشة، البطارية، ولا منفذ الشحن؟" }
   - { key: area,         ask_ar: "وين تبي المحلات تكون؟" }
+
+fields:                       # everything the agent tries to collect, with its type
+  price_sar:          { type: number, unit: SAR }
+  part_type:          { type: choice, choices: [original, pulled_original, commercial, unknown] }
+  warranty_days:      { type: number, unit: days }
+  turnaround_minutes: { type: number, unit: minutes }
+  availability:       { type: choice, choices: [in_stock, needs_order] }
+offer_fields: [part_type, price_sar, warranty_days]   # can differ per option the shop quotes
+quote_fields: [turnaround_minutes, availability]      # one value for the whole call
 
 call_questions:               # asked by the AGENT on the call, one at a time
   - { field: price_sar,          ask_ar: "كم سعر تغيير {{repair_type}} لـ {{device_model}}؟" }

@@ -9,8 +9,8 @@
   "properties": {
     "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
     "status": {
-      "enum": ["ranked", "partial", "cannot_compare"],
-      "description": "ranked: every shop compared. partial: some ranked, some excluded. cannot_compare: no fair ranking possible."
+      "enum": ["ranked", "partial", "side_by_side", "cannot_compare"],
+      "description": "ranked: every shop compared. partial: some ranked, some excluded. side_by_side: shops gave usable answers but there is nothing to rank by (e.g. only the user's own questions); the UI shows answers next to each other. cannot_compare: no usable or comparable answers."
     },
     "basis": {
       "type": ["string", "null"],
@@ -65,6 +65,16 @@
           "basis": { "type": "string" },
           "ranking": { "minItems": 1 },
           "excluded": { "minItems": 1 },
+          "cannot_compare_reasons": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "side_by_side" } } },
+      "then": {
+        "properties": {
+          "basis": { "type": "null" },
+          "ranking": { "maxItems": 0 },
           "cannot_compare_reasons": { "maxItems": 0 }
         }
       }

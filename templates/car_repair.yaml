@@ -1,0 +1,33 @@
+# Car repair, standardized requests only: tires, lights, brake pads (STRETCH, architecture §2, Gate C).
+# Not diagnosis: "my car makes a noise" is out of scope. Not wired into the pipeline unless Gate C passes;
+# it exists so the contracts and tests prove a new category needs no engine change.
+# Owner R1. Call questions: R2. Fields: R6. Shape: contracts/template.schema.json
+category: car_repair
+
+planner_questions:
+  - { key: vehicle, ask_ar: "وش نوع السيارة وموديلها وسنة الصنع؟" }
+  - { key: service, ask_ar: "وش تحتاج بالضبط؟ (مثال: تغيير كفرات، تغيير لمبة الإضاءة)" }
+  - { key: area,    ask_ar: "وين تبي الورش تكون؟" }
+
+fields:
+  price_sar:          { type: number, unit: SAR }
+  part_brand:         { type: choice, choices: [original, aftermarket, unknown] }
+  labor_included:     { type: boolean }
+  warranty_days:      { type: number, unit: days }
+  turnaround_minutes: { type: number, unit: minutes }
+  availability:       { type: choice, choices: [in_stock, needs_order] }
+offer_fields: [part_brand, price_sar, labor_included, warranty_days]
+quote_fields: [turnaround_minutes, availability]
+
+call_questions:
+  - { field: price_sar,          ask_ar: "كم سعر {{service}} لـ {{vehicle}}؟" }
+  - { field: part_brand,         ask_ar: "القطع وكالة ولا تجارية؟ وإذا عندكم النوعين، كم سعر كل وحدة؟" }
+  - { field: labor_included,     ask_ar: "السعر شامل التركيب؟" }
+  - { field: warranty_days,      ask_ar: "فيه ضمان؟ وكم مدته؟" }
+  - { field: turnaround_minutes, ask_ar: "كم ياخذ وقت الشغل تقريبًا؟" }
+  - { field: availability,       ask_ar: "القطعة متوفرة الحين ولا تحتاجون تطلبونها؟" }
+
+required_fields: [price_sar, part_brand, turnaround_minutes]
+compare_on: [part_brand, price_sar, labor_included]
+asr_keywords: [وكالة, أصلي, تجاري, كفر, كفرات, إطار, لمبة, إضاءة, ضمان, تركيب]
+places_queries: { ar: [ورشة سيارات, صيانة سيارات], en: [car repair shop] }

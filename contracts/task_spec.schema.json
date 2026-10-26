@@ -10,6 +10,7 @@
     "category",
     "request_text",
     "slots",
+    "custom_questions",
     "area",
     "max_businesses",
     "missing_slots",
@@ -28,6 +29,7 @@
       "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
       "additionalProperties": { "type": "string", "minLength": 1 }
     },
+    "custom_questions": { "$ref": "common.schema.json#/$defs/custom_questions" },
     "area": {
       "description": "Where to search. null until the user has answered the `area` planner question.",
       "oneOf": [

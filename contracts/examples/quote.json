@@ -2,10 +2,10 @@
   "call_id": "call_01",
   "task_id": "tsk_01",
   "place_id": "ChIJexample01",
-  "options": [
+  "offers": [
     {
       "part_type": {
-        "value": "original", "status": "found", "confidence": 0.95,
+        "value": "original", "value_min": null, "value_max": null, "status": "found", "confidence": 0.95,
         "evidence_quote": "الأصلي بألف ومتين", "evidence_turn": 3
       },
       "price_sar": {
@@ -19,7 +19,7 @@
     },
     {
       "part_type": {
-        "value": "commercial", "status": "found", "confidence": 0.95,
+        "value": "commercial", "value_min": null, "value_max": null, "status": "found", "confidence": 0.95,
         "evidence_quote": "والتجاري بأربعمية وخمسين", "evidence_turn": 3
       },
       "price_sar": {
@@ -32,13 +32,24 @@
       }
     }
   ],
-  "turnaround_minutes": {
-    "value": null, "value_min": 60, "value_max": 120, "status": "found", "confidence": 0.85,
-    "evidence_quote": "من ساعة لساعتين", "evidence_turn": 9
+  "fields": {
+    "turnaround_minutes": {
+      "value": null, "value_min": 60, "value_max": 120, "status": "found", "confidence": 0.85,
+      "evidence_quote": "من ساعة لساعتين", "evidence_turn": 9
+    },
+    "availability": {
+      "value": "in_stock", "value_min": null, "value_max": null, "status": "found", "confidence": 0.9,
+      "evidence_quote": "موجودة", "evidence_turn": 11
+    }
   },
-  "availability": {
-    "value": "in_stock", "status": "found", "confidence": 0.9,
-    "evidence_quote": "موجودة", "evidence_turn": 11
-  },
+  "answers": [
+    {
+      "question_index": 0,
+      "question": "يصلحونه قدامي ولا أتركه عندهم؟",
+      "status": "found",
+      "summary_ar": "يصلحونه قدام العميل وهو ينتظر في المحل.",
+      "evidence": [{ "quote": "تقعد وتشوفه قدامك", "turn": 13 }]
+    }
+  ],
   "evidence_issues": []
 }
