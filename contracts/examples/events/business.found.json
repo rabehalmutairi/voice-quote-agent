@@ -1,0 +1,16 @@
+{
+  "seq": 3,
+  "type": "business.found",
+  "task_id": "tsk_01",
+  "at": "2026-10-25T18:01:10Z",
+  "data": {
+    "place_id": "ChIJexample01",
+    "name": "محل الريان للجوالات",
+    "phone_e164": "+966500000001",
+    "number_type": "mobile",
+    "address": "طريق أنس بن مالك، حي الملقا، الرياض",
+    "maps_url": "https://maps.google.com/?cid=1000000000000000001",
+    "open_now": true,
+    "rating": 4.4
+  }
+}

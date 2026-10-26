@@ -1,0 +1,20 @@
+# Electronics repair: the committed category (architecture §2, §7).
+# Owner R1. Call questions: R2. Fields: R6. Shape: contracts/template.schema.json
+category: electronics_repair
+
+planner_questions:            # asked to the USER before calling
+  - { key: device_model, ask_ar: "وش نوع الجهاز وموديله بالضبط؟" }
+  - { key: repair_type,  ask_ar: "وش تبي تصلّح؟ الشاشة، البطارية، ولا منفذ الشحن؟" }
+  - { key: area,         ask_ar: "وين تبي المحلات تكون؟" }
+
+call_questions:               # asked by the AGENT on the call, one at a time
+  - { field: price_sar,          ask_ar: "كم سعر تغيير {{repair_type}} لـ {{device_model}}؟" }
+  - { field: part_type,          ask_ar: "القطعة أصلية ولا تجارية؟ وإذا عندكم النوعين، كم سعر كل وحدة؟" }
+  - { field: warranty_days,      ask_ar: "فيه ضمان؟ وكم مدته؟" }
+  - { field: turnaround_minutes, ask_ar: "كم ياخذ وقت التصليح تقريبًا؟" }
+  - { field: availability,       ask_ar: "القطعة متوفرة الحين ولا تحتاجون تطلبونها؟" }
+
+required_fields: [price_sar, part_type, warranty_days, turnaround_minutes]
+compare_on: [part_type, price_sar, warranty_days]   # like-for-like comparison basis
+asr_keywords: [أصلي, تجاري, سحب, ضمان, شاشة, بطارية, آيفون, iPhone, Samsung]
+places_queries: { ar: [صيانة جوالات], en: [phone repair shop] }

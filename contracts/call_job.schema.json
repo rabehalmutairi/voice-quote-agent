@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/call_job.schema.json",
+  "title": "CallJob",
+  "description": "Orchestrator -> Voice/Telephony. One call to place.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "call_id",
+    "task_id",
+    "place_id",
+    "to_number",
+    "template",
+    "dynamic_variables",
+    "max_duration_s",
+    "attempt"
+  ],
+  "properties": {
+    "call_id": { "$ref": "common.schema.json#/$defs/call_id" },
+    "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
+    "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
+    "to_number": {
+      "$ref": "common.schema.json#/$defs/phone_e164",
+      "description": "Must be on the allowlist until sign-off (architecture §11). Checked at runtime."
+    },
+    "template": { "$ref": "common.schema.json#/$defs/name" },
+    "dynamic_variables": {
+      "type": "object",
+      "description": "Values the agent fills into the template's call questions. Never personal data about the user (§11).",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "max_duration_s": { "type": "integer", "minimum": 30, "maximum": 150 },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2,
+      "description": "At most one retry (architecture §8, R4)."
+    }
+  }
+}

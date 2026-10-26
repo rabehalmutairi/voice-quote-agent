@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/task_spec.schema.json",
+  "title": "TaskSpec",
+  "description": "Planner -> Discovery, Orchestrator. A user's request turned into typed slots.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "category",
+    "request_text",
+    "slots",
+    "area",
+    "max_businesses",
+    "missing_slots",
+    "created_at"
+  ],
+  "properties": {
+    "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
+    "category": {
+      "$ref": "common.schema.json#/$defs/name",
+      "description": "Name of a template in /templates. Checked against the template files at runtime, not here."
+    },
+    "request_text": { "type": "string", "minLength": 1 },
+    "slots": {
+      "type": "object",
+      "description": "Answers to the template's planner_questions, except `area` (see below).",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "area": {
+      "description": "Where to search. null until the user has answered the `area` planner question.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["label", "lat", "lng", "radius_m"],
+          "properties": {
+            "label": { "type": "string", "minLength": 1 },
+            "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+            "lng": { "type": "number", "minimum": -180, "maximum": 180 },
+            "radius_m": { "type": "integer", "minimum": 100, "maximum": 50000 }
+          }
+        }
+      ]
+    },
+    "max_businesses": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "missing_slots": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/name" },
+      "description": "Planner question keys still unanswered. Non-empty means: ask the user, do not call."
+    },
+    "created_at": { "$ref": "common.schema.json#/$defs/timestamp" }
+  },
+  "if": { "properties": { "missing_slots": { "maxItems": 0 } } },
+  "then": { "properties": { "area": { "type": "object" } } }
+}

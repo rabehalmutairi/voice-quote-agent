@@ -1,0 +1,16 @@
+{
+  "seq": 1,
+  "type": "task.created",
+  "task_id": "tsk_01",
+  "at": "2026-10-25T18:00:00Z",
+  "data": {
+    "task_id": "tsk_01",
+    "category": "electronics_repair",
+    "request_text": "أبي أغير شاشة آيفون 15 برو",
+    "slots": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+    "area": null,
+    "max_businesses": 3,
+    "missing_slots": ["area"],
+    "created_at": "2026-10-25T18:00:00Z"
+  }
+}

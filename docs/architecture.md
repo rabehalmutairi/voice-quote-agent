@@ -113,9 +113,10 @@ Put them in `/data/` (gitignored). Share **metrics**, not raw data.
 
 Parts talk to each other **only** through these shapes. Because they're fixed, every
 role can build in parallel against the example files in `/contracts/examples/`
-without waiting for anyone. R1 drafts the schemas + example files in Week 9 if convenient
-and **publishes them by Mon 26 Oct** (start of Week 10). Until then, the examples in this
-section are the reference, so nobody has to wait to start.
+without waiting for anyone. **The schemas and example files in `/contracts/` are the source
+of truth** (published Tue 27 Oct); the JSON below only illustrates them, and where the two
+differ, the files win. Read `/contracts/README.md` first: it lists the conventions and the
+rules a schema can't check (e.g. evidence must come from a shop turn).
 Changing a contract = a PR labelled `contract-change`, approved by R1 and every role
 that reads it.
 

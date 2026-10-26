@@ -1,0 +1,12 @@
+{
+  "seq": 14,
+  "type": "call.failed",
+  "task_id": "tsk_01",
+  "at": "2026-10-25T18:12:05Z",
+  "data": {
+    "call_id": "call_02",
+    "place_id": "ChIJexample02",
+    "outcome": "no_answer",
+    "reason": "no answer after one retry"
+  }
+}

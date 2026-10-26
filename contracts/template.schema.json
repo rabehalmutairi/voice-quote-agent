@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/template.schema.json",
+  "title": "Category template",
+  "description": "Shape of every /templates/<category>.yaml file. Everything category-specific lives in a template, not in engine code (architecture §2, §7).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "category",
+    "planner_questions",
+    "call_questions",
+    "required_fields",
+    "compare_on",
+    "asr_keywords",
+    "places_queries"
+  ],
+  "properties": {
+    "category": { "$ref": "common.schema.json#/$defs/name" },
+    "planner_questions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Asked to the USER before any call.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "ask_ar"],
+        "properties": {
+          "key": { "$ref": "common.schema.json#/$defs/name" },
+          "ask_ar": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "call_questions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Asked by the AGENT on the call, one at a time. {{slot}} placeholders come from CallJob.dynamic_variables.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "ask_ar"],
+        "properties": {
+          "field": { "$ref": "common.schema.json#/$defs/name" },
+          "ask_ar": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "required_fields": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/name" }
+    },
+    "compare_on": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/name" }
+    },
+    "asr_keywords": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "places_queries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ar", "en"],
+      "properties": {
+        "ar": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "en": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

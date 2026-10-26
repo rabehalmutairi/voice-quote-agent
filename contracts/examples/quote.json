@@ -1,0 +1,44 @@
+{
+  "call_id": "call_01",
+  "task_id": "tsk_01",
+  "place_id": "ChIJexample01",
+  "options": [
+    {
+      "part_type": {
+        "value": "original", "status": "found", "confidence": 0.95,
+        "evidence_quote": "الأصلي بألف ومتين", "evidence_turn": 3
+      },
+      "price_sar": {
+        "value": 1200, "value_min": null, "value_max": null, "status": "found", "confidence": 0.9,
+        "evidence_quote": "الأصلي بألف ومتين", "evidence_turn": 3
+      },
+      "warranty_days": {
+        "value": null, "value_min": null, "value_max": null, "status": "refused", "confidence": 0.8,
+        "evidence_quote": "الأصلي تعال المحل ونشوف", "evidence_turn": 7
+      }
+    },
+    {
+      "part_type": {
+        "value": "commercial", "status": "found", "confidence": 0.95,
+        "evidence_quote": "والتجاري بأربعمية وخمسين", "evidence_turn": 3
+      },
+      "price_sar": {
+        "value": 450, "value_min": null, "value_max": null, "status": "found", "confidence": 0.9,
+        "evidence_quote": "والتجاري بأربعمية وخمسين", "evidence_turn": 3
+      },
+      "warranty_days": {
+        "value": 30, "value_min": null, "value_max": null, "status": "found", "confidence": 0.9,
+        "evidence_quote": "التجاري عليه ضمان شهر", "evidence_turn": 7
+      }
+    }
+  ],
+  "turnaround_minutes": {
+    "value": null, "value_min": 60, "value_max": 120, "status": "found", "confidence": 0.85,
+    "evidence_quote": "من ساعة لساعتين", "evidence_turn": 9
+  },
+  "availability": {
+    "value": "in_stock", "status": "found", "confidence": 0.9,
+    "evidence_quote": "موجودة", "evidence_turn": 11
+  },
+  "evidence_issues": []
+}

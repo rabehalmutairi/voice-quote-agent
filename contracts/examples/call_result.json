@@ -1,0 +1,29 @@
+{
+  "call_id": "call_01",
+  "task_id": "tsk_01",
+  "place_id": "ChIJexample01",
+  "conversation_id": "conv_example01",
+  "outcome": "human_completed",
+  "started_at": "2026-10-25T18:01:30Z",
+  "duration_s": 58,
+  "language_final": "ar",
+  "transcript": [
+    { "i": 0,  "speaker": "agent", "t": 0,  "text": "السلام عليكم، معك مساعد ذكاء اصطناعي، عندي سؤال عن صيانة جوال." },
+    { "i": 1,  "speaker": "shop",  "t": 5,  "text": "هلا، تفضل" },
+    { "i": 2,  "speaker": "agent", "t": 7,  "text": "كم سعر تغيير الشاشة لـ آيفون 15 برو؟" },
+    { "i": 3,  "speaker": "shop",  "t": 13, "text": "الأصلي بألف ومتين، والتجاري بأربعمية وخمسين" },
+    { "i": 4,  "speaker": "agent", "t": 20, "text": "يعني الأصلي بألف ومتين، والتجاري بأربعمية وخمسين؟" },
+    { "i": 5,  "speaker": "shop",  "t": 25, "text": "إيه صح." },
+    { "i": 6,  "speaker": "agent", "t": 27, "text": "فيه ضمان؟ وكم مدته؟" },
+    { "i": 7,  "speaker": "shop",  "t": 31, "text": "التجاري عليه ضمان شهر. الأصلي تعال المحل ونشوف." },
+    { "i": 8,  "speaker": "agent", "t": 37, "text": "كم ياخذ وقت التصليح تقريبًا؟" },
+    { "i": 9,  "speaker": "shop",  "t": 41, "text": "من ساعة لساعتين." },
+    { "i": 10, "speaker": "agent", "t": 45, "text": "القطعة متوفرة الحين ولا تحتاجون تطلبونها؟" },
+    { "i": 11, "speaker": "shop",  "t": 49, "text": "موجودة، تقدر تجي اليوم." },
+    { "i": 12, "speaker": "agent", "t": 53, "text": "شكرًا لك، يعطيك العافية." },
+    { "i": 13, "speaker": "shop",  "t": 56, "text": "الله يعافيك، مع السلامة." }
+  ],
+  "cost_usd": 0.40,
+  "pre_arranged": true,
+  "scenario_id": null
+}
