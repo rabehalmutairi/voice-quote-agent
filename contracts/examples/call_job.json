@@ -1,0 +1,10 @@
+{
+  "call_id": "call_01",
+  "task_id": "tsk_01",
+  "place_id": "ChIJexample01",
+  "to_number": "+966500000001",
+  "template": "electronics_repair",
+  "dynamic_variables": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+  "max_duration_s": 150,
+  "attempt": 1
+}

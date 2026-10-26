@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/comparison.schema.json",
+  "title": "Comparison",
+  "description": "Comparison -> UI. Shops ranked like for like, or the reasons they can't be.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "status", "basis", "ranking", "excluded", "cannot_compare_reasons"],
+  "properties": {
+    "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
+    "status": {
+      "enum": ["ranked", "partial", "cannot_compare"],
+      "description": "ranked: every shop compared. partial: some ranked, some excluded. cannot_compare: no fair ranking possible."
+    },
+    "basis": {
+      "type": ["string", "null"],
+      "description": "What was compared, e.g. 'commercial screen, price incl. warranty'. null when nothing was ranked."
+    },
+    "ranking": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["place_id", "rank", "reason"],
+        "properties": {
+          "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
+          "rank": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["place_id", "reason"],
+        "properties": {
+          "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "cannot_compare_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ranked" } } },
+      "then": {
+        "properties": {
+          "basis": { "type": "string" },
+          "ranking": { "minItems": 1 },
+          "excluded": { "maxItems": 0 },
+          "cannot_compare_reasons": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "partial" } } },
+      "then": {
+        "properties": {
+          "basis": { "type": "string" },
+          "ranking": { "minItems": 1 },
+          "excluded": { "minItems": 1 },
+          "cannot_compare_reasons": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "cannot_compare" } } },
+      "then": {
+        "properties": {
+          "basis": { "type": "null" },
+          "ranking": { "maxItems": 0 },
+          "cannot_compare_reasons": { "minItems": 1 }
+        }
+      }
+    }
+  ]
+}

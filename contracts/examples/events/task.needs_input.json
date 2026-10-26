@@ -1,0 +1,9 @@
+{
+  "seq": 2,
+  "type": "task.needs_input",
+  "task_id": "tsk_01",
+  "at": "2026-10-25T18:00:01Z",
+  "data": {
+    "questions": [{ "key": "area", "ask_ar": "وين تبي المحلات تكون؟" }]
+  }
+}

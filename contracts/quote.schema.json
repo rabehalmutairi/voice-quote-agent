@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/quote.schema.json",
+  "title": "Quote",
+  "description": "Extraction -> Comparison, UI. What one shop said, every value backed by the shop's own words. Models the electronics_repair template; the car stretch needs a contract-change PR.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "call_id",
+    "task_id",
+    "place_id",
+    "options",
+    "turnaround_minutes",
+    "availability",
+    "evidence_issues"
+  ],
+  "properties": {
+    "call_id": { "$ref": "common.schema.json#/$defs/call_id" },
+    "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
+    "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
+    "options": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per part tier the shop quoted (e.g. original and commercial).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["part_type", "price_sar", "warranty_days"],
+        "properties": {
+          "part_type": { "$ref": "#/$defs/part_type" },
+          "price_sar": { "$ref": "common.schema.json#/$defs/number_field" },
+          "warranty_days": { "$ref": "#/$defs/whole_number_field" }
+        }
+      }
+    },
+    "turnaround_minutes": { "$ref": "#/$defs/whole_number_field" },
+    "availability": { "$ref": "#/$defs/availability" },
+    "evidence_issues": {
+      "type": "array",
+      "description": "Values the evidence checker rejected and dropped. Empty when every value passed.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "option_index", "reason"],
+        "properties": {
+          "field": { "$ref": "common.schema.json#/$defs/name" },
+          "option_index": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Index into `options`; null for top-level fields."
+          },
+          "reason": { "enum": ["quote_not_found", "quote_in_agent_turn", "number_not_in_quote"] }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "part_type": {
+      "$ref": "common.schema.json#/$defs/enum_field",
+      "properties": {
+        "value": { "enum": ["original", "pulled_original", "commercial", "unknown", null] }
+      }
+    },
+    "availability": {
+      "$ref": "common.schema.json#/$defs/enum_field",
+      "properties": {
+        "value": { "enum": ["in_stock", "needs_order", null] }
+      }
+    },
+    "whole_number_field": {
+      "$ref": "common.schema.json#/$defs/number_field",
+      "properties": {
+        "value": { "type": ["integer", "null"] },
+        "value_min": { "type": ["integer", "null"] },
+        "value_max": { "type": ["integer", "null"] }
+      }
+    }
+  }
+}

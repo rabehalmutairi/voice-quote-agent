@@ -1,0 +1,7 @@
+{
+  "seq": 3,
+  "type": "task.failed",
+  "task_id": "tsk_02",
+  "at": "2026-10-25T19:00:05Z",
+  "data": { "reason": "no open shops with a phone number found within 5 km of حي الملقا" }
+}

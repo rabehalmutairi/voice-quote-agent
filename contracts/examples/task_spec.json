@@ -1,0 +1,10 @@
+{
+  "task_id": "tsk_01",
+  "category": "electronics_repair",
+  "request_text": "أبي أغير شاشة آيفون 15 برو",
+  "slots": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+  "area": { "label": "حي الملقا", "lat": 24.80, "lng": 46.61, "radius_m": 5000 },
+  "max_businesses": 3,
+  "missing_slots": [],
+  "created_at": "2026-10-25T18:00:00Z"
+}
