@@ -1,6 +1,6 @@
 # Voice Quote Agent
 
-An AI voice agent that calls 3 nearby phone-repair shops in parallel in Saudi Arabic (English fallback), extracts price / part type / warranty / repair time with evidence quotes from the transcript, and compares the shops.
+An AI voice agent that phones 3 nearby shops in parallel in Saudi Arabic (English fallback) to get repair quotes or check stock, asks the user's own questions, backs every value with the shop's exact words, and compares the shops.
 
 **Start here: [docs/architecture.md](docs/architecture.md)** (read it fully, then your own role section).
 

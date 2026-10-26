@@ -5,7 +5,7 @@
 > If you use Claude, Codex or any AI coding tool, give it this file first (see §12).
 
 Team 2 · Tuwaiq Club AI Track · King Saud University
-Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **KSU Week 13 (Nov 15–21)** · Last updated: 22 Oct 2026
+Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **KSU Week 13 (Nov 15–21)** · Last updated: 27 Oct 2026
 
 ---
 
@@ -28,11 +28,11 @@ on a labelled set of 50–100 calls. Every claim in our demo is backed by a numb
 
 | | In scope | Out of scope |
 |---|---|---|
-| Committed (the only one we promise) | **Electronics repair**: screens, batteries, charging ports | — |
-| Stretch (only if electronics is stable, §10 Gate C) | **Car maintenance, standardized quotes only** (e.g. "2022 Camry front brake pads") | Open-ended diagnosis ("my car makes a noise") |
-| Always | Asking questions, comparing answers | **Any action for the user**: bookings, reservations, payments, sharing personal info. Hospitals. **Hotels** (removed to protect time for evaluation and reliability). |
+| Committed | **Electronics repair quotes**: screens, batteries, charging ports. **Stock checks**: "عندكم آيفون 16؟", "MacBook Air M4؟" (available? price? new or used?) | — |
+| Stretch (only if the committed work is stable, §10 Gate C) | **Car maintenance, standardized requests only** (e.g. "2022 Camry front brake pads", tires, lights) | Open-ended diagnosis ("my car makes a noise") |
+| Always | Asking questions, comparing answers, and up to 2 questions the user writes (answered as a short summary plus the shop's exact words) | **Any action for the user**: bookings, reservations, payments, sharing personal info. Hospitals. **Hotels** (removed to protect time for evaluation and reliability). |
 
-**Principle:** one reliable, well-evaluated electronics workflow beats three weak ones. If
+**Principle:** a few reliable, well-evaluated workflows beat many weak ones. If
 time gets tight, we cut the stretch, never the evaluation.
 
 **One engine, many templates.** Everything category-specific (planner questions, call
@@ -60,9 +60,9 @@ flowchart LR
    (device model, car make/model/year, travel dates), it asks the user first. **No call is
    placed while required slots are empty.**
 2. **Discovery** finds 3 open, relevant businesses with phone numbers (Places API).
-3. **Calling**: one voice-agent call per business, in parallel. The agent says it is an AI
-   assistant in its first sentence, asks the template's questions one at a time, and ends
-   within ~2 minutes.
+3. **Calling**: one voice-agent call per business, in parallel. The agent speaks like a
+   normal caller (it does not announce that it is an AI; see ADR 001), asks the template's
+   questions and then the user's own questions one at a time, and ends within ~2 minutes.
 4. **Extraction** turns each transcript into a `Quote`. Every value has a status,
    confidence, and the evidence quote it came from. Code verifies that the quote really
    appears in what the shop said. **No quote → no value.**
@@ -127,6 +127,7 @@ that reads it.
   "category": "electronics_repair",
   "request_text": "أبي أغير شاشة آيفون 15 برو",
   "slots": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+  "custom_questions": ["يصلحونه قدامي ولا أتركه عندهم؟"],
   "area": { "label": "حي الملقا", "lat": 24.80, "lng": 46.61, "radius_m": 5000 },
   "max_businesses": 3,
   "missing_slots": [],
@@ -134,6 +135,7 @@ that reads it.
 }
 ```
 Rule: if `missing_slots` is not empty, the planner returns follow-up questions instead.
+`custom_questions` holds at most 2 questions the user wrote themselves.
 
 ### 6.2 `Business` — Discovery → Orchestrator
 ```jsonc
@@ -151,7 +153,8 @@ Rule: if `missing_slots` is not empty, the planner returns follow-up questions i
 {
   "call_id": "call_01", "task_id": "tsk_01", "place_id": "ChIJ...",
   "to_number": "+966501234567", "template": "electronics_repair",
-  "dynamic_variables": { "user_name": "رابح", "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+  "dynamic_variables": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
+  "custom_questions": ["يصلحونه قدامي ولا أتركه عندهم؟"],
   "max_duration_s": 150, "attempt": 1
 }
 ```
@@ -163,7 +166,7 @@ Rule: if `missing_slots` is not empty, the planner returns follow-up questions i
   "outcome": "human_completed",
   "started_at": "...", "duration_s": 104, "language_final": "ar",
   "transcript": [
-    { "i": 0, "speaker": "agent", "t": 0,  "text": "السلام عليكم، معك مساعد ذكاء اصطناعي..." },
+    { "i": 0, "speaker": "agent", "t": 0,  "text": "السلام عليكم، حياك الله. عندي استفسار بسيط عن تصليح جوال..." },
     { "i": 1, "speaker": "shop",  "t": 6,  "text": "هلا، تفضل" },
     { "i": 2, "speaker": "shop",  "t": 21, "text": "الأصلي بألف ومتين، والتجاري بأربعمية وخمسين" }
   ],
@@ -176,37 +179,48 @@ Note: ElevenLabs transcripts call the shop `user` and our agent `agent`. Convert
 `shop`/`agent` at the boundary so nobody confuses them.
 
 ### 6.5 `Quote` — Extraction → Comparison, UI
-Every field uses the same **evidence-backed field** shape:
+Every value uses the same **evidence-backed field** shape:
 ```json
-{ "value": 450, "status": "found", "confidence": 0.9,
-  "evidence_quote": "والتجاري بأربعمية وخمسين", "evidence_turn": 2 }
+{ "value": 450, "value_min": null, "value_max": null, "status": "found", "confidence": 0.9,
+  "evidence_quote": "والتجاري بأربعمية وخمسين", "evidence_turn": 3 }
 ```
-`status`: `found` | `not_mentioned` | `refused` ("تعال المحل ونشوف") | `unclear` (e.g. a wide range).
-Rules: `value` is allowed **only** when `status = found` **and** `evidence_quote` is
-non-empty **and** the quote is found in a **shop** turn.
+`status`: `found` | `not_mentioned` | `refused` ("تعال المحل ونشوف") | `unclear`.
+A number is an exact `value` or a range in `value_min`/`value_max` (e.g. "ساعة لساعتين").
+Rules: `value` is allowed **only** when `status = found`. Every status except
+`not_mentioned` needs a non-empty `evidence_quote`, and the quote must be found in a
+**shop** turn.
 
-Shops often quote two tiers in one breath, so a quote holds a **list of options**:
-```json
+Which fields exist comes from the category template (§7). Shops often quote two tiers (or
+several variants) in one breath, so a quote holds a list of **offers** (the template's
+`offer_fields`) plus **fields** that apply to the whole call (`quote_fields`):
+```jsonc
 {
-  "call_id": "call_01", "place_id": "ChIJ...",
-  "options": [
-    { "part_type": { "value": "original",   "...": "..." },
-      "price_sar": { "value": 1200, "...": "..." }, "warranty_days": { "status": "not_mentioned" } },
-    { "part_type": { "value": "commercial", "...": "..." },
-      "price_sar": { "value": 450,  "...": "..." }, "warranty_days": { "value": 30, "...": "..." } }
+  "call_id": "call_01", "task_id": "tsk_01", "place_id": "ChIJ...",
+  "offers": [
+    { "part_type": { "value": "original",   "...": "..." }, "price_sar": { "value": 1200, "...": "..." },
+      "warranty_days": { "status": "refused", "...": "..." } },
+    { "part_type": { "value": "commercial", "...": "..." }, "price_sar": { "value": 450,  "...": "..." },
+      "warranty_days": { "value": 30, "...": "..." } }
   ],
-  "turnaround_minutes": { "...": "..." },
-  "availability":       { "...": "..." },
+  "fields": { "turnaround_minutes": { "...": "..." }, "availability": { "...": "..." } },
+  "answers": [   // one per question the user wrote
+    { "question_index": 0, "question": "يصلحونه قدامي ولا أتركه عندهم؟", "status": "found",
+      "summary_ar": "يصلحونه قدام العميل وهو ينتظر في المحل.",
+      "evidence": [ { "quote": "تقعد وتشوفه قدامك", "turn": 13 } ] }
+  ],
   "evidence_issues": []
 }
 ```
-`part_type`: `original` (أصلي) · `pulled_original` (أصلي سحب) · `commercial` (تجاري / كوبي / high copy) · `unknown`.
+Code checks that the quotes are real shop words. Whether a `summary_ar` is faithful to its
+quotes can't be checked by code; R3 measures it in the eval (§9).
+Example choice values (electronics `part_type`): `original` (أصلي) · `pulled_original`
+(أصلي سحب) · `commercial` (تجاري / كوبي / high copy) · `unknown`.
 
 ### 6.6 `Comparison` — Comparison → UI
 ```jsonc
 {
   "task_id": "tsk_01",
-  "status": "ranked",                  // ranked | partial | cannot_compare
+  "status": "ranked",                  // ranked | partial | side_by_side | cannot_compare
   "basis": "commercial screen, price incl. warranty",
   "ranking": [ { "place_id": "...", "rank": 1, "reason": "cheapest commercial, 30-day warranty" } ],
   "excluded": [ { "place_id": "...", "reason": "refused to quote by phone" } ],
@@ -221,26 +235,33 @@ Each event: `{ "type", "task_id", "at", "data": <the contract above> }`.
 
 ## 7. Category template format
 
-`/templates/electronics_repair.yaml` (owner R1; questions R2; fields R6):
+One file per category in `/templates/` (owner R1; questions R2; fields R6). The shape is
+`contracts/template.schema.json` and the files are the reference; this is the idea:
 ```yaml
 category: electronics_repair
-planner_questions:            # asked to the USER before calling
+planner_questions:           # asked to the USER before calling
   - { key: device_model, ask_ar: "وش نوع الجهاز وموديله بالضبط؟" }
-  - { key: repair_type,  ask_ar: "وش تبي تصلّح؟ الشاشة، البطارية، ولا منفذ الشحن؟" }
-  - { key: area,         ask_ar: "وين تبي المحلات تكون؟" }
-call_questions:               # asked by the AGENT on the call, one at a time
-  - { field: price_sar,          ask_ar: "كم سعر تغيير {{repair_type}} لـ {{device_model}}؟" }
-  - { field: part_type,          ask_ar: "القطعة أصلية ولا تجارية؟ وإذا عندكم النوعين، كم سعر كل وحدة؟" }
-  - { field: warranty_days,      ask_ar: "فيه ضمان؟ وكم مدته؟" }
-  - { field: turnaround_minutes, ask_ar: "كم ياخذ وقت التصليح تقريبًا؟" }
-  - { field: availability,       ask_ar: "القطعة متوفرة الحين ولا تحتاجون تطلبونها؟" }
+fields:                      # everything the agent collects, with its type
+  price_sar: { type: number, unit: SAR }
+  part_type: { type: choice, choices: [original, pulled_original, commercial, unknown] }
+offer_fields: [part_type, price_sar, warranty_days]   # can differ per option the shop quotes
+quote_fields: [turnaround_minutes, availability]      # one value for the whole call
+call_questions:              # asked by the AGENT on the call, one at a time
+  - { field: price_sar, ask_ar: "كم سعر تغيير {{repair_type}} لـ {{device_model}}؟" }
 required_fields: [price_sar, part_type, warranty_days, turnaround_minutes]
-compare_on: [part_type, price_sar, warranty_days]   # like-for-like comparison basis
-asr_keywords: [أصلي, تجاري, سحب, ضمان, شاشة, بطارية, آيفون, iPhone, Samsung]
+compare_on: [part_type, price_sar, warranty_days]     # like-for-like comparison basis
+asr_keywords: [أصلي, تجاري, سحب, ضمان]
 places_queries: { ar: [صيانة جوالات], en: [phone repair shop] }
 ```
-Car maintenance fields (stretch only): `price_sar`, `part_brand` (original / aftermarket),
-`labor_included`, `warranty_days`, `turnaround_minutes`.
+Field types: `number`, `choice`, `text`, `boolean`.
+
+Templates today: `electronics_repair` and `stock_check` (committed), `car_repair` (stretch,
+Gate C). A new category is a new YAML file plus scenario cards, with no engine change;
+`tests/contracts` checks every template and that a stock-check and a car-repair quote fit the
+same `Quote` shape. The user's own questions (up to 2 per task) work in every category and
+are not part of the template.
+
+---
 
 ## 8. Roles
 
@@ -267,7 +288,7 @@ demo their part if the owner is absent.
 **Owns:** `/contracts`, `/templates`, `/app/planner`, `/app/orchestrator`, `/docs`.
 **Builds:**
 - All JSON Schemas + example files (§6): drafted in Week 9 if convenient, **published by Mon 26 Oct** so every role can build in parallel.
-- **Planner:** request text → `TaskSpec` with a strong LLM in JSON mode; returns follow-up questions from the template when slots are missing; refuses out-of-scope requests (booking, hospitals, open diagnosis) with a clear message.
+- **Planner:** request text → `TaskSpec` with a strong LLM in JSON mode; returns follow-up questions from the template when slots are missing; keeps up to 2 of the user's own questions as `custom_questions`; refuses out-of-scope requests (booking, hospitals, open diagnosis) with a clear message.
 - **Orchestrator:** task state machine (`created → needs_input → discovering → calling → extracting → done | failed`), launches up to 3 calls in parallel, emits events (§6.7), retries per R4's rules, stops a task that runs over budget or time.
 - Decision records in `/docs/decisions/` (voice platform, queue, car-stretch go/no-go).
 **First milestone (Week 10, Thu 29 Oct):** request → `TaskSpec` → one controlled call → transcript back (§10 Gate A).
@@ -280,12 +301,12 @@ demo their part if the owner is absent.
 **Owns:** `/app/voice`, `/prompts`.
 **Builds:**
 - Agent configuration **as code**: prompt, first message, voice, LLM, tools, max duration, all in the repo, pushed to ElevenLabs by a script. Never edit only in the dashboard.
-- Call flow: disclosure → questions one at a time → one clarification per unclear answer → repeat the price back to confirm → polite end. Refuse bookings and personal info.
+- Call flow: natural greeting → the template's questions one at a time, then the user's own questions → one clarification per unclear answer → repeat the price back to confirm → polite end. Refuse bookings and personal info. If a shop asks whether it is talking to a robot or an AI, answer honestly.
 - English switching (language-detection tool + an English first message), voicemail/IVR detection → hang up, no message left.
 - Pick the voice (Saudi dialect, natural on an 8 kHz phone line) and A/B 2–3 fast LLMs on the same scenarios.
 - Accepts a `CallJob`, returns a `CallResult` (with R4).
-**Done when:** 10 role-play calls in a row disclose AI in the first sentence, finish under 2.5 min, and never agree to a booking.
-**Watch out:** the first sentence **must** say it's an AI assistant calling on behalf of the user. Add an automated test that fails if the first message stops saying this.
+**Done when:** 10 role-play calls in a row finish under 2.5 min, ask every template question and the user's own questions, and never agree to a booking.
+**Watch out:** the agent must never claim to be human or deny being an AI when asked directly (ADR 001). Add an automated test with a scenario card where the shop asks "إنت روبوت؟"; it fails if the agent denies it.
 
 ### R3 — Speech recognition + evaluation harness
 **Pick this if:** you like data, experiments and measuring things more than building features. You'll run the speech-recognition test that picks our platform, then build the test sets and metrics that turn our demo into real results.
@@ -299,7 +320,7 @@ demo their part if the owner is absent.
   - The result feeds the voice-stack decision (§10 Gate B) together with R2/R4's real test calls.
   - Week 10 prep: download SADA, write the phone-simulation script, draft scenario cards, record ~10 clips over the first Twilio calls.
 - Arabic text normalization + number parsing shared by everyone (e.g. "ثلاثمية وخمسين" = 350, "٤٥٠" = 450).
-- **Scenario cards:** role-play scripts with hidden ground truth (cooperative shop, English-speaking expat, "come to the shop" refusal, hold/busy, price range, asks for your number, mixed Arabic/English).
+- **Scenario cards:** role-play scripts with hidden ground truth (cooperative shop, English-speaking expat, "come to the shop" refusal, hold/busy, price range, asks for your number, mixed Arabic/English, stock check, shop asks "are you a robot?", the user's own question).
 - **Fake shopkeeper:** an LLM playing a scenario card in text mode, for hundreds of cheap logic tests of the call flow + extraction.
 - Metrics script (§9) that reads `CallResult` + `Quote` + labels and prints the headline table.
 **Done when:** one command produces the §9 table from the labelled call set.
@@ -341,7 +362,7 @@ demo their part if the owner is absent.
 **Mission:** turn transcripts into trustworthy numbers, and compare only what is comparable.
 **Owns:** `/app/extraction`, `/app/comparison`.
 **Builds:**
-- **Extraction:** `CallResult` → `Quote` with a strong LLM in JSON mode, following §6.5 exactly. Convert units (3 months → 90 days, 1 hour → 60 min) while keeping the original words as evidence.
+- **Extraction:** `CallResult` → `Quote` with a strong LLM in JSON mode, following §6.5 exactly, plus a one- or two-sentence Arabic answer to each of the user's own questions with its quotes. Convert units (3 months → 90 days, 1 hour → 60 min) while keeping the original words as evidence.
 - **Evidence checker (code, not prompt):** for every value, check the quote exists in a **shop** turn (whole-word match after Arabic normalization) and, for prices, that the number is actually in the quote. Failures go to `evidence_issues` and the value is dropped. This is how "no invented values" is enforced. The agent repeating a price back does **not** count as evidence.
 - **Comparison:** compare like with like (same `part_type`). Return `cannot_compare` with reasons when key fields are missing, refused, or inconsistent (e.g. shop A only gave an original price, shop B only commercial).
 - **Baseline experiment:** ElevenLabs' built-in "data collection" gives values without verified evidence. Run both on the same calls and compare hallucination rates. This is one of our strongest results.
@@ -442,12 +463,12 @@ fallback video**; bug fixes only, no new features.
 
 - **Gate A, Thu 29 Oct → "we can make a call":** one controlled call completes and its transcript is stored against a `TaskSpec`. If it fails, R1/R2/R4/R5 fix it first thing Sunday 1 Nov; everyone else keeps building on fixtures.
 - **Gate B, Tue 3 Nov → voice stack:** stay on ElevenLabs if the real test calls work and Scribe's number accuracy on phone-quality clips is acceptable. Otherwise switch to Vapi/Retell with Deepgram `ar-SA`, after confirming that platform actually accepts `ar-SA` (one Vapi support thread showed it rejected). With this calendar, any switch must be decided by Tue 3 Nov, and only on clear evidence; after that date the stack is final.
-- **Gate C, Thu 12 Nov → car stretch:** only if the full electronics workflow runs end-to-end and, on the labelled calls, critical-field accuracy is ≥ 85% and hallucination ≤ 2% (team confirms the exact bar in Week 11). Cars = a new template + scenario cards only, no engine changes, added only by someone whose own part is done, before the freeze. Otherwise cars are listed as future work in the README.
+- **Gate C, Thu 12 Nov → car stretch:** only if the full electronics and stock-check workflows run end-to-end and, on the labelled calls, critical-field accuracy is ≥ 85% and hallucination ≤ 2% (team confirms the exact bar in Week 11). Cars = a new template + scenario cards only, no engine changes, added only by someone whose own part is done, before the freeze. Otherwise cars are listed as future work in the README.
 - **Feature freeze, Sat 14 Nov:** after this, only bug fixes.
 
 ## 11. Ethics, privacy, safety (non-negotiable)
 
-- The agent **always** says it is an AI assistant in its first sentence and never pretends to be human.
+- The agent never claims to be human and never denies being an AI when asked directly. It does not have to announce it: Tuwaiq approved this for now (`docs/decisions/001-scope-and-ai-disclosure.md`); we revisit after testing and before any wider deployment.
 - Weeks 10–11 (and until sign-off): calls only to an **allowlist** of numbers whose owners agreed (friends, teammates, shops we know). Code must refuse any number not on it.
 - Saudi PDPL applies to recording and transcribing calls. Get **Tuwaiq/KSU sign-off** on disclosure, consent and retention **before** calling real businesses at scale.
 - Keep recordings/transcripts only as long as evaluation needs (e.g. 30 days). Never in git.

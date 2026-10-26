@@ -19,6 +19,12 @@
       "description": "RFC 3339, always UTC with a trailing Z."
     },
     "phone_e164": { "type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$" },
+    "custom_questions": {
+      "type": "array",
+      "maxItems": 2,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Questions the user wrote themselves, in Arabic, asked after the template's questions. At most 2 so a call stays under ~2.5 minutes."
+    },
     "outcome": {
       "enum": [
         "human_completed",
@@ -34,7 +40,7 @@
     },
 
     "evidence_base": {
-      "description": "Keys and status rules shared by every evidence-backed field. Value rules live in the typed fields below.",
+      "description": "Keys and status rules shared by every evidence-backed value. Value rules live in evidence_field.",
       "type": "object",
       "required": ["value", "status", "confidence", "evidence_quote", "evidence_turn"],
       "properties": {
@@ -68,21 +74,12 @@
       ]
     },
 
-    "enum_field": {
-      "description": "Evidence-backed field whose value is one of a fixed set. Narrow `value` with an enum where it is used.",
-      "$ref": "#/$defs/evidence_base",
-      "properties": { "value": { "type": ["string", "null"] } },
-      "if": { "properties": { "status": { "const": "found" } } },
-      "then": { "properties": { "value": { "type": "string" } } },
-      "unevaluatedProperties": false
-    },
-
-    "number_field": {
-      "description": "Evidence-backed number: either an exact `value`, or a range in `value_min`/`value_max`. Never both.",
+    "evidence_field": {
+      "description": "One value the shop gave, backed by the shop's own words. Its type (number, choice, text, yes/no) is set by the category template, which this schema cannot see: R6's checker verifies the value against the template. A number is either an exact `value` or a range in `value_min`/`value_max`, never both.",
       "$ref": "#/$defs/evidence_base",
       "required": ["value_min", "value_max"],
       "properties": {
-        "value": { "type": ["number", "null"], "minimum": 0 },
+        "value": { "type": ["number", "string", "boolean", "null"], "minimum": 0 },
         "value_min": { "type": ["number", "null"], "minimum": 0 },
         "value_max": { "type": ["number", "null"], "minimum": 0 }
       },
@@ -92,7 +89,7 @@
           {
             "title": "exact",
             "properties": {
-              "value": { "type": "number" },
+              "value": { "type": ["number", "string", "boolean"] },
               "value_min": { "type": "null" },
               "value_max": { "type": "null" }
             }

@@ -2,12 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/template.schema.json",
   "title": "Category template",
-  "description": "Shape of every /templates/<category>.yaml file. Everything category-specific lives in a template, not in engine code (architecture §2, §7).",
+  "description": "Shape of every /templates/<category>.yaml file. Everything category-specific lives in a template, not in engine code (architecture §2, §7). Cross-references (every key used below is defined in `fields`) are checked in tests/contracts.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "category",
     "planner_questions",
+    "fields",
+    "offer_fields",
+    "quote_fields",
     "call_questions",
     "required_fields",
     "compare_on",
@@ -19,7 +22,7 @@
     "planner_questions": {
       "type": "array",
       "minItems": 1,
-      "description": "Asked to the USER before any call.",
+      "description": "Asked to the USER before any call. The answer to `area` fills TaskSpec.area; every other answer fills TaskSpec.slots.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -29,6 +32,42 @@
           "ask_ar": { "type": "string", "minLength": 1 }
         }
       }
+    },
+    "fields": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Every value the agent tries to collect. `type` tells extraction what to produce; `choice` values must come from `choices`.",
+      "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type"],
+        "properties": {
+          "type": { "enum": ["number", "choice", "text", "boolean"] },
+          "unit": { "type": "string", "minLength": 1 },
+          "choices": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": { "$ref": "common.schema.json#/$defs/name" }
+          }
+        },
+        "if": { "properties": { "type": { "const": "choice" } } },
+        "then": { "required": ["choices"] },
+        "else": { "not": { "required": ["choices"] } }
+      }
+    },
+    "offer_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/name" },
+      "description": "Fields that can differ per option the shop quotes: they go inside each entry of Quote.offers."
+    },
+    "quote_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/name" },
+      "description": "Fields that apply to the whole call: they go in Quote.fields."
     },
     "call_questions": {
       "type": "array",
@@ -54,7 +93,8 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "common.schema.json#/$defs/name" }
+      "items": { "$ref": "common.schema.json#/$defs/name" },
+      "description": "Offer fields shops are compared on, like for like."
     },
     "asr_keywords": {
       "type": "array",

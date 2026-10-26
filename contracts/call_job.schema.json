@@ -12,6 +12,7 @@
     "to_number",
     "template",
     "dynamic_variables",
+    "custom_questions",
     "max_duration_s",
     "attempt"
   ],
@@ -29,6 +30,10 @@
       "description": "Values the agent fills into the template's call questions. Never personal data about the user (§11).",
       "propertyNames": { "$ref": "common.schema.json#/$defs/name" },
       "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "custom_questions": {
+      "$ref": "common.schema.json#/$defs/custom_questions",
+      "description": "Copied from TaskSpec.custom_questions. Asked after the template's questions."
     },
     "max_duration_s": { "type": "integer", "minimum": 30, "maximum": 150 },
     "attempt": {
