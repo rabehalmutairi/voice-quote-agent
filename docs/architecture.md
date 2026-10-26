@@ -12,13 +12,15 @@ Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submi
 ## 1. What we are building (one paragraph)
 
 A user types a request like *"I want to replace my iPhone 15 Pro screen. Find 3 nearby
-shops and ask about price, part type, warranty and repair time."* Our system asks any
-missing questions, finds 3 nearby shops on Google Maps, **phones all 3 at the same time**
-with an AI voice agent that speaks Saudi Arabic (and switches to English when staff
-speak English), extracts the answers into structured fields **where every value is backed
-by the exact words the shop said**, and shows a side-by-side comparison. If the answers
-can't be compared fairly, it says so instead of guessing. Target: 3 quotes in about
-3 minutes, versus 10–15 minutes calling by hand.
+shops and ask about price, part type, warranty and repair time."* or *"Do you have the
+iPhone 16 in stock?"*, and can add up to 2 questions of their own (*"do they repair it in
+front of me?"*). Our system asks any missing questions, finds 3 nearby shops on Google
+Maps, **phones all 3 at the same time** with an AI voice agent that speaks Saudi Arabic
+(and switches to English when staff speak English), extracts the answers into structured
+fields **where every value is backed by the exact words the shop said**, answers the
+user's own questions with a short summary plus the shop's quotes, and shows a side-by-side
+comparison. If the answers can't be compared fairly, it says so instead of guessing.
+Target: 3 quotes in about 3 minutes, versus 10–15 minutes calling by hand.
 
 **What makes this more than a wrapper:** measured results. We report human reach rate,
 task completion, critical-field accuracy, hallucination rate and cost per successful task
@@ -85,13 +87,14 @@ flowchart LR
 ## 5. Repository layout and ownership
 
 Each folder has **one owner**. You may read everything; you only change your own folders.
-`.github/CODEOWNERS` enforces this: PRs touching a folder need its owner's review.
+A PR that touches a folder gets reviewed by its owner or backup (§8, §12).
 
 ```
 /docs/architecture.md          this file                         R1
 /docs/decisions/               decision records (ADRs)           R1 (anyone can propose)
 /contracts/                    JSON Schemas of every contract    R1  ← change only via "contract change" PR
 /contracts/examples/           one valid example per contract    R1  ← everyone builds against these
+/contracts/README.md           conventions + rules a schema can't check  R1
 /templates/                    category templates (YAML)         R1 (fields with R6, questions with R2)
 /app/planner/                  request → TaskSpec                R1
 /app/orchestrator/             task state machine, fan-out       R1
@@ -103,7 +106,8 @@ Each folder has **one owner**. You may read everything; you only change your own
 /app/comparison/               Quotes → Comparison               R6
 /eval/                         datasets, scenarios, metrics      R3
 /web/                          frontend                          R7
-/tests/<area>/                 tests, owned by the area's owner
+/tests/<area>/                 tests, owned by the area's owner  (/tests/contracts/ runs in CI: R1)
+/.github/                      CI workflow                       R1
 ```
 
 **Never commit:** `.env` / API keys, call audio, transcripts of real people, SADA clips.
@@ -268,17 +272,17 @@ are not part of the template.
 7 roles, each with one owner and one backup. The backup reviews the owner's PRs and can
 demo their part if the owner is absent.
 
-**How to pick:** read R2–R7 below, then reply in the group with your **1st and 2nd choice**. If two people want the same role, we'll agree together, and second choices fill the rest. Backups are assigned after.
+Roles were assigned on 27 Oct 2026. The GitHub handle is for assigning PR reviews.
 
-| Role | Name | Backup |
-|---|---|---|
-| R1 Tech lead, planner, orchestrator | Rabeh | R5 |
-| R2 Voice agent | _____ | R4 |
-| R3 Speech recognition + evaluation | _____ | R6 |
-| R4 Telephony | _____ | R2 |
-| R5 Backend + discovery | _____ | R1 |
-| R6 Extraction + comparison | _____ | R3 |
-| R7 Frontend, evidence view, demo | _____ | R5 |
+| Role | Name | GitHub | Backup |
+|---|---|---|---|
+| R1 Tech lead, planner, orchestrator | Rabeh | @rabehalmutairi | R5 |
+| R2 Voice agent | Abdulmalik | @abdulmaliksd955 | R4 |
+| R3 Speech recognition + evaluation | Feras | @FerasMad | R6 |
+| R4 Telephony | Saleh Alrakban | @Salehalrakban | R2 |
+| R5 Backend + discovery | Omar | @EviLooo | R1 |
+| R6 Extraction + comparison | Ahmed | @Ahmed-Aw | R3 |
+| R7 Frontend, evidence view, demo | Saleh Aljarwan | @CsSaleh17 | R5 |
 
 ---
 
@@ -389,8 +393,9 @@ demo their part if the owner is absent.
 |---|---|
 | **Human reach rate** | calls with outcome `human_*` ÷ all attempts. Report pre-arranged vs cold separately |
 | **Task completion** | `human_completed` ÷ calls that reached a human |
-| **Critical-field accuracy** | correct values ÷ labelled values, for price, part type, warranty, time (per field and overall) |
+| **Critical-field accuracy** | correct values ÷ labelled values, for the template's required fields (electronics: price, part type, warranty, time; stock check: availability, price), per field and overall |
 | **Hallucination rate** | values not supported by the transcript ÷ all values returned. Ours vs the ElevenLabs built-in baseline |
+| **Answer faithfulness** | for the user's own questions: share of `summary_ar` answers that two labellers judge faithful to the shop's words. Code verifies the quotes; only people can judge the summary |
 | **Cost per successful task** | total cost ÷ tasks where ≥2 of 3 shops gave usable quotes |
 | Also logged | turn latency, language-switch success, failure types, total time per request |
 
@@ -445,13 +450,13 @@ Each cell is that role's deliverable for the Thursday demo. Every role can start
 
 | Role | Week 10 (Oct 25–31) | Week 11 (Nov 1–7) | Week 12 (Nov 8–14) |
 |---|---|---|---|
-| **R1** | Contracts + examples published Mon 26 Oct; planner v0 (request → `TaskSpec` + follow-up questions); wires the minimal flow (**Gate A**) | Orchestrator state machine + events; fan-out from 1 to 3 calls; runs **Gate B** | Full pipeline with 3 real parallel calls; integration fixes; **Gate C**; freeze |
-| **R2** | Agent as code (prompt, first message, Saudi voice, tools) pushed by script; tested in browser, then on a teammate's phone | Full call flow; English switching; voicemail/IVR → hang up; LLM A/B; 10–20 role-play calls using R3's scenario cards | Fix the top voice failures found in labelled calls; consented real-shop calls (after sign-off) |
-| **R3** | Arabic normalization + number parser; SADA phone-simulation script; ≥6 scenario cards; ~10 clips recorded over the first Twilio calls | **Speech benchmark Sun–Tue (Gate B input)**; label role-play calls as they happen; fake-shopkeeper text tests; metrics script v0 | ≥50 labelled calls; full metrics table incl. ours vs ElevenLabs baseline; failure-type breakdown |
+| **R1** | Contracts v0 published Mon 26 Oct, v1 (stock checks, own questions) Tue 27 Oct; planner v0 (request → `TaskSpec` + follow-up questions); wires the minimal flow (**Gate A**) | Orchestrator state machine + events; fan-out from 1 to 3 calls; runs **Gate B** | Full pipeline with 3 real parallel calls; integration fixes; **Gate C**; freeze |
+| **R2** | Agent as code (prompt, first message, Saudi voice, tools) pushed by script; tested in browser, then on a teammate's phone | Full call flow incl. the user's own questions; honest answer if asked "are you a robot?"; English switching; voicemail/IVR → hang up; LLM A/B; 10–20 role-play calls using R3's scenario cards | Fix the top voice failures found in labelled calls; consented real-shop calls (after sign-off) |
+| **R3** | Arabic normalization + number parser; SADA phone-simulation script; ≥8 scenario cards (incl. stock check, the user's own question, "are you a robot?"); ~10 clips recorded over the first Twilio calls | **Speech benchmark Sun–Tue (Gate B input)**; label role-play calls as they happen; fake-shopkeeper text tests; metrics script v0 | ≥50 labelled calls; full metrics table incl. ours vs ElevenLabs baseline; failure-type breakdown |
 | **R4** | Paid Twilio, Saudi permissions, number connected to ElevenLabs, allowlist enforced; places the Gate A call; caller-ID test | Correct `outcome` for voicemail / IVR / busy / no answer; retry policy + calling hours; Unifonic emailed; `docs/telephony.md` | Reliability under 3 parallel calls; reach rate pre-arranged vs cold (if signed off) |
 | **R5** | FastAPI skeleton + Postgres tables; stores `TaskSpec`, call and transcript (Gate A); queue decision; Places script returns callable shops | Places discovery in the pipeline (pick 3); SSE events endpoint; cost per call; cache | Robustness, logging, cost/latency data for the dashboard |
-| **R6** | Extraction v0 on the §6.4 example transcripts → `Quote`; evidence checker with unit tests | Extraction on real role-play transcripts; comparison + `cannot_compare`; ElevenLabs baseline stored for comparison | Fix evidence failures; price ranges; hallucination numbers ours vs baseline |
-| **R7** | Web skeleton: request box, follow-up questions, 3 shop cards driven by fake events | Live view on real SSE events; evidence display (value + quote + transcript turn) | Metrics dashboard; demo script; **first take of the recorded fallback** |
+| **R6** | Extraction v0 on the example transcripts → `Quote` (offers, fields, answers); evidence checker with unit tests | Extraction on real role-play transcripts; comparison + `cannot_compare` / `side_by_side`; ElevenLabs baseline stored for comparison | Fix evidence failures; hallucination numbers ours vs baseline; answer faithfulness |
+| **R7** | Web skeleton: request box (+ up to 2 own questions), follow-up questions, 3 shop cards driven by fake events | Live view on real SSE events; evidence display (value + quote + transcript turn, and the answers to the user's own questions) | Metrics dashboard; demo script; **first take of the recorded fallback** |
 
 ### Week 13 (Nov 15–21): submission and finalization
 
@@ -498,9 +503,11 @@ Blocked for more than a day → tell R1 immediately, don't wait for Thursday.
 
 - Approval from the AI track leader + exact submission day in Week 13: share this file now; show the first recorded test call after Gate A (29 Oct) → R1.
 - Tuwaiq/KSU sign-off on disclosure, consent, retention → R1, request in Week 9; needed before any real-shop calls (Week 12).
-- Which API subscriptions Tuwaiq covers vs our $500–1k budget → R1, Week 9 if convenient, at latest Sun 25 Oct.
+- Which API subscriptions Tuwaiq covers; keep our own spend under $500 → R1, needed before Gate A (Thu 29 Oct).
 - Can Unifonic (or a Saudi SIP provider) carry a live two-way AI call with a Saudi caller ID? → R4, Week 11.
-- How to represent price ranges ("من ٣٠٠ لين ٥٠٠") → R6, Week 11.
+- Do `Quote.answers` and the generic `offers` / `fields` fit real transcripts? → R6 and R3, Week 11 (change via a `contract-change` PR).
+- Written Tuwaiq approval of the no-AI-announcement decision (ADR 001), and that it covers recording and transcribing calls → R1, this week.
+- Is the 150 s call limit enough with 2 custom questions? → R2, after the first role-play calls.
 
 ## 14. Glossary
 
@@ -511,3 +518,5 @@ Blocked for more than a day → tell R1 immediately, don't wait for Thursday.
 - **SIP trunk:** a carrier connection that lets our voice platform make calls with a local number.
 - **IVR:** an automated phone menu ("press 1 for…").
 - **ADR:** a short decision record: context, options, decision, why.
+- **Offer:** one option a shop quoted (a part tier, a variant, new or used); a `Quote` holds a list of them.
+- **Custom question:** a question the user wrote themselves (max 2 per task), asked after the template's questions.
