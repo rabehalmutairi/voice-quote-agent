@@ -2,7 +2,7 @@
 
 Everything except the HTTP call is here and tested: the prompt is built from the
 templates, and the model's JSON answer is checked strictly before the planner uses it.
-To go live, write a small class with this method (Anthropic, OpenAI, whatever we get)
+To go live, write a small class with this method for whichever LLM API we get,
 and pass it in:
 
     class MyLLMClient:
