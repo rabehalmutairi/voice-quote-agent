@@ -5,7 +5,12 @@
 > If you use Claude, Codex or any AI coding tool, give it this file first (see §12).
 
 Team 2 · Tuwaiq Club AI Track · King Saud University
-Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **KSU Week 13 (Nov 15–21)** · Last updated: 27 Oct 2026
+Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **KSU Week 13 (Nov 15–21)** · Tuwaiq showcase: **Thu 10 Dec 2026** · Last updated: 3 Nov 2026
+
+> **Mock-first (from 3 Nov):** our API subscriptions (ElevenLabs, Twilio, Google Places, LLM) are
+> delayed. We build everything against mock providers behind fixed interfaces and swap in the real
+> ones when the keys arrive. Nothing below is redesigned. What each role does now, what is blocked and
+> the new milestones: **[`docs/mock-first-plan.md`](mock-first-plan.md)**.
 
 ---
 
@@ -83,6 +88,7 @@ flowchart LR
 | Backend | Python 3.11+, **FastAPI**, **Postgres** | One service. Simple job queue (decision by R5 early in KSU Week 10: Postgres-backed jobs or asyncio tasks) |
 | Frontend | Small web app (React + Vite suggested) | Streams events from the backend (Server-Sent Events) |
 | Discovery | **Google Places API (New) Text Search** | Requesting phone fields bills as the *Enterprise* tier: 1,000 free requests/month, then $35/1,000. Never request reviews/amenity fields (more expensive tier) |
+| Provider boundary | One small Python interface per external service, taking and returning contract objects | Mock implementations in `/app/mocks` until keys arrive; real ones in the owner's folder; swapped in one place at startup (`docs/mock-first-plan.md` §2) |
 
 ## 5. Repository layout and ownership
 
@@ -98,6 +104,8 @@ A PR that touches a folder gets reviewed by its owner or backup (§8, §12).
 /templates/                    category templates (YAML)         R1 (fields with R6, questions with R2)
 /app/planner/                  request → TaskSpec                R1
 /app/orchestrator/             task state machine, fan-out       R1
+/app/contracts.py              load + validate contracts/templates in Python  R1 (everyone imports it)
+/app/mocks/                    mock providers for dev/tests only, no network  R1
 /app/voice/   /prompts/        ElevenLabs agent config + prompts R2
 /app/telephony/                Twilio, caller ID, retries, hours R4
 /app/api/  /app/db/            FastAPI routes, Postgres          R5
@@ -289,13 +297,13 @@ Roles were assigned on 27 Oct 2026. The GitHub handle is for assigning PR review
 ### R1 — Tech lead, planner, orchestrator
 **Taken by Rabeh.** Glue work: contracts, planning, running the parallel calls, and integrating everyone's parts every Thursday.
 **Mission:** keep the parts connected; own the contracts; turn requests into tasks and tasks into parallel calls.
-**Owns:** `/contracts`, `/templates`, `/app/planner`, `/app/orchestrator`, `/docs`.
+**Owns:** `/contracts`, `/templates`, `/app/planner`, `/app/orchestrator`, `/app/contracts.py`, `/app/mocks`, `/docs`.
 **Builds:**
 - All JSON Schemas + example files (§6): drafted in Week 9 if convenient, **published by Mon 26 Oct** so every role can build in parallel.
 - **Planner:** request text → `TaskSpec` with a strong LLM in JSON mode; returns follow-up questions from the template when slots are missing; keeps up to 2 of the user's own questions as `custom_questions`; refuses out-of-scope requests (booking, hospitals, open diagnosis) with a clear message.
 - **Orchestrator:** task state machine (`created → needs_input → discovering → calling → extracting → done | failed`), launches up to 3 calls in parallel, emits events (§6.7), retries per R4's rules, stops a task that runs over budget or time.
 - Decision records in `/docs/decisions/` (voice platform, queue, car-stretch go/no-go).
-**First milestone (Week 10, Thu 29 Oct):** request → `TaskSpec` → one controlled call → transcript back (§10 Gate A).
+**First milestone (Week 10, Thu 29 Oct):** request → `TaskSpec` → one controlled call → transcript back (§10 Gate A). *Real call blocked by API access; mock version Thu 5 Nov (`docs/mock-first-plan.md`).*
 **Done when:** a request runs end-to-end on fixtures (no real calls) and the UI receives every event in order.
 **Not your job:** writing other roles' code. Review it, unblock it, integrate it.
 
@@ -418,6 +426,10 @@ every other role builds against the contracts. Weeks 11–12 bring the full syst
 Week 13 is finalization only. The scope stays the same; what makes it fit is **parallel work
 from fixed contracts**, not cutting features and not compressing two weeks into one.
 
+> **From 3 Nov, `docs/mock-first-plan.md` replaces the Week 11–12 parts of this section that need an
+> API key** (per-role deliverables, Gates A/B, milestones for 5, 7, 12 and 14 Nov). The overview and the
+> per-role table below are the original plan, kept for reference.
+
 **Rhythm:** weeks run Sunday–Thursday. **Every Thursday (29 Oct, 5 Nov, 12 Nov): integration
 demo**: whatever is merged to `main` must run end-to-end (fixtures are fine early on). If your
 part isn't merged, it doesn't exist yet. Blocked for more than a day → tell R1 that day.
@@ -428,7 +440,7 @@ part isn't merged, it doesn't exist yet. Blocked for more than a day → tell R1
 |---|---|---|
 | **9** | Oct 18–24 | **Light setup only:** roles, repo, architecture read-through, account/API requests if convenient |
 | **10** | Oct 25–31 | **Minimal working call:** user request → `TaskSpec` → one controlled call → transcript returned. All other roles start their components against fixtures |
-| **11** | Nov 1–7 | **Core components come together:** discovery + backend, full voice flow, telephony outcomes, extraction + evidence on real transcripts, live UI; from one call to 3 parallel calls; speech benchmark |
+| **11** | Nov 1–7 | *Mock-first from 3 Nov: Thu 5 Nov checkpoint, Sat 7 Nov mock integration (see the plan).* **Core components come together:** discovery + backend, full voice flow, telephony outcomes, extraction + evidence on real transcripts, live UI; from one call to 3 parallel calls; speech benchmark |
 | **12** | Nov 8–14 | **Full integration:** 3 parallel calls → extraction → evidence check → comparison / can't-compare → live UI; evaluation runs on ≥50 labelled calls; reliability fixes. **Feature freeze Sat 14 Nov** |
 | **13** | Nov 15–21 | **Submission:** final metrics, README, architecture diagram, presentation, live demo + recorded fallback, bug fixes only |
 
@@ -443,7 +455,7 @@ The only goal: **nobody is confused about what we are building or what they own.
 **Not required this week:** no coding deadline, no group technical session, no Twilio setup,
 no speech benchmark, no end-to-end call.
 
-### Per-role plan (Weeks 10–12)
+### Per-role plan (Weeks 10–12): original, assumes API access
 
 Each cell is that role's deliverable for the Thursday demo. Every role can start on Sunday
 26 Oct from the contracts and §6 examples, without waiting for anyone.
@@ -466,10 +478,19 @@ fallback video**; bug fixes only, no new features.
 
 ### Gates (decisions with numbers, recorded in `/docs/decisions/`)
 
+> **Status 3 Nov:** Gate A and Gate B (real) are **blocked pending API access, not passed**. Mock
+> versions: Gate A-mock Thu 5 Nov, Gate B-mock Sat 7 Nov. Until real tests exist, the voice stack stays
+> ElevenLabs (§4); see `docs/mock-first-plan.md` §6.
+
 - **Gate A, Thu 29 Oct → "we can make a call":** one controlled call completes and its transcript is stored against a `TaskSpec`. If it fails, R1/R2/R4/R5 fix it first thing Sunday 1 Nov; everyone else keeps building on fixtures.
 - **Gate B, Tue 3 Nov → voice stack:** stay on ElevenLabs if the real test calls work and Scribe's number accuracy on phone-quality clips is acceptable. Otherwise switch to Vapi/Retell with Deepgram `ar-SA`, after confirming that platform actually accepts `ar-SA` (one Vapi support thread showed it rejected). With this calendar, any switch must be decided by Tue 3 Nov, and only on clear evidence; after that date the stack is final.
 - **Gate C, Thu 12 Nov → car stretch:** only if the full electronics and stock-check workflows run end-to-end and, on the labelled calls, critical-field accuracy is ≥ 85% and hallucination ≤ 2% (team confirms the exact bar in Week 11). Cars = a new template + scenario cards only, no engine changes, added only by someone whose own part is done, before the freeze. Otherwise cars are listed as future work in the README.
-- **Feature freeze, Sat 14 Nov:** after this, only bug fixes.
+- **Feature freeze, Sat 14 Nov:** after this, only bug fixes. A real provider adapter merged and tested
+  on a saved response before the freeze may be switched on afterwards when its key arrives.
+- **Submission-ready, Wed 18 Nov** (KSU Week 13). If real-provider validation is still blocked, the
+  submission says so plainly and reports no metric we didn't measure.
+- **Tuwaiq showcase, Thu 10 Dec:** separate from the KSU submission. Real-call work that missed the
+  submission is finished for the showcase.
 
 ## 11. Ethics, privacy, safety (non-negotiable)
 
@@ -503,7 +524,8 @@ Blocked for more than a day → tell R1 immediately, don't wait for Thursday.
 
 - Approval from the AI track leader + exact submission day in Week 13: share this file now; show the first recorded test call after Gate A (29 Oct) → R1.
 - Tuwaiq/KSU sign-off on disclosure, consent, retention → R1, request in Week 9; needed before any real-shop calls (Week 12).
-- Which API subscriptions Tuwaiq covers; keep our own spend under $500 → R1, needed before Gate A (Thu 29 Oct).
+- Which API subscriptions Tuwaiq covers; keep our own spend under $500 → R1. **Open as of 3 Nov: ElevenLabs, Twilio, Places and LLM access delayed with no date; we work mock-first (`docs/mock-first-plan.md`).** Ask Tuwaiq for a date, chase every Thursday.
+- If no keys by Sun 8 Nov: how small a labelled-call set we still report, and whether real calls move to the Dec 10 showcase → R1 + R3, Thu 12 Nov.
 - Can Unifonic (or a Saudi SIP provider) carry a live two-way AI call with a Saudi caller ID? → R4, Week 11.
 - Do `Quote.answers` and the generic `offers` / `fields` fit real transcripts? → R6 and R3, Week 11 (change via a `contract-change` PR).
 - Written Tuwaiq approval of the no-AI-announcement decision (ADR 001), and that it covers recording and transcribing calls → R1, this week.
