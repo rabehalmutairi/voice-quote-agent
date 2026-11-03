@@ -2,7 +2,7 @@
 
 > **Read this whole file before you write any code.** It is the single source of truth for
 > what we are building, how the parts fit together, and what each role owns.
-> If you use Claude, Codex or any AI coding tool, give it this file first (see §12).
+> If you use an AI coding assistant, give it this file first (see §12).
 
 Team 2 · Tuwaiq Club AI Track · King Saud University
 Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **KSU Week 13 (Nov 15–21)** · Tuwaiq showcase: **Thu 10 Dec 2026** · Last updated: 3 Nov 2026
@@ -503,7 +503,7 @@ fallback video**; bug fixes only, no new features.
 
 ## 12. How to work (with or without AI tools)
 
-**Using Claude / Codex / any AI coding tool:**
+**Using an AI coding assistant:**
 1. Give it this whole file plus your role section, and say: *"Build only inside my folders
    (`…`). Use the contracts in `/contracts/` exactly. Use the example files as test data.
    Don't change contracts or other folders."*
