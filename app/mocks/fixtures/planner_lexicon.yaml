@@ -1,0 +1,56 @@
+# Mock planner lexicon (R1): the vocabulary behind app.mocks.planner.MockRequestParser.
+#
+# This is a deterministic stand-in for the LLM planner, for tests and demos. It is NOT
+# language understanding: it recognises these phrasings and nothing else. Which slots a
+# category has still comes from /templates; this file only says which words fill them.
+#
+# Text and patterns are normalised before matching: أ/إ/آ -> ا, ة -> ه, ى -> ي,
+# Arabic digits -> 0-9, lowercase, punctuation removed. Longest matching pattern wins.
+
+# Checked first. Things we never do (architecture §2).
+out_of_scope:
+  booking: [احجز, احجزلي, حجز, موعد, book, reserve, appointment]
+  payment: [ادفع, الدفع, pay for]
+  personal_info: [رقمي, رقم جوالي, اسمي, my number, my name]
+  medical: [مستشفى, عيادة, دكتور, hospital, clinic]
+  hotel: [فندق, hotel]
+  diagnosis: [صوت غريب, يطلع صوت, وش فيها, وش فيه, makes a noise, diagnose]
+
+# First matching category wins, so the order matters ("تصليح سيارة" is car_repair).
+categories:
+  - category: car_repair
+    keywords: [سيارة, سيارتي, كامري, كفرات, فحمات, ورشة, car, tires, tyres, brake]
+  - category: electronics_repair
+    keywords: [أغير, تغيير, تصليح, أصلح, صيانة, مكسور, مكسورة, انكسرت, خربان, repair, replace, fix, broken]
+  - category: stock_check
+    keywords: [عندكم, متوفر, متوفرة, موجود, موجودة, توفر, أبي أشتري, in stock, available, do you have]
+
+# Slot key (from the templates' planner_questions) -> known values.
+slots:
+  device_model: &devices
+    - { value: "آيفون 16 برو ماكس", match: ["آيفون 16 برو ماكس", "iphone 16 pro max"] }
+    - { value: "آيفون 16 برو", match: ["آيفون 16 برو", "iphone 16 pro"] }
+    - { value: "آيفون 16", match: ["آيفون 16", "iphone 16"] }
+    - { value: "آيفون 15 برو ماكس", match: ["آيفون 15 برو ماكس", "iphone 15 pro max"] }
+    - { value: "آيفون 15 برو", match: ["آيفون 15 برو", "iphone 15 pro"] }
+    - { value: "آيفون 15", match: ["آيفون 15", "iphone 15"] }
+    - { value: "آيفون 14", match: ["آيفون 14", "iphone 14"] }
+    - { value: "سامسونج جالكسي S24", match: ["جالكسي S24", "سامسونج S24", "galaxy s24"] }
+    - { value: "ماك بوك اير M4", match: ["ماك بوك اير M4", "macbook air m4"] }
+    - { value: "ماك بوك اير", match: ["ماك بوك اير", "macbook air"] }
+    - { value: "آيباد", match: ["آيباد", "ipad"] }
+  item: *devices
+  repair_type:
+    - { value: "الشاشة", match: [شاشة, شاشتي, screen] }
+    - { value: "البطارية", match: [بطارية, battery] }
+    - { value: "منفذ الشحن", match: [منفذ الشحن, منفذ الشاحن, مدخل الشحن, charging port] }
+
+# Approximate district centres in Riyadh, for mocks only. Real geocoding is R5's (Places).
+areas:
+  radius_m: 5000
+  known:
+    - { label: "حي الملقا", match: [ملقا, malqa], lat: 24.80, lng: 46.61 }
+    - { label: "حي العليا", match: [العليا, olaya], lat: 24.69, lng: 46.68 }
+    - { label: "حي النرجس", match: [النرجس, narjis], lat: 24.85, lng: 46.66 }
+    - { label: "حي الياسمين", match: [الياسمين, yasmin], lat: 24.82, lng: 46.64 }
+    - { label: "حي السليمانية", match: [السليمانية, sulaimaniyah], lat: 24.70, lng: 46.70 }

@@ -1,0 +1,168 @@
+# Mock shops and scripted calls (R1). Fictional shops, fictional numbers, written by hand.
+# Used by app.mocks.providers; checked by tests/integration/test_mock_fixtures.py:
+# every transcript and quote must pass the contracts, and every evidence quote must
+# appear in the shop turn it points to (the same rule R6's evidence checker enforces).
+#
+# Compact forms, expanded by the loader:
+#   transcript turn:  [speaker, seconds, text]
+#   evidence field:   {value: X, quote: "...", turn: N}        found, exact
+#                     {min: X, max: Y, quote: "...", turn: N}  found, range
+#                     {status: refused, quote: "...", turn: N} refused / unclear
+#                     not_mentioned
+# Answers are matched to the user's custom question by its exact text; any other
+# question gets "not_mentioned".
+#
+# Safety: every phone number must look like +9665000000NN. The mock call provider
+# refuses any other number.
+
+businesses:
+  - from_contract_example: true        # contracts/examples/business.json (ChIJexample01)
+  - place_id: ChIJexample02
+    name: مركز النخبة لصيانة الجوالات
+    phone_e164: "+966500000002"
+    number_type: mobile
+    address: شارع الخير، حي الملقا، الرياض
+    maps_url: https://maps.google.com/?cid=1000000000000000002
+    open_now: true
+    rating: 4.1
+  - place_id: ChIJexample03
+    name: محل الأفق للاتصالات
+    phone_e164: "+966500000003"
+    number_type: mobile
+    address: شارع الريحان، حي الملقا، الرياض
+    maps_url: https://maps.google.com/?cid=1000000000000000003
+    open_now: null
+    rating: null
+
+scripts:
+  electronics_repair:
+    ChIJexample01:
+      from_contract_example: true      # contracts/examples/call_result.json + quote.json
+
+    ChIJexample02:
+      outcome: human_completed
+      transcript:
+        - [agent, 0, "السلام عليكم، عندي استفسار عن تصليح جوال."]
+        - [shop, 4, "وعليكم السلام، تفضل."]
+        - [agent, 6, "كم سعر تغيير الشاشة لـ آيفون 15 برو؟"]
+        - [shop, 11, "الشاشة الأصلية بألف ومية وخمسين، والتجارية بأربعمية وثمانين."]
+        - [agent, 18, "فيه ضمان؟ وكم مدته؟"]
+        - [shop, 22, "الأصلية ضمانها ثلاث شهور، والتجارية شهرين."]
+        - [agent, 28, "كم ياخذ وقت التصليح تقريبًا؟"]
+        - [shop, 32, "ساعة وحدة بالكثير."]
+        - [agent, 36, "القطعة متوفرة الحين ولا تحتاجون تطلبونها؟"]
+        - [shop, 40, "متوفرة عندنا."]
+        - [agent, 43, "يصلحونه قدامي ولا أتركه عندكم؟"]
+        - [shop, 48, "لازم تتركه عندنا، نتصل عليك إذا خلص."]
+        - [agent, 53, "تمام، شكرًا لك."]
+        - [shop, 55, "حياك الله."]
+      offers:
+        - part_type: { value: original, quote: "الشاشة الأصلية بألف ومية وخمسين", turn: 3 }
+          price_sar: { value: 1150, quote: "الشاشة الأصلية بألف ومية وخمسين", turn: 3 }
+          warranty_days: { value: 90, quote: "الأصلية ضمانها ثلاث شهور", turn: 5 }
+        - part_type: { value: commercial, quote: "والتجارية بأربعمية وثمانين", turn: 3 }
+          price_sar: { value: 480, quote: "والتجارية بأربعمية وثمانين", turn: 3 }
+          warranty_days: { value: 60, quote: "والتجارية شهرين", turn: 5 }
+      fields:
+        turnaround_minutes: { value: 60, quote: "ساعة وحدة بالكثير", turn: 7 }
+        availability: { value: in_stock, quote: "متوفرة عندنا", turn: 9 }
+      answers:
+        - question: "يصلحونه قدامي ولا أتركه عندهم؟"
+          status: found
+          summary_ar: "لازم يترك الجهاز عندهم، ويتصلون عليه إذا خلص."
+          evidence: [{ quote: "لازم تتركه عندنا", turn: 11 }]
+
+    ChIJexample03:
+      outcome: human_partial           # the shop gets busy and ends the call early
+      transcript:
+        - [agent, 0, "السلام عليكم، عندي استفسار بسيط عن تصليح جوال."]
+        - [shop, 3, "هلا."]
+        - [agent, 5, "كم سعر تغيير الشاشة لـ آيفون 15 برو؟"]
+        - [shop, 10, "عندنا تجاري بس، بخمسمية وعشرين."]
+        - [agent, 15, "فيه ضمان؟ وكم مدته؟"]
+        - [shop, 18, "أسبوعين ضمان."]
+        - [agent, 21, "كم ياخذ وقت التصليح تقريبًا؟"]
+        - [shop, 24, "والله عندي زباين الحين، كلمني بعدين."]
+      offers:
+        - part_type: { value: commercial, quote: "عندنا تجاري بس، بخمسمية وعشرين", turn: 3 }
+          price_sar: { value: 520, quote: "تجاري بس، بخمسمية وعشرين", turn: 3 }
+          warranty_days: { value: 14, quote: "أسبوعين ضمان", turn: 5 }
+      fields:
+        turnaround_minutes: { status: refused, quote: "كلمني بعدين", turn: 7 }
+        availability: not_mentioned
+      answers: []
+
+  stock_check:
+    ChIJexample01:
+      outcome: human_completed
+      transcript:
+        - [agent, 0, "السلام عليكم، عندي سؤال سريع."]
+        - [shop, 3, "هلا والله، تفضل."]
+        - [agent, 5, "عندكم آيفون 16 متوفر الحين؟"]
+        - [shop, 9, "إيه موجود."]
+        - [agent, 11, "وش الألوان والسعات الموجودة عندكم؟"]
+        - [shop, 15, "عندنا الأسود ١٢٨ جيجا، والأبيض ٢٥٦ جيجا."]
+        - [agent, 20, "جديد ولا مستعمل؟"]
+        - [shop, 23, "كله جديد بكرتونه."]
+        - [agent, 26, "كم سعره؟"]
+        - [shop, 30, "الأسود ١٢٨ بثلاثة آلاف وأربعمية، والأبيض ٢٥٦ بثلاثة آلاف وتسعمية."]
+        - [agent, 38, "فيه ضمان؟ وكم مدته؟"]
+        - [shop, 41, "ضمان سنة من أبل."]
+        - [agent, 44, "تمام، شكرًا لك."]
+        - [shop, 46, "العفو."]
+      offers:
+        - variant: { value: "الأسود ١٢٨ جيجا", quote: "الأسود ١٢٨ جيجا", turn: 5 }
+          condition: { value: new, quote: "كله جديد", turn: 7 }
+          price_sar: { value: 3400, quote: "الأسود ١٢٨ بثلاثة آلاف وأربعمية", turn: 9 }
+          availability: { value: in_stock, quote: "إيه موجود", turn: 3 }
+        - variant: { value: "الأبيض ٢٥٦ جيجا", quote: "والأبيض ٢٥٦ جيجا", turn: 5 }
+          condition: { value: new, quote: "كله جديد", turn: 7 }
+          price_sar: { value: 3900, quote: "والأبيض ٢٥٦ بثلاثة آلاف وتسعمية", turn: 9 }
+          availability: { value: in_stock, quote: "إيه موجود", turn: 3 }
+      fields:
+        warranty_days: { value: 365, quote: "ضمان سنة", turn: 11 }
+      answers: []
+
+    ChIJexample02:
+      outcome: human_completed
+      transcript:
+        - [agent, 0, "السلام عليكم، عندي سؤال سريع."]
+        - [shop, 3, "وعليكم السلام."]
+        - [agent, 5, "عندكم آيفون 16 متوفر الحين؟"]
+        - [shop, 9, "حاليًا خلصان، نقدر نطلبه لك ويوصل بعد يومين."]
+        - [agent, 15, "وش الألوان والسعات الموجودة عندكم؟"]
+        - [shop, 19, "نطلب أي لون تبيه، ١٢٨ أو ٢٥٦."]
+        - [agent, 23, "جديد ولا مستعمل؟"]
+        - [shop, 25, "جديد."]
+        - [agent, 27, "كم سعره؟"]
+        - [shop, 31, "الـ ١٢٨ بثلاثة آلاف وثلاثمية."]
+        - [agent, 35, "فيه ضمان؟ وكم مدته؟"]
+        - [shop, 38, "سنة."]
+        - [agent, 40, "شكرًا لك."]
+        - [shop, 42, "حياك."]
+      offers:
+        - variant: { value: "١٢٨", quote: "الـ ١٢٨ بثلاثة آلاف وثلاثمية", turn: 9 }
+          condition: { value: new, quote: "جديد", turn: 7 }
+          price_sar: { value: 3300, quote: "الـ ١٢٨ بثلاثة آلاف وثلاثمية", turn: 9 }
+          availability: { value: needs_order, quote: "نقدر نطلبه لك", turn: 3 }
+      fields:
+        warranty_days: { value: 365, quote: "سنة", turn: 11 }
+      answers: []
+
+    ChIJexample03:
+      outcome: human_partial
+      transcript:
+        - [agent, 0, "السلام عليكم، عندي سؤال سريع."]
+        - [shop, 2, "نعم؟"]
+        - [agent, 4, "عندكم آيفون 16 متوفر الحين؟"]
+        - [shop, 7, "موجود المستعمل بس."]
+        - [agent, 10, "وش الألوان والسعات الموجودة عندكم؟"]
+        - [shop, 13, "مشغول الحين، مع السلامة."]
+      offers:
+        - variant: { status: refused, quote: "مشغول الحين", turn: 5 }
+          condition: { value: used, quote: "المستعمل بس", turn: 3 }
+          price_sar: not_mentioned
+          availability: { value: in_stock, quote: "موجود المستعمل", turn: 3 }
+      fields:
+        warranty_days: not_mentioned
+      answers: []
