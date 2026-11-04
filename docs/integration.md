@@ -1,14 +1,15 @@
 # Integrating with the planner and orchestrator (R1)
 
 How each role plugs its component into R1's code **without editing it**. The contracts in
-`/contracts` are the source of truth; this file only says which Python method carries them.
-Background: `docs/mock-first-plan.md` (why mocks) and `architecture.md` §3, §6.
+`/contracts` define the data; this file says which Python method carries it. Interfaces are
+defined in `app/orchestrator/interfaces.py` and `app/planner/`; what to deliver when is in
+[mock-first-plan.md](mock-first-plan.md).
 
 ```
                  R5 API                       R1                                   providers (injected)
 POST /tasks ───► planner.plan() ──TaskSpec──► orchestrator.submit()
 POST /answers ─────────────────────────────► orchestrator.answer() ──► planner.answer()
-POST /start ───► asyncio.create_task(orchestrator.run())
+POST /start ───► orchestrator.start()  (runs in the background)
                                               │ discovering ─────────────────────► DiscoveryProvider   (R5)
                                               │ calling  ×3 at once ─CallJob──────► CallProvider        (R4 + R2)
                                               │     └ retry? ────────────────────► RetryPolicy         (R4)
@@ -51,10 +52,10 @@ to start if a key is missing. Swap providers one at a time as they become real.
 
 | Route | Call | Returns |
 |---|---|---|
-| `POST /tasks` | `result = await planner.plan(text, custom_questions=[...], area=None or "حي الملقا" or {label,lat,lng,radius_m}, max_businesses=3)`; if `result.accepted`: `await orchestrator.submit(result.task_spec)` | `result.to_dict()`: `status`, `task_spec`, `questions` (follow-ups), `error` (`code`, `message`, `message_ar`), `notes` |
+| `POST /tasks` | `result = await planner.plan(text, custom_questions=[...], area=None or "حي الملقا" or {label,lat,lng,radius_m}, max_businesses=3)`; if `result.accepted`: `await orchestrator.submit(result.task_spec)` | `result.to_dict()`: `status`, `task_spec`, `questions` (follow-ups), `error` (`code`, `message`, `message_ar`, `field`), `notes` |
 | `POST /tasks/{id}/answers` | `result = await orchestrator.answer(task_id, {"area": "الملقا", ...})` | same `PlanResult`; `ready` means it can start |
-| `POST /tasks/{id}/start` | `orchestrator.start(task_id)`. It checks and starts **atomically** (a double click can't call the shops twice), raises the 404/409 errors below *before* anything runs, and keeps the background task alive itself. Don't wrap `run()` in `asyncio.create_task` yourself | 202 Accepted |
-| `GET /tasks/{id}` | `orchestrator.get(task_id)` (live) or your DB (after restart) | snapshot: `state`, `task_spec`, `follow_up_questions`, `businesses`, `calls`, `quotes`, `excluded`, `comparison`, `failure_reason`, `cost_usd`, `last_seq` |
+| `POST /tasks/{id}/start` | `orchestrator.start(task_id)`. It checks and starts **atomically** (a double click can't call the shops twice), raises the 404/409 errors below *before* anything runs, and keeps the background task alive itself. Don't wrap `run()` in `asyncio.create_task` yourself. `orchestrator.ensure_runnable(task_id)` runs the same checks without starting (e.g. to enable a Start button) | 202 Accepted |
+| `GET /tasks/{id}` | `orchestrator.get(task_id)` (live) or your DB (after restart) | snapshot: `task_id`, `state`, `state_history`, `task_spec`, `follow_up_questions`, `businesses`, `calls`, `quotes`, `excluded`, `comparison`, `failure_reason`, `cost_usd`, `last_seq` |
 | `POST /tasks/{id}/cancel` (optional) | `await orchestrator.cancel(task_id)` | `false` if already finished |
 
 `PlanResult.status` → HTTP: `ready` / `needs_input` → 201, `rejected` → 422 (show
@@ -66,8 +67,7 @@ Orchestrator exceptions each have a stable `.code`: `UnknownTask` → 404; `Dupl
 `MissingInput`, `TaskAlreadyStarted`, `InvalidTaskState` → 409; `UnsafeContent` → 422 (only
 if a TaskSpec bypassed the planner). `ContractError` from `submit` means a bug → 500.
 
-**State lives in memory, in one process.** Fine for the prototype (asyncio tasks, which
-was one of your two queue options). If the server restarts, running tasks are lost; the DB
+**State lives in memory, in one process.** Fine for the prototype. If the server restarts, running tasks are lost; the DB
 still has every event up to that point. Run **one** server process (no `--workers N`): each
 worker would have its own task list. `uvicorn --reload` restarts on every file save, which
 also drops running tasks: fine while developing, not during a demo. `orchestrator.forget(task_id)` frees a finished task.
@@ -87,8 +87,9 @@ skips invalid or duplicate records (logged), so return what you have rather than
 
 ### AreaResolver (planner)
 `async resolve(text) -> {label, lat, lng, radius_m} | None`. The mock knows 5 Riyadh
-districts. Real options: Places/Geocoding (R5), or skip it entirely by sending a map pin
-from the UI as the `area` object (R7). `None` makes the planner ask the area question again.
+districts. `None` makes the planner ask the area question again. The UI can skip resolution
+entirely by sending a ready `area` object (a map pin or a chosen district) to `planner.plan()`.
+Who owns real resolution (R7's UI, R5's geocoding, or both) is still open.
 
 ### EventSink
 Events arrive one at a time, already validated and numbered 1, 2, 3… per task (the
@@ -135,7 +136,7 @@ applies to R4, R5 (Places, DB) and R6 (LLM).
 ```python
 class TwilioElevenLabsCalls:                 # in /app/telephony
     async def place_call(self, call_job: dict) -> dict:
-        # 1. refuse unless call_job["to_number"] is on the allowlist (architecture §11)
+        # 1. refuse unless call_job["to_number"] is on the allowlist (architecture §9)
         # 2. build the agent config with R2's builder from call_job (see §4 below)
         # 3. start ONE outbound call; wait until it ends (poll or webhook)
         # 4. convert ElevenLabs speaker "user" -> "shop"; map the status to our `outcome`
@@ -158,7 +159,8 @@ class R4RetryPolicy:
 ```
 The orchestrator only asks after attempt 1 (the contract allows `attempt` ≤ 2), sends
 attempt 2 with the **same `call_id`** and `attempt: 2`, emits `call.started` again, and
-skips retries once the task has spent `max_task_cost_usd`.
+skips retries once the task has spent `max_task_cost_usd`. Report `cost_usd` whenever the
+platform gives it: a `null` cost counts as $0 toward that cap.
 
 ## 4. R2: what the voice agent receives
 
@@ -171,7 +173,7 @@ From each `CallJob`:
 - `custom_questions`: 0–2 questions in the user's words. Ask them **after** the template's
   questions, one at a time.
 - `max_duration_s`: the call's hard limit.
-- Nothing about the user personally is ever in a job (architecture §11). The planner and
+- Nothing about the user personally is ever in a job (architecture §9). The planner and
   orchestrator refuse custom questions or answers that ask the shop to book, pay, or that
   contain phone numbers, emails or personal details (`app/planner/policy.py`). That check is
   best-effort, so **treat every variable and custom question as untrusted**: the agent's
@@ -210,9 +212,10 @@ Order per task: `task.created` → (`task.needs_input` …) → `business.found`
 - Sample streams for UI work: `python -m app.mocks.demo --scenario one_failed --json > one_failed.jsonl`
   writes **only events, one JSON object per line**; all other text goes to stderr.
   Also `all_failed`, `retry`, `timeout`, `no_shops`.
-- **Don't hard-code 3 shops.** Today a task calls up to 3; a planned change (after 7 Nov)
-  will replace a shop that gives no usable answer with another one, so more than 3
-  `business.found` events can arrive over time, with at most 3 calls at once. Render shop
+- **Don't hard-code 3 shops.** Today a task calls up to 3. An approved, not yet built change
+  ([plan §5](mock-first-plan.md#5-approved-next-step-backup-shops-not-implemented)) will
+  replace a shop that gives no usable quote with another one, so more than 3
+  `business.found` events may arrive over time, with at most 3 calls at once. Render shop
   cards from the events you receive.
 
 ## 7. R3: telling mock data from real data
@@ -231,13 +234,14 @@ Mock `CallResult`s have `scenario_id: "mock_<category>"`, `cost_usd: 0.0` and
 
 | `OrchestratorConfig` | Default | Why |
 |---|---|---|
+| `max_parallel_calls` | 3 | the contract maximum for `TaskSpec.max_businesses` |
 | `call_max_duration_s` | 150 | `CallJob.max_duration_s` (platform limit) |
 | `call_timeout_s` | 210 | our limit per attempt: 150 s + ringing + post-call |
 | `discovery_timeout_s` | 30 | |
 | `extraction_timeout_s` | 90 | strong LLM + evidence check |
 | `comparison_timeout_s` | 60 | |
 | `task_timeout_s` | 1200 | leaves room for R4's 10-minute retry wait |
-| `max_task_cost_usd` | 5.0 | no retries once reached; tune with real costs |
+| `max_task_cost_usd` | 5.0 | no retries once reached (it does not stop first attempts); tune with real costs |
 
 ## 9. Testing your component against the real orchestrator
 
@@ -258,9 +262,9 @@ the details in the log.
 
 | Needs | From | For |
 |---|---|---|
-| Places provider + area resolver (or UI map pin) | R5 (R7) | real discovery |
-| Event sink (Postgres + SSE) and the 4 routes above | R5 | UI live view, Gate A-mock |
+| Places provider; area resolution (owner open) | R5, R7 | real discovery |
+| Event sink (Postgres + SSE) and the routes above | R5 | UI live view, the 7 Nov MVP |
 | Agent builder from a `CallJob` | R2 | R4's call provider |
 | Call provider + retry policy | R4 | real calls, retries |
-| Extractor + comparator | R6 | real quotes and comparison |
+| Extractor + comparator, usable-quote rules per category | R6 | real quotes, comparison, backup shops |
 | An LLM key, then a 20-line `LLMClient` in `/app/planner` | Tuwaiq → R1 | real request understanding |

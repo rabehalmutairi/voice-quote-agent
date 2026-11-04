@@ -1,545 +1,282 @@
-# Architecture — AI Voice Agent That Calls Shops and Compares Quotes
+# Architecture
 
-> **Read this whole file before you write any code.** It is the single source of truth for
-> what we are building, how the parts fit together, and what each role owns.
-> If you use an AI coding assistant, give it this file first (see §12).
+What we are building, how the parts fit, who owns what, and the rules that don't change.
+Current deadlines and deliverables live in [mock-first-plan.md](mock-first-plan.md); Python
+interfaces in [integration.md](integration.md); data formats in [`/contracts`](../contracts/README.md).
 
-Team 2 · Tuwaiq Club AI Track · King Saud University
-Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **end of KSU Week 13, provisionally Thu 19 Nov** (internal target Wed 18 Nov) · Tuwaiq showcase: **Thu 10 Dec 2026** · Last updated: 3 Nov 2026
+Team 2 · Tuwaiq Club AI Track · King Saud University · Lead: Rabeh (R1)
 
-> **Mock-first (from 3 Nov):** our API subscriptions (ElevenLabs, Twilio, Google Places, LLM) are
-> delayed. We build everything against mock providers behind fixed interfaces and swap in the real
-> ones when the keys arrive. Nothing below is redesigned. What each role does now, what is blocked and
-> the new milestones: **[`docs/mock-first-plan.md`](mock-first-plan.md)**.
+## 1. Problem and solution
 
----
+Getting a repair quote or checking stock means phoning several shops, asking the same
+questions, and comparing vague answers. It takes 10–15 minutes and the answers are hard to
+compare.
 
-## 1. What we are building (one paragraph)
+A user types a request (*"أبي أغير شاشة آيفون 15 برو"*, *"عندكم آيفون 16؟"*) and may add up
+to 2 questions of their own. The system asks for anything missing, finds nearby shops on
+Google Places, **phones them at the same time** with a voice agent that speaks Saudi Arabic
+(English when staff do), and turns each call into structured fields **where every value is
+backed by the shop's exact words**. It answers the user's own questions with a short summary
+plus quotes, and compares the shops, or says plainly that they can't be compared fairly.
+Target: 3 quotes in about 3 minutes.
 
-A user types a request like *"I want to replace my iPhone 15 Pro screen. Find 3 nearby
-shops and ask about price, part type, warranty and repair time."* or *"Do you have the
-iPhone 16 in stock?"*, and can add up to 2 questions of their own (*"do they repair it in
-front of me?"*). Our system asks any missing questions, finds 3 nearby shops on Google
-Maps, **phones all 3 at the same time** with an AI voice agent that speaks Saudi Arabic
-(and switches to English when staff speak English), extracts the answers into structured
-fields **where every value is backed by the exact words the shop said**, answers the
-user's own questions with a short summary plus the shop's quotes, and shows a side-by-side
-comparison. If the answers can't be compared fairly, it says so instead of guessing.
-Target: 3 quotes in about 3 minutes, versus 10–15 minutes calling by hand.
-
-**What makes this more than a wrapper:** measured results. We report human reach rate,
-task completion, critical-field accuracy, hallucination rate and cost per successful task
-on a labelled set of 50–100 calls. Every claim in our demo is backed by a number.
+**What makes it more than a wrapper:** measured results on labelled calls (§8). Every claim
+in the demo is backed by a number.
 
 ## 2. Scope
 
 | | In scope | Out of scope |
 |---|---|---|
-| Committed | **Electronics repair quotes**: screens, batteries, charging ports. **Stock checks**: "عندكم آيفون 16؟", "MacBook Air M4؟" (available? price? new or used?) | — |
-| Stretch (only if the committed work is stable, §10 Gate C) | **Car maintenance, standardized requests only** (e.g. "2022 Camry front brake pads", tires, lights) | Open-ended diagnosis ("my car makes a noise") |
-| Always | Asking questions, comparing answers, and up to 2 questions the user writes (answered as a short summary plus the shop's exact words) | **Any action for the user**: bookings, reservations, payments, sharing personal info. Hospitals. **Hotels** (removed to protect time for evaluation and reliability). |
+| **Committed** | **Electronics repair quotes** (screens, batteries, charging ports) and **stock checks** ("عندكم آيفون 16؟", "MacBook Air M4؟": available, price, new or used) | — |
+| **Stretch** (only if Gate C passes) | **Car repair, standardized requests only** (brake pads, tires, lights) | Open-ended diagnosis ("my car makes a noise") |
+| **Always** | Asking questions, comparing answers, up to 2 user-written questions per task | **Any action for the user**: bookings, reservations, payments, sharing personal data. Hospitals, hotels |
 
-**Principle:** a few reliable, well-evaluated workflows beat many weak ones. If
-time gets tight, we cut the stretch, never the evaluation.
+- A few reliable, well-evaluated workflows beat many weak ones. If time gets tight, we cut
+  the stretch, never the evaluation.
+- **One engine, many templates.** Everything category-specific lives in `/templates/*.yaml`.
+  A new category is a YAML file plus scenario cards, with no engine change.
 
-**One engine, many templates.** Everything category-specific (planner questions, call
-questions, fields, test scenarios) lives in a template file. Adding a category must not
-require changing engine code.
-
-## 3. The flow
+## 3. How it works
 
 ```mermaid
 flowchart LR
-    U[User request] --> P[1. Planner<br/>strong LLM]
+    U[User request] --> P[1. Planner]
     P -- missing info? --> U
-    P -- TaskSpec --> D[2. Discovery<br/>Google Places]
-    D -- 3 Businesses --> O[Orchestrator<br/>fan-out]
-    O -- CallJob x3 --> V1[3. Voice call A]
-    O --> V2[3. Voice call B]
-    O --> V3[3. Voice call C]
-    V1 & V2 & V3 -- CallResult --> X[4. Extraction<br/>strong LLM + evidence check]
+    P -- TaskSpec --> O[Orchestrator]
+    O -- TaskSpec --> D[2. Discovery<br/>Google Places]
+    D -- Businesses --> O
+    O -- CallJob, up to 3 at once --> V[3. Voice calls]
+    V -- CallResult --> X[4. Extraction<br/>LLM + evidence check]
     X -- Quote --> C[5. Comparison]
-    C -- Comparison --> UI[6. Web UI<br/>streams results live]
-    O -. events .-> UI
+    C -- Comparison --> O
+    O -. events, in order .-> UI[6. Web UI, live]
 ```
 
-1. **Planner** turns free text into a typed `TaskSpec`. If a required detail is missing
-   (device model, car make/model/year, travel dates), it asks the user first. **No call is
-   placed while required slots are empty.**
-2. **Discovery** finds 3 open, relevant businesses with phone numbers (Places API).
-3. **Calling**: one voice-agent call per business, in parallel. The agent speaks like a
-   normal caller (it does not announce that it is an AI; see ADR 001), asks the template's
-   questions and then the user's own questions one at a time, and ends within ~2 minutes.
-4. **Extraction** turns each transcript into a `Quote`. Every value has a status,
-   confidence, and the evidence quote it came from. Code verifies that the quote really
-   appears in what the shop said. **No quote → no value.**
-5. **Comparison** ranks the shops, or returns `cannot_compare` with reasons.
-6. **UI** shows each shop's result the moment its call ends (not after all 3).
+1. **Planner** turns the request into a typed `TaskSpec`, asking follow-up questions from the
+   template when details are missing. It refuses out-of-scope requests, and refuses custom
+   questions or answers that would make the agent book, pay or share personal data.
+   **No call is placed while required details are missing.**
+2. **Discovery** finds open, relevant shops with phone numbers.
+3. **Calling:** one call per shop, **up to 3 at the same time**, each under ~2.5 minutes. The
+   agent asks the template's questions, then the user's own questions, one at a time. It
+   does not announce that it is an AI, and never denies it when asked (§9).
+4. **Extraction** turns each transcript into a `Quote`. Code checks that every value's evidence
+   quote really appears in a **shop** turn. **No quote, no value.**
+5. **Comparison** ranks shops like for like, or returns `cannot_compare` with reasons.
+6. **UI** shows each shop's result the moment its call ends, from a stream of ordered events.
 
-## 4. Tech stack (decided unless marked)
+**Status today:** R1's planner, orchestrator and contract validation are implemented and
+tested. Every external service runs as a **mock** (`app/mocks/`) until the API keys arrive.
+Real discovery, calling, extraction, comparison, backend and UI are being built by R2–R7.
+What is blocked and when: [mock-first-plan.md](mock-first-plan.md).
+
+## 4. Design decisions
+
+- **Contracts are the interfaces.** Parts exchange only the JSON shapes in `/contracts`, so
+  every role builds and tests in parallel against `contracts/examples/`. Changing one needs a
+  `contract-change` PR ([contracts/README.md](../contracts/README.md)).
+- **Every external service sits behind a small Python interface** taking and returning
+  contract objects. Mocks and real providers are swapped in one place, the backend's startup
+  wiring, so nobody edits the planner or orchestrator to integrate.
+- **Evidence over confidence.** LLM confidence scores are poorly calibrated, so the code-level
+  evidence check is the real guard against invented values.
+- **An attempted call is not a usable quote.** Reaching a person (`human_*` outcome) is
+  measured separately from getting a quote that is usable for the category.
+- **One process, asyncio, no queue.** The orchestrator runs tasks as asyncio tasks inside the
+  backend process. Simple and enough for a prototype; the limits are in §10.
+- **The orchestrator numbers events** (1, 2, 3… per task, no gaps); the backend stores them and
+  streams them over Server-Sent Events (SSE), replaying on reconnect.
+- **Today: at most 3 shops per task.** *Approved future direction, not implemented:* discover
+  ~6 candidates, keep at most 3 calls running, and replace a shop that gives no usable quote
+  with the next candidate, until 3 verified usable quotes or a limit (attempts, time, cost)
+  is reached. Usability rules per category come from R6. This needs a contract proposal
+  first (§10).
+
+## 5. Tech stack
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Voice agent platform | **ElevenLabs Agents** | $0.08/call-minute + LLM + carrier. Native Twilio integration, outbound calls, built-in end-call / language-detection / voicemail-detection tools. **Alternative:** Vapi or Retell if Arabic recognition fails our tests. Decided **after** we have a basic working call (§10 Gate B), not before |
-| Speech recognition | ElevenLabs Scribe (inside ElevenLabs Agents) | ElevenLabs Agents only runs its own recognizer. Deepgram Nova-3 `ar-SA` is what we'd use **only if** we switch platform |
-| Carrier | **Twilio**, foreign (US) number for the prototype | Saudi rates: ~$0.17/min landline, **~$0.31/min mobile**. Many shop numbers are mobiles: budget at the mobile rate |
-| Live-call LLM | Fast model chosen in ElevenLabs config | A/B tested by R2 in KSU Week 11 |
-| Planner + extraction LLM | Strong model via API | Structured (JSON) output |
-| Backend | Python 3.11+, **FastAPI**, **Postgres** | One service. Simple job queue (decision by R5 early in KSU Week 10: Postgres-backed jobs or asyncio tasks) |
-| Frontend | Small web app (React + Vite suggested) | Streams events from the backend (Server-Sent Events) |
-| Discovery | **Google Places API (New) Text Search** | Requesting phone fields bills as the *Enterprise* tier: 1,000 free requests/month, then $35/1,000. Never request reviews/amenity fields (more expensive tier) |
-| Provider boundary | One small Python interface per external service, taking and returning contract objects | Mock implementations in `/app/mocks` until keys arrive; real ones in the owner's folder; swapped in one place at startup (`docs/mock-first-plan.md` §2) |
+| Voice agent | **ElevenLabs Agents** | $0.08/call-minute + LLM + carrier. Native Twilio, outbound calls, end-call / language-detection / voicemail-detection tools. Default unless real tests justify switching (Gate B in the plan). Alternative: Vapi or Retell, only after confirming they accept `ar-SA` |
+| Speech recognition | ElevenLabs Scribe (built in) | ElevenLabs runs only its own recognizer. Deepgram Nova-3 `ar-SA` only if we switch platform |
+| Carrier | **Twilio**, US number for the prototype | Saudi rates ~$0.17/min landline, **~$0.31/min mobile**; budget at the mobile rate |
+| Live-call LLM | Fast model in the ElevenLabs config | A/B tested by R2 |
+| Planner + extraction LLM | Strong model via API, JSON output | Planner runs on a deterministic mock parser until a key arrives |
+| Backend | Python 3.11+, **FastAPI**, **Postgres** | One process; tasks run as asyncio tasks |
+| Frontend | Small web app (React + Vite suggested) | Live updates via SSE |
+| Discovery | **Google Places API (New) Text Search** | Phone fields bill at the Enterprise tier: 1,000 free requests/month, then $35/1,000. Never request reviews or amenity fields |
 
-## 5. Repository layout and ownership
+Total spend stays under **$500**.
 
-Each folder has **one owner**. You may read everything; you only change your own folders.
-A PR that touches a folder gets reviewed by its owner or backup (§8, §12).
+## 6. Components and ownership
 
-```
-/docs/architecture.md          this file                         R1
-/docs/decisions/               decision records (ADRs)           R1 (anyone can propose)
-/contracts/                    JSON Schemas of every contract    R1  ← change only via "contract change" PR
-/contracts/examples/           one valid example per contract    R1  ← everyone builds against these
-/contracts/README.md           conventions + rules a schema can't check  R1
-/templates/                    category templates (YAML)         R1 (fields with R6, questions with R2)
-/app/planner/                  request → TaskSpec                R1
-/app/orchestrator/             task state machine, fan-out       R1
-/app/contracts.py              load + validate contracts/templates in Python  R1 (everyone imports it)
-/app/mocks/                    mock providers for dev/tests only, no network  R1
-/app/voice/   /prompts/        ElevenLabs agent config + prompts R2
-/app/telephony/                Twilio, caller ID, retries, hours R4
-/app/api/  /app/db/            FastAPI routes, Postgres          R5
-/app/discovery/  /app/cache/   Places search, answer cache       R5
-/app/extraction/               transcript → Quote + evidence     R6
-/app/comparison/               Quotes → Comparison               R6
-/eval/                         datasets, scenarios, metrics      R3
-/web/                          frontend                          R7
-/tests/<area>/                 tests, owned by the area's owner  (/tests/contracts/ runs in CI: R1)
-/.github/                      CI workflow                       R1
-```
+Each folder has one owner. Read anything; change only your own folders. A PR is reviewed by
+the folder's owner or backup.
 
-**Never commit:** `.env` / API keys, call audio, transcripts of real people, SADA clips.
-Put them in `/data/` (gitignored). Share **metrics**, not raw data.
+| Role | Owner | GitHub | Backup | Folders |
+|---|---|---|---|---|
+| R1 Tech lead, planner, orchestrator | Rabeh | @rabehalmutairi | R5 | `app/planner/`, `app/orchestrator/`, `app/mocks/`, `app/contracts.py`, `contracts/`, `templates/` (fields with R6, questions with R2), `docs/`, `.github/` |
+| R2 Voice agent | Abdulmalik | @abdulmaliksd955 | R4 | `app/voice/`, `prompts/` |
+| R3 Speech recognition + evaluation | Feras | @FerasMad | R6 | `eval/` |
+| R4 Telephony | Saleh Alrakban | @Salehalrakban | R2 | `app/telephony/` |
+| R5 Backend + discovery | Omar | @EviLooo | R1 | `app/api/`, `app/db/`, `app/discovery/`, `app/cache/` |
+| R6 Extraction + comparison | Ahmed | @Ahmed-Aw | R3 | `app/extraction/`, `app/comparison/` |
+| R7 Frontend, evidence view, demo | Saleh Aljarwan | @CsSaleh17 | R5 | `web/` |
 
-## 6. Contracts (the most important section)
+Tests live in `tests/<area>/`, owned by the area's owner. **Never commit** `.env`, API keys,
+call audio, transcripts of real people or SADA clips; keep them in `data/` (gitignored).
 
-Parts talk to each other **only** through these shapes. Because they're fixed, every
-role can build in parallel against the example files in `/contracts/examples/`
-without waiting for anyone. **The schemas and example files in `/contracts/` are the source
-of truth** (published Tue 27 Oct); the JSON below only illustrates them, and where the two
-differ, the files win. Read `/contracts/README.md` first: it lists the conventions and the
-rules a schema can't check (e.g. evidence must come from a shop turn).
-Changing a contract = a PR labelled `contract-change`, approved by R1 and every role
-that reads it.
+What each component must do (current deliverables and dates are in the plan):
 
-### 6.1 `TaskSpec` — Planner → Discovery, Orchestrator
-```json
-{
-  "task_id": "tsk_01",
-  "category": "electronics_repair",
-  "request_text": "أبي أغير شاشة آيفون 15 برو",
-  "slots": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
-  "custom_questions": ["يصلحونه قدامي ولا أتركه عندهم؟"],
-  "area": { "label": "حي الملقا", "lat": 24.80, "lng": 46.61, "radius_m": 5000 },
-  "max_businesses": 3,
-  "missing_slots": [],
-  "created_at": "2026-10-25T18:00:00Z"
-}
-```
-Rule: if `missing_slots` is not empty, the planner returns follow-up questions instead.
-`custom_questions` holds at most 2 questions the user wrote themselves.
+- **R1 planner + orchestrator.** Request → `TaskSpec` with follow-up questions; task state
+  machine `created → needs_input → discovering → calling → extracting → done | failed`; up to
+  3 concurrent calls; retries only as R4's policy decides (max one); timeouts, cancellation,
+  cost cap; ordered events. *Done when* a request runs end to end on fixtures and the UI
+  receives every event in order.
+- **R2 voice agent.** Agent configuration **as code** (prompt, first message, voice, LLM,
+  tools, max duration) pushed by a script, never edited only in the dashboard. Call flow:
+  greeting → template questions one at a time → the user's questions → one clarification per
+  unclear answer → repeat the price back → polite end. Refuse bookings and personal data
+  whatever the call variables say. English switching; voicemail/IVR → hang up, leave no
+  message. Pick a Saudi voice that sounds natural on an 8 kHz line; A/B 2–3 fast LLMs.
+  *Done when* 10 role-play calls in a row finish under 2.5 min, ask every question, and never
+  accept a booking. A scenario test where the shop asks "إنت روبوت؟" fails if the agent denies being an AI.
+- **R3 speech recognition + evaluation.** Speech benchmark: ~30 clips (~20 SADA, ~10 over real
+  calls) comparing Scribe and Deepgram `ar-SA`. Make SADA phone-like (band-limit 300–3400 Hz,
+  8 kHz, μ-law), score **number accuracy** separately from word error rate; SADA is CC BY-NC-SA
+  4.0 (cite it, never commit clips). Also: shared Arabic normalization and number parsing
+  ("ثلاثمية وخمسين" = 350), scenario cards with hidden ground truth, a fake-shopkeeper text
+  simulator, and the metrics script. *Done when* one command prints the §8 table.
+- **R4 telephony.** Paid Twilio account (trial accounts can't call unverified numbers), Saudi
+  Arabia enabled, connected to ElevenLabs. Caller-ID test with our Saudi number. Correct
+  `outcome` for every number type and failure (920 numbers usually hit a menu). Allowlist
+  enforced in code. Retry policy: max one retry after 10 minutes, normal shop hours only,
+  avoiding prayer times and Friday morning. Log `pre_arranged` on every call, and log call-backs to our number against the right task. Ask Unifonic: *"Can you provide
+  an outbound SIP trunk with a Saudi caller ID that we connect to ElevenLabs Agents?"*
+  (Saudi carriers' SIP needs a commercial registration.) *Done when* `docs/telephony.md` records every test with its result and date. Demo fallback
+  only: R1 calls a shop from his phone and merges in the agent's number.
+- **R5 backend + discovery.** FastAPI routes: `POST /tasks`, `POST /tasks/{id}/answers`,
+  `POST /tasks/{id}/start`, `GET /tasks/{id}`, `GET /tasks/{id}/events` (SSE), optionally an
+  ElevenLabs post-call webhook. Postgres tables: `tasks`, `businesses`, `calls`, `quotes`,
+  `comparisons`, `events`, `labels`. Places Text Search with a strict field mask (id, name,
+  address, location, phones, opening hours, rating, Maps link; no reviews), `regionCode=SA`,
+  open now, location bias; prefer mobile/landline over 920. Answer cache (don't call the same
+  shop for the same question within N days; label reused answers "from &lt;date&gt;"). Cost per
+  call. *Done when* a whole task runs against the real DB, and Places returns callable shops
+  for 3 Riyadh districts.
+- **R6 extraction + comparison.** `CallResult` → `Quote` with a strong LLM in JSON mode,
+  converting units (3 months → 90 days) while keeping the original words as evidence. The
+  **evidence checker** (code, not prompt): the quote must appear in a shop turn after Arabic
+  normalization, and a price must appear in its quote; failures go to `evidence_issues` and
+  the value is dropped. The agent repeating a price back is not evidence. Comparison is like
+  for like (same part type) or `cannot_compare` with reasons. Baseline experiment: our
+  hallucination rate vs ElevenLabs' built-in data collection. Also owns the per-category rules
+  for what counts as a **usable quote**. *Done when* every fixture value has valid evidence and
+  the mismatched fixture returns `cannot_compare`.
+- **R7 frontend + demo.** Request box (with up to 2 own questions) → follow-up questions → live
+  shop cards (searching → ringing → talking → done/failed) from SSE events. Every value shows
+  its evidence quote (tap for the transcript turn); clear can't-compare state. Internal
+  dashboard (reach, completion, cost, latency). Demo script, recorded fallback video, live call
+  to a pre-arranged shop. Never show a real worker's voice or name without consent.
+  *Done when* a full task on fixtures plays through the UI with no manual refresh.
 
-### 6.2 `Business` — Discovery → Orchestrator
-```jsonc
-{
-  "place_id": "ChIJ...", "name": "محل الريان للجوالات",
-  "phone_e164": "+966501234567",
-  "number_type": "mobile",          // mobile | landline | unified_920 | toll_free_800
-  "address": "...", "maps_url": "https://maps.google.com/?cid=...",
-  "open_now": true, "rating": 4.4
-}
-```
+## 7. Contracts and templates
 
-### 6.3 `CallJob` — Orchestrator → Voice/Telephony
-```json
-{
-  "call_id": "call_01", "task_id": "tsk_01", "place_id": "ChIJ...",
-  "to_number": "+966501234567", "template": "electronics_repair",
-  "dynamic_variables": { "device_model": "آيفون 15 برو", "repair_type": "الشاشة" },
-  "custom_questions": ["يصلحونه قدامي ولا أتركه عندهم؟"],
-  "max_duration_s": 150, "attempt": 1
-}
-```
+The shapes in `/contracts/*.schema.json`, with one example each in `contracts/examples/`. The
+files are the source of truth; conventions and the rules a schema can't check are in
+[contracts/README.md](../contracts/README.md).
 
-### 6.4 `CallResult` — Voice/Telephony → Extraction, Eval
-```json
-{
-  "call_id": "call_01", "conversation_id": "conv_...",
-  "outcome": "human_completed",
-  "started_at": "...", "duration_s": 104, "language_final": "ar",
-  "transcript": [
-    { "i": 0, "speaker": "agent", "t": 0,  "text": "السلام عليكم، حياك الله. عندي استفسار بسيط عن تصليح جوال..." },
-    { "i": 1, "speaker": "shop",  "t": 6,  "text": "هلا، تفضل" },
-    { "i": 2, "speaker": "shop",  "t": 21, "text": "الأصلي بألف ومتين، والتجاري بأربعمية وخمسين" }
-  ],
-  "cost_usd": 0.62, "pre_arranged": true, "scenario_id": null
-}
-```
-`outcome` values: `human_completed` (all required fields), `human_partial`, `voicemail`,
-`ivr`, `no_answer`, `busy`, `hung_up`, `wrong_business`, `failed`.
-Note: ElevenLabs transcripts call the shop `user` and our agent `agent`. Convert to
-`shop`/`agent` at the boundary so nobody confuses them.
+| Contract | From → to |
+|---|---|
+| `TaskSpec` | Planner → Orchestrator, Discovery |
+| `Business` | Discovery → Orchestrator |
+| `CallJob` | Orchestrator → Voice / Telephony |
+| `CallResult` | Voice / Telephony → Extraction, Evaluation |
+| `Quote` | Extraction → Comparison, UI |
+| `Comparison` | Comparison → UI |
+| `Event` | Orchestrator → Backend → UI (SSE) |
 
-### 6.5 `Quote` — Extraction → Comparison, UI
-Every value uses the same **evidence-backed field** shape:
-```json
-{ "value": 450, "value_min": null, "value_max": null, "status": "found", "confidence": 0.9,
-  "evidence_quote": "والتجاري بأربعمية وخمسين", "evidence_turn": 3 }
-```
-`status`: `found` | `not_mentioned` | `refused` ("تعال المحل ونشوف") | `unclear`.
-A number is an exact `value` or a range in `value_min`/`value_max` (e.g. "ساعة لساعتين").
-Rules: `value` is allowed **only** when `status = found`. Every status except
-`not_mentioned` needs a non-empty `evidence_quote`, and the quote must be found in a
-**shop** turn.
+- Every value in a `Quote` is an **evidence-backed field**: `value` (or a `value_min`/`value_max`
+  range), `status` (`found`, `not_mentioned`, `refused`, `unclear`), `confidence`, and the
+  `evidence_quote` and `evidence_turn` it came from.
+- A `Quote` holds `offers` (one per option the shop quoted, e.g. original vs commercial part),
+  `fields` (call-level values) and `answers` (one per user question).
+- Electronics `part_type` values: `original` (أصلي), `pulled_original` (أصلي سحب), `commercial`
+  (تجاري / كوبي / high copy), `unknown`.
+- Event order per task: `task.created` → `task.needs_input` (only if details are missing) →
+  `business.found` per shop → `call.started` → `call.ended` + `quote.ready`, or `call.failed` →
+  `comparison.ready` or `task.failed`.
+- **Templates** (`/templates/*.yaml`, shape in `contracts/template.schema.json`) define a
+  category's planner questions, typed fields, offer vs call-level fields, call questions,
+  required fields, comparison basis, ASR keywords and Places queries. Today:
+  `electronics_repair`, `stock_check` (committed) and `car_repair` (stretch, disabled in the
+  planner until Gate C).
 
-Which fields exist comes from the category template (§7). Shops often quote two tiers (or
-several variants) in one breath, so a quote holds a list of **offers** (the template's
-`offer_fields`) plus **fields** that apply to the whole call (`quote_fields`):
-```jsonc
-{
-  "call_id": "call_01", "task_id": "tsk_01", "place_id": "ChIJ...",
-  "offers": [
-    { "part_type": { "value": "original",   "...": "..." }, "price_sar": { "value": 1200, "...": "..." },
-      "warranty_days": { "status": "refused", "...": "..." } },
-    { "part_type": { "value": "commercial", "...": "..." }, "price_sar": { "value": 450,  "...": "..." },
-      "warranty_days": { "value": 30, "...": "..." } }
-  ],
-  "fields": { "turnaround_minutes": { "...": "..." }, "availability": { "...": "..." } },
-  "answers": [   // one per question the user wrote
-    { "question_index": 0, "question": "يصلحونه قدامي ولا أتركه عندهم؟", "status": "found",
-      "summary_ar": "يصلحونه قدام العميل وهو ينتظر في المحل.",
-      "evidence": [ { "quote": "تقعد وتشوفه قدامك", "turn": 13 } ] }
-  ],
-  "evidence_issues": []
-}
-```
-Code checks that the quotes are real shop words. Whether a `summary_ar` is faithful to its
-quotes can't be checked by code; R3 measures it in the eval (§9).
-Example choice values (electronics `part_type`): `original` (أصلي) · `pulled_original`
-(أصلي سحب) · `commercial` (تجاري / كوبي / high copy) · `unknown`.
-
-### 6.6 `Comparison` — Comparison → UI
-```jsonc
-{
-  "task_id": "tsk_01",
-  "status": "ranked",                  // ranked | partial | side_by_side | cannot_compare
-  "basis": "commercial screen, price incl. warranty",
-  "ranking": [ { "place_id": "...", "rank": 1, "reason": "cheapest commercial, 30-day warranty" } ],
-  "excluded": [ { "place_id": "...", "reason": "refused to quote by phone" } ],
-  "cannot_compare_reasons": []
-}
-```
-
-### 6.7 Events — Backend → UI (Server-Sent Events, in order)
-`task.created` → `task.needs_input` → `business.found` (×3) → `call.started` →
-`call.ended` → `quote.ready` → … → `comparison.ready` · plus `call.failed`, `task.failed`.
-Each event: `{ "type", "task_id", "at", "data": <the contract above> }`.
-
-## 7. Category template format
-
-One file per category in `/templates/` (owner R1; questions R2; fields R6). The shape is
-`contracts/template.schema.json` and the files are the reference; this is the idea:
-```yaml
-category: electronics_repair
-planner_questions:           # asked to the USER before calling
-  - { key: device_model, ask_ar: "وش نوع الجهاز وموديله بالضبط؟" }
-fields:                      # everything the agent collects, with its type
-  price_sar: { type: number, unit: SAR }
-  part_type: { type: choice, choices: [original, pulled_original, commercial, unknown] }
-offer_fields: [part_type, price_sar, warranty_days]   # can differ per option the shop quotes
-quote_fields: [turnaround_minutes, availability]      # one value for the whole call
-call_questions:              # asked by the AGENT on the call, one at a time
-  - { field: price_sar, ask_ar: "كم سعر تغيير {{repair_type}} لـ {{device_model}}؟" }
-required_fields: [price_sar, part_type, warranty_days, turnaround_minutes]
-compare_on: [part_type, price_sar, warranty_days]     # like-for-like comparison basis
-asr_keywords: [أصلي, تجاري, سحب, ضمان]
-places_queries: { ar: [صيانة جوالات], en: [phone repair shop] }
-```
-Field types: `number`, `choice`, `text`, `boolean`.
-
-Templates today: `electronics_repair` and `stock_check` (committed), `car_repair` (stretch,
-Gate C). A new category is a new YAML file plus scenario cards, with no engine change;
-`tests/contracts` checks every template and that a stock-check and a car-repair quote fit the
-same `Quote` shape. The user's own questions (up to 2 per task) work in every category and
-are not part of the template.
-
----
-
-## 8. Roles
-
-7 roles, each with one owner and one backup. The backup reviews the owner's PRs and can
-demo their part if the owner is absent.
-
-Roles were assigned on 27 Oct 2026. The GitHub handle is for assigning PR reviews.
-
-| Role | Name | GitHub | Backup |
-|---|---|---|---|
-| R1 Tech lead, planner, orchestrator | Rabeh | @rabehalmutairi | R5 |
-| R2 Voice agent | Abdulmalik | @abdulmaliksd955 | R4 |
-| R3 Speech recognition + evaluation | Feras | @FerasMad | R6 |
-| R4 Telephony | Saleh Alrakban | @Salehalrakban | R2 |
-| R5 Backend + discovery | Omar | @EviLooo | R1 |
-| R6 Extraction + comparison | Ahmed | @Ahmed-Aw | R3 |
-| R7 Frontend, evidence view, demo | Saleh Aljarwan | @CsSaleh17 | R5 |
-
----
-
-### R1 — Tech lead, planner, orchestrator
-**Taken by Rabeh.** Glue work: contracts, planning, running the parallel calls, and integrating everyone's parts every Thursday.
-**Mission:** keep the parts connected; own the contracts; turn requests into tasks and tasks into parallel calls.
-**Owns:** `/contracts`, `/templates`, `/app/planner`, `/app/orchestrator`, `/app/contracts.py`, `/app/mocks`, `/docs`.
-**Builds:**
-- All JSON Schemas + example files (§6): drafted in Week 9 if convenient, **published by Mon 26 Oct** so every role can build in parallel.
-- **Planner:** request text → `TaskSpec` with a strong LLM in JSON mode; returns follow-up questions from the template when slots are missing; keeps up to 2 of the user's own questions as `custom_questions`; refuses out-of-scope requests (booking, hospitals, open diagnosis) with a clear message.
-- **Orchestrator:** task state machine (`created → needs_input → discovering → calling → extracting → done | failed`), launches up to 3 calls in parallel, emits events (§6.7), retries per R4's rules, stops a task that runs over budget or time.
-- Decision records in `/docs/decisions/` (voice platform, queue, car-stretch go/no-go).
-**First milestone (Week 10, Thu 29 Oct):** request → `TaskSpec` → one controlled call → transcript back (§10 Gate A). *Real call blocked by API access; mock version Sat 7 Nov (`docs/mock-first-plan.md`).*
-**Done when:** a request runs end-to-end on fixtures (no real calls) and the UI receives every event in order.
-**Not your job:** writing other roles' code. Review it, unblock it, integrate it.
-
-### R2 — Voice agent
-**Pick this if:** you like prompt engineering and want to hear your work. You'll spend most of your time tuning how the agent sounds, asks and reacts, then testing it on real phone calls.
-**Mission:** a polite, short, honest phone call in Saudi Arabic that gets the answers.
-**Owns:** `/app/voice`, `/prompts`.
-**Builds:**
-- Agent configuration **as code**: prompt, first message, voice, LLM, tools, max duration, all in the repo, pushed to ElevenLabs by a script. Never edit only in the dashboard.
-- Call flow: natural greeting → the template's questions one at a time, then the user's own questions → one clarification per unclear answer → repeat the price back to confirm → polite end. Refuse bookings and personal info. If a shop asks whether it is talking to a robot or an AI, answer honestly.
-- English switching (language-detection tool + an English first message), voicemail/IVR detection → hang up, no message left.
-- Pick the voice (Saudi dialect, natural on an 8 kHz phone line) and A/B 2–3 fast LLMs on the same scenarios.
-- Accepts a `CallJob`, returns a `CallResult` (with R4).
-**Done when:** 10 role-play calls in a row finish under 2.5 min, ask every template question and the user's own questions, and never agree to a booking.
-**Watch out:** the agent must never claim to be human or deny being an AI when asked directly (ADR 001). Add an automated test with a scenario card where the shop asks "إنت روبوت؟"; it fails if the agent denies it.
-
-### R3 — Speech recognition + evaluation harness
-**Pick this if:** you like data, experiments and measuring things more than building features. You'll run the speech-recognition test that picks our platform, then build the test sets and metrics that turn our demo into real results.
-**Mission:** prove with numbers whether the system works.
-**Owns:** `/eval`.
-**Builds:**
-- **Speech benchmark (run Sun–Tue 1–3 Nov in Week 11, after the first working call; nobody is blocked on it):** ~30 clips = ~20 from SADA + ~10 recorded over real Twilio calls of teammates reading shop-style answers (prices, "أصلي/تجاري", English mixed in). Compare **ElevenLabs Scribe** vs **Deepgram Nova-3 `ar-SA`**.
-  - SADA is TV-broadcast audio. Make it phone-like: band-limit to ~300–3400 Hz, resample to 8 kHz, pass through the μ-law phone codec. Downsampling alone is too clean.
-  - Score **number accuracy** separately from word error rate. Getting the price right matters more than spelling.
-  - SADA licence is CC BY-NC-SA 4.0: OK for our non-commercial evaluation, cite it, don't commit the clips.
-  - The result feeds the voice-stack decision (§10 Gate B) together with R2/R4's real test calls.
-  - Week 10 prep: download SADA, write the phone-simulation script, draft scenario cards, record ~10 clips over the first Twilio calls.
-- Arabic text normalization + number parsing shared by everyone (e.g. "ثلاثمية وخمسين" = 350, "٤٥٠" = 450).
-- **Scenario cards:** role-play scripts with hidden ground truth (cooperative shop, English-speaking expat, "come to the shop" refusal, hold/busy, price range, asks for your number, mixed Arabic/English, stock check, shop asks "are you a robot?", the user's own question).
-- **Fake shopkeeper:** an LLM playing a scenario card in text mode, for hundreds of cheap logic tests of the call flow + extraction.
-- Metrics script (§9) that reads `CallResult` + `Quote` + labels and prints the headline table.
-**Done when:** one command produces the §9 table from the labelled call set.
-
-### R4 — Telephony (biggest real-world risk)
-**Pick this if:** you enjoy solving messy real-world problems and talking to providers. Less ML, more systems: carriers, caller ID, voicemail and phone menus, retries. If this part fails, nothing reaches a real shop, so it's high impact.
-**Mission:** make real phone calls reach real people in Saudi Arabia.
-**Owns:** `/app/telephony`.
-**Builds / tests:**
-- Twilio **paid** account (trial accounts only call verified numbers and play a trial message), Saudi Arabia enabled in voice geographic permissions, US number, connected to ElevenLabs.
-- **Caller-ID test (10 min):** try showing our own Saudi number via Twilio Verified Caller ID. Does the call connect? What does the receiver see? Write down the result.
-- **Reach-rate reality:** shopkeepers often ignore unknown international numbers. Log `pre_arranged` on every call; we report reach rate for pre-arranged and cold calls **separately**.
-- Number types: mobile / landline / 920 (usually a phone menu) / 800. Hold music, IVR menus, voicemail, busy, no answer → correct `outcome`.
-- Retry policy (max 1 retry after 10 min, never more), calling hours (normal shop hours; avoid prayer times and Friday morning), callbacks to our number logged to the right task.
-- **Production path research:** email Unifonic. Their public voice API shows one-way calls (play a message), but they list SIP trunking with Saudi caller ID. Ask exactly: *"Can you provide an outbound SIP trunk with a Saudi caller ID that we connect to ElevenLabs Agents?"* Also check Saudi SIP options (Zain/STC/Mobily need a commercial registration).
-**Done when:** `docs/telephony.md` records every test with result + date, and every call gets a correct `outcome`.
-**Demo fallback only (not the product):** Rabeh calls a shop from his phone and merges in the agent's number.
-
-### R5 — Backend + discovery
-**Pick this if:** you want solid software engineering: APIs, databases, external APIs, caching. You'll build the service everything runs through, plus the Google Places search that finds the shops.
-**Mission:** the service that stores everything and serves the UI.
-**Owns:** `/app/api`, `/app/db`, `/app/discovery`, `/app/cache`.
-**Builds:**
-- FastAPI endpoints:
-  - `POST /tasks` (request text) → `{task_id, follow_up_questions}`
-  - `POST /tasks/{id}/answers`
-  - `POST /tasks/{id}/start`
-  - `GET /tasks/{id}` (full state)
-  - `GET /tasks/{id}/events` (SSE stream)
-  - `POST /webhooks/elevenlabs/post-call` (optional; polling the conversation API also works and is easier locally)
-- Postgres tables: `tasks`, `businesses`, `calls`, `quotes`, `comparisons`, `events`, `labels` (for eval).
-- **Places discovery:** Text Search with a strict field mask (id, name, address, location, phones, opening hours, rating, Maps link; **no reviews**), `regionCode=SA`, `openNow`, location bias. Pick 3: open now, has a phone, relevant, prefer landline/mobile over 920.
-- **Cache:** don't call the same shop for the same question within N days; reuse the stored quote and label it "from <date>".
-- Cost record per call (platform + LLM + carrier) for the cost metric.
-**Done when:** the orchestrator can run a whole task against the real DB with fixture calls, and Places returns 3 callable shops for 3 Riyadh districts.
-
-### R6 — Extraction + comparison
-**Pick this if:** you like LLMs and want the most "AI engineering" part of the project. You'll turn messy Arabic transcripts into reliable structured data and build the check that stops the AI from inventing values.
-**Mission:** turn transcripts into trustworthy numbers, and compare only what is comparable.
-**Owns:** `/app/extraction`, `/app/comparison`.
-**Builds:**
-- **Extraction:** `CallResult` → `Quote` with a strong LLM in JSON mode, following §6.5 exactly, plus a one- or two-sentence Arabic answer to each of the user's own questions with its quotes. Convert units (3 months → 90 days, 1 hour → 60 min) while keeping the original words as evidence.
-- **Evidence checker (code, not prompt):** for every value, check the quote exists in a **shop** turn (whole-word match after Arabic normalization) and, for prices, that the number is actually in the quote. Failures go to `evidence_issues` and the value is dropped. This is how "no invented values" is enforced. The agent repeating a price back does **not** count as evidence.
-- **Comparison:** compare like with like (same `part_type`). Return `cannot_compare` with reasons when key fields are missing, refused, or inconsistent (e.g. shop A only gave an original price, shop B only commercial).
-- **Baseline experiment:** ElevenLabs' built-in "data collection" gives values without verified evidence. Run both on the same calls and compare hallucination rates. This is one of our strongest results.
-**Done when:** on the fixture transcripts, every value has valid evidence, and the comparison returns `cannot_compare` for the mismatched fixture.
-**Watch out:** LLM confidence scores are poorly calibrated. Treat them as secondary; the evidence check is the real guard.
-
-### R7 — Frontend, evidence view, observability, demo
-**Pick this if:** you like UI/UX and presenting. You'll build what everyone sees: the live 3-shop view, the evidence display and the metrics dashboard, and you'll own the final demo.
-**Mission:** make it obvious, in 10 seconds, what the system found and why we trust it.
-**Owns:** `/web`.
-**Builds:**
-- Request box → follow-up questions → live view of 3 shop cards (searching → ringing → talking → done/failed) driven by the SSE events.
-- Each field shows its value **and** its evidence quote (tap to see the transcript turn). Clear "can't compare" state with reasons.
-- Internal dashboard: reach rate, completion, cost, latency per call (from R3's metrics + R5's data).
-- Demo: script, a recorded backup video, and a live call to a pre-arranged shop.
-**Done when:** a full task on fixtures plays through the UI with no manual refresh.
-**Rule:** never show a real worker's voice or name publicly without consent. Use role-play recordings in the demo video.
-
----
-
-## 9. Evaluation (how we prove it works)
+## 8. Evaluation
 
 | Metric | Definition |
 |---|---|
-| **Human reach rate** | calls with outcome `human_*` ÷ all attempts. Report pre-arranged vs cold separately |
-| **Task completion** | `human_completed` ÷ calls that reached a human |
-| **Critical-field accuracy** | correct values ÷ labelled values, for the template's required fields (electronics: price, part type, warranty, time; stock check: availability, price), per field and overall |
-| **Hallucination rate** | values not supported by the transcript ÷ all values returned. Ours vs the ElevenLabs built-in baseline |
-| **Answer faithfulness** | for the user's own questions: share of `summary_ar` answers that two labellers judge faithful to the shop's words. Code verifies the quotes; only people can judge the summary |
-| **Cost per successful task** | total cost ÷ tasks where ≥2 of 3 shops gave usable quotes |
+| **Human reach rate** | calls with outcome `human_*` ÷ all attempts; pre-arranged and cold calls reported separately |
+| **Task completion** | `human_completed` ÷ calls that reached a person |
+| **Critical-field accuracy** | correct values ÷ labelled values for the template's required fields (electronics: price, part type, warranty, time; stock: availability, price), per field and overall |
+| **Hallucination rate** | values not supported by the transcript ÷ all values returned; ours vs the ElevenLabs baseline |
+| **Answer faithfulness** | share of `summary_ar` answers two labellers judge faithful to the shop's words (code checks the quotes; only people can judge the summary) |
+| **Cost per successful task** | total cost ÷ tasks where at least 2 shops gave usable quotes |
 | Also logged | turn latency, language-switch success, failure types, total time per request |
 
-**Datasets:** (1) role-play calls over real phone lines using scenario cards (we know the
-truth); (2) consenting real shops; (3) pilot calls after approval; (4) fake-shopkeeper text
-simulations; (5) SADA phone-simulated clips for the Week 11 speech benchmark.
-**Targets:** ~30 speech clips by Tue 3 Nov; **at least 50 fully labelled calls** by the feature
-freeze (Sat 14 Nov), 100 if time allows. Labelling starts with the first role-play calls in
-Week 11 and runs continuously, never saved for the end. Fake-shopkeeper text tests cover
-the long tail cheaply.
-**Labels:** two people label each call independently, then resolve disagreements.
+- **Datasets:** role-play calls from scenario cards (known truth), consenting real shops, pilot
+  calls after sign-off, fake-shopkeeper text simulations, phone-simulated SADA clips.
+- **Targets:** ~30 speech clips for the benchmark; **at least 50 fully labelled calls** by the
+  feature freeze (100 if time allows). This needs real calls; if keys arrive late, we report a
+  smaller set with its size.
+- **Labels:** two people label each call independently, then resolve disagreements.
+- **Mock data is never a result.** Mock `CallResult`s carry `scenario_id: "mock_…"` and are
+  excluded from every metric.
 
-## 10. Plan, gates and integration rhythm
+## 9. Ethics, privacy and safety (non-negotiable)
 
-**Deadline: submission at the end of KSU Week 13, provisionally Thu 19 Nov** (Week 13 is
-Nov 15–21; the exact day is being confirmed with the AI track leader). We aim to be
-**submission-ready by Wed 18 Nov** (internal target) either way.
+- **AI disclosure:** the agent does not have to announce it is an AI. Tuwaiq approved this
+  provisionally ([ADR 001](decisions/001-scope-and-ai-disclosure.md)), to be revisited after
+  testing. It never claims to be human and never denies being an AI when asked.
+- **Written approval still pending:** Tuwaiq's written confirmation of the disclosure decision,
+  and Tuwaiq/KSU sign-off on consent and retention for **recording and transcribing** calls
+  (Saudi PDPL). Neither is granted yet. Both are needed before calling real businesses beyond
+  the allowlist.
+- **Allowlist until sign-off:** only numbers whose owners agreed (teammates, friends, shops we
+  know). Code refuses any other number.
+- **Nothing is done for the user:** no bookings, payments or personal data shared.
+  User-written content is checked before it can reach a call (`app/planner/policy.py`); that
+  check is best-effort, so the agent's own instructions are the backstop.
+- Keep recordings and transcripts only as long as evaluation needs (e.g. 30 days), never in git.
+- Call only during normal hours, retry at most once, and reuse cached answers so we don't
+  pester shops.
 
-**Principle:** Week 9 is light setup only. Week 10 proves one minimal working call while
-every other role builds against the contracts. Weeks 11–12 bring the full system together.
-Week 13 is finalization only. The scope stays the same; what makes it fit is **parallel work
-from fixed contracts**, not cutting features and not compressing two weeks into one.
+## 10. Limitations and open questions
 
-> **From 3 Nov, `docs/mock-first-plan.md` replaces the Week 11–12 parts of this section that need an
-> API key** (per-role deliverables, Gates A/B, milestones for 5, 7, 12 and 14 Nov). The overview and the
-> per-role table below are the original plan, kept for reference.
+**Known limitations (accepted for the prototype):**
+- Task state is in memory in one process: a restart loses running tasks (stored events
+  remain). Run a single server process.
+- Every external service is a mock until keys arrive; mock results prove wiring, not quality.
+- The cost cap only blocks retries, and a real `cost_usd` of `null` counts as $0.
+- The outbound content check is deterministic and best-effort; it misses, for example, names
+  given without "اسمي" and numbers spelled out in words.
 
-**Rhythm:** weeks run Sunday–Thursday. **Every Thursday (29 Oct, 5 Nov, 12 Nov): integration
-demo**: whatever is merged to `main` must run end-to-end (fixtures are fine early on). If your
-part isn't merged, it doesn't exist yet. Blocked for more than a day → tell R1 that day.
+**Open questions (owner):**
+- API access date from Tuwaiq; chased every Thursday (R1).
+- Exact submission date at the end of Week 13 (R1, with the AI track leader).
+- Written approvals in §9 (R1).
+- Contract proposal for backup shops: separate target usable quotes, max businesses, max
+  parallel calls and max attempts; migration for R5 and R7 (R1, after 7 Nov).
+- Per-category usable-quote rules, e.g. electronics needs a verified relevant price, stock
+  check verified availability (R6).
+- Area resolution owner: proposed, a map pin or district list from the UI now (R7) and free-text
+  geocoding later (R5); not decided yet (R1, R5, R7).
+- Can Unifonic or a Saudi SIP provider carry a live two-way AI call with a Saudi caller ID (R4)?
+- Do `Quote.offers`, `fields` and `answers` fit real transcripts (R6, R3)?
+- Is the 150 s call limit enough with 2 custom questions (R2)?
 
-### Overview
+## 11. Glossary
 
-| KSU week | Dates | Goal |
-|---|---|---|
-| **9** | Oct 18–24 | **Light setup only:** roles, repo, architecture read-through, account/API requests if convenient |
-| **10** | Oct 25–31 | **Minimal working call:** user request → `TaskSpec` → one controlled call → transcript returned. All other roles start their components against fixtures |
-| **11** | Nov 1–7 | *Mock-first from 3 Nov: Thu 5 Nov checkpoint, Fri 6 Nov first PRs, Sat 7 Nov integrated mock MVP (see the plan).* **Core components come together:** discovery + backend, full voice flow, telephony outcomes, extraction + evidence on real transcripts, live UI; from one call to 3 parallel calls; speech benchmark |
-| **12** | Nov 8–14 | **Full integration:** 3 parallel calls → extraction → evidence check → comparison / can't-compare → live UI; evaluation runs on ≥50 labelled calls; reliability fixes. **Feature freeze Sat 14 Nov** |
-| **13** | Nov 15–21 | **Submission:** final metrics, README, architecture diagram, presentation, live demo + recorded fallback, bug fixes only |
-
-### Week 9 (Oct 18–24): light setup only
-
-The only goal: **nobody is confused about what we are building or what they own.**
-- Final roles assigned (done); repo created; everyone added to GitHub
-- Everyone reads this file and their own role section, and asks questions in the group
-- Account/API requests submitted **if convenient** (Twilio, ElevenLabs, Google Maps, LLM API)
-- R1, only if convenient: repo folders, contract drafts, and send the Tuwaiq/KSU sign-off request (§11), because real-shop calls in Week 12 depend on it
-
-**Not required this week:** no coding deadline, no group technical session, no Twilio setup,
-no speech benchmark, no end-to-end call.
-
-### Per-role plan (Weeks 10–12): original, assumes API access
-
-Each cell is that role's deliverable for the Thursday demo. Every role can start on Sunday
-26 Oct from the contracts and §6 examples, without waiting for anyone.
-
-| Role | Week 10 (Oct 25–31) | Week 11 (Nov 1–7) | Week 12 (Nov 8–14) |
-|---|---|---|---|
-| **R1** | Contracts v0 published Mon 26 Oct, v1 (stock checks, own questions) Tue 27 Oct; planner v0 (request → `TaskSpec` + follow-up questions); wires the minimal flow (**Gate A**) | Orchestrator state machine + events; fan-out from 1 to 3 calls; runs **Gate B** | Full pipeline with 3 real parallel calls; integration fixes; **Gate C**; freeze |
-| **R2** | Agent as code (prompt, first message, Saudi voice, tools) pushed by script; tested in browser, then on a teammate's phone | Full call flow incl. the user's own questions; honest answer if asked "are you a robot?"; English switching; voicemail/IVR → hang up; LLM A/B; 10–20 role-play calls using R3's scenario cards | Fix the top voice failures found in labelled calls; consented real-shop calls (after sign-off) |
-| **R3** | Arabic normalization + number parser; SADA phone-simulation script; ≥8 scenario cards (incl. stock check, the user's own question, "are you a robot?"); ~10 clips recorded over the first Twilio calls | **Speech benchmark Sun–Tue (Gate B input)**; label role-play calls as they happen; fake-shopkeeper text tests; metrics script v0 | ≥50 labelled calls; full metrics table incl. ours vs ElevenLabs baseline; failure-type breakdown |
-| **R4** | Paid Twilio, Saudi permissions, number connected to ElevenLabs, allowlist enforced; places the Gate A call; caller-ID test | Correct `outcome` for voicemail / IVR / busy / no answer; retry policy + calling hours; Unifonic emailed; `docs/telephony.md` | Reliability under 3 parallel calls; reach rate pre-arranged vs cold (if signed off) |
-| **R5** | FastAPI skeleton + Postgres tables; stores `TaskSpec`, call and transcript (Gate A); queue decision; Places script returns callable shops | Places discovery in the pipeline (pick 3); SSE events endpoint; cost per call; cache | Robustness, logging, cost/latency data for the dashboard |
-| **R6** | Extraction v0 on the example transcripts → `Quote` (offers, fields, answers); evidence checker with unit tests | Extraction on real role-play transcripts; comparison + `cannot_compare` / `side_by_side`; ElevenLabs baseline stored for comparison | Fix evidence failures; hallucination numbers ours vs baseline; answer faithfulness |
-| **R7** | Web skeleton: request box (+ up to 2 own questions), follow-up questions, 3 shop cards driven by fake events | Live view on real SSE events; evidence display (value + quote + transcript turn, and the answers to the user's own questions) | Metrics dashboard; demo script; **first take of the recorded fallback** |
-
-### Week 13 (Nov 15–21): submission and finalization
-
-Code is frozen. Final metrics run on the frozen version; README; architecture diagram;
-presentation; demo rehearsal; live call to a pre-arranged shop **plus the final recorded
-fallback video**; bug fixes only, no new features.
-
-### Gates (decisions with numbers, recorded in `/docs/decisions/`)
-
-> **Status 3 Nov:** Gate A and Gate B (real) are **blocked pending API access, not passed**. Mock
-> versions: Gate A-mock and Gate B-mock, both Sat 7 Nov. Until real tests exist, the voice stack stays
-> ElevenLabs (§4); see `docs/mock-first-plan.md` §6.
-
-- **Gate A, Thu 29 Oct → "we can make a call":** one controlled call completes and its transcript is stored against a `TaskSpec`. If it fails, R1/R2/R4/R5 fix it first thing Sunday 1 Nov; everyone else keeps building on fixtures.
-- **Gate B, Tue 3 Nov → voice stack:** stay on ElevenLabs if the real test calls work and Scribe's number accuracy on phone-quality clips is acceptable. Otherwise switch to Vapi/Retell with Deepgram `ar-SA`, after confirming that platform actually accepts `ar-SA` (one Vapi support thread showed it rejected). With this calendar, any switch must be decided by Tue 3 Nov, and only on clear evidence; after that date the stack is final.
-- **Gate C, Thu 12 Nov → car stretch:** only if the full electronics and stock-check workflows run end-to-end and, on the labelled calls, critical-field accuracy is ≥ 85% and hallucination ≤ 2% (team confirms the exact bar in Week 11). Cars = a new template + scenario cards only, no engine changes, added only by someone whose own part is done, before the freeze. Otherwise cars are listed as future work in the README.
-- **Feature freeze, Sat 14 Nov:** after this, only bug fixes. Real providers may still be activated and
-  validated afterwards under the activation policy (`docs/mock-first-plan.md` §5: smoke test, flag, rollback).
-- **Submission-ready, Wed 18 Nov** (internal target); expected submission end of Week 13, provisionally
-  Thu 19 Nov. If real-provider validation is still blocked, the submission says so plainly and reports no metric we didn't measure.
-- **Tuwaiq showcase, Thu 10 Dec:** separate from the KSU submission. Real-call work that missed the
-  submission is finished for the showcase.
-
-## 11. Ethics, privacy, safety (non-negotiable)
-
-- The agent never claims to be human and never denies being an AI when asked directly. It does not have to announce it: Tuwaiq approved this for now (`docs/decisions/001-scope-and-ai-disclosure.md`); we revisit after testing and before any wider deployment.
-- Weeks 10–11 (and until sign-off): calls only to an **allowlist** of numbers whose owners agreed (friends, teammates, shops we know). Code must refuse any number not on it.
-- Saudi PDPL applies to recording and transcribing calls. Get **Tuwaiq/KSU sign-off** on disclosure, consent and retention **before** calling real businesses at scale.
-- Keep recordings/transcripts only as long as evaluation needs (e.g. 30 days). Never in git.
-- Call only during normal hours; at most one retry; cache answers so we don't pester shops.
-- No bookings, no personal data shared, no actions for the user.
-
-## 12. How to work (with or without AI tools)
-
-**Using an AI coding assistant:**
-1. Give it this whole file plus your role section, and say: *"Build only inside my folders
-   (`…`). Use the contracts in `/contracts/` exactly. Use the example files as test data.
-   Don't change contracts or other folders."*
-2. Ask it to explain the plan before writing code, and to write tests.
-3. **You must understand every line you push.** Your backup will ask you to explain it in
-   review, and you'll present it in the demo. Ask the AI to walk you through anything you don't get.
-
-**Pull requests:**
-- Small PRs, one topic each. Branch name: `r<role>/<topic>` (e.g. `r4/caller-id-test`).
-- Every PR description has **What**, **Why**, and **How I verified** (paste the command and its output, or a screenshot).
-- Your backup reviews. Contract changes also need R1.
-- CI (lint + tests) must pass. No secrets, no recordings, no real people's data.
-
-**Status:** every Thursday before the demo, post 3 lines in the group: *done / next / blocked by.*
-Blocked for more than a day → tell R1 immediately, don't wait for Thursday.
-
-## 13. Open questions (owner → due)
-
-- Approval from the AI track leader + exact submission day in Week 13: share this file now; show the first recorded test call after Gate A (29 Oct) → R1.
-- Tuwaiq/KSU sign-off on disclosure, consent, retention → R1, request in Week 9; needed before any real-shop calls (Week 12).
-- Which API subscriptions Tuwaiq covers; keep our own spend under $500 → R1. **Open as of 3 Nov: ElevenLabs, Twilio, Places and LLM access delayed with no date; we work mock-first (`docs/mock-first-plan.md`).** Ask Tuwaiq for a date, chase every Thursday.
-- If no keys by Sun 8 Nov: how small a labelled-call set we still report, and whether real calls move to the Dec 10 showcase → R1 + R3, Thu 12 Nov.
-- Can Unifonic (or a Saudi SIP provider) carry a live two-way AI call with a Saudi caller ID? → R4, Week 11.
-- Do `Quote.answers` and the generic `offers` / `fields` fit real transcripts? → R6 and R3, Week 11 (change via a `contract-change` PR).
-- Written Tuwaiq approval of the no-AI-announcement decision (ADR 001), and that it covers recording and transcribing calls → R1, this week.
-- Is the 150 s call limit enough with 2 custom questions? → R2, after the first role-play calls.
-
-## 14. Glossary
-
-- **Contract:** the agreed JSON shape one part hands to another (§6).
-- **Fixture / example file:** a fake but valid contract instance you build and test against.
-- **Evidence quote:** the shop's exact words that support a value.
+- **Mock:** a stand-in provider with the same interface as the real one, offline and free.
+- **Offer:** one option a shop quoted (part tier, variant, new or used).
 - **Pre-arranged call:** the shop agreed in advance; reported separately from cold calls.
-- **SIP trunk:** a carrier connection that lets our voice platform make calls with a local number.
-- **IVR:** an automated phone menu ("press 1 for…").
-- **ADR:** a short decision record: context, options, decision, why.
-- **Offer:** one option a shop quoted (a part tier, a variant, new or used); a `Quote` holds a list of them.
-- **Custom question:** a question the user wrote themselves (max 2 per task), asked after the template's questions.
+- **IVR:** an automated phone menu. **SIP trunk:** a carrier link that lets the voice platform call with a local number.

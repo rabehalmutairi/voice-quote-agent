@@ -1,6 +1,6 @@
 # Contracts
 
-The shapes parts of the system hand to each other (architecture §6). **These files are the source of truth.** If `docs/architecture.md` disagrees, the files win and the doc gets fixed.
+The shapes parts of the system hand to each other ([architecture §7](../docs/architecture.md#7-contracts-and-templates)). **These files are the source of truth.** If `docs/architecture.md` disagrees, the files win and the doc gets fixed.
 
 | Contract | Schema | Example | Flow |
 |---|---|---|---|
@@ -21,16 +21,17 @@ The shapes parts of the system hand to each other (architecture §6). **These fi
 - **Check your output** against the schema (Python: `jsonschema`, JavaScript: `ajv`). Use a format checker, or `date-time` is silently ignored.
   In this repo's Python code, use `app.contracts.validate("quote", obj)`: it does exactly that and raises `ContractError` listing every problem.
 - **Run the tests:** `pip install -r requirements-dev.txt`, then `python -m pytest tests/contracts` (or `python -m pytest` for everything).
-## These are v0, not law
 
-R1 drafted these before anyone had built against them. They are a starting point, and **you are expected to challenge them**: if a shape doesn't fit what you're building, or real calls show something missing, change it.
+## Changing a contract
+
+These are v1, written before real calls existed, so **challenge them**: if a shape doesn't fit what you're building, or real calls show something missing, propose a change. Never work around a contract quietly.
 
 1. **Tell the group what broke.** One message: what you tried, what the contract made hard.
 2. **Open a PR labelled `contract-change`** with the fix. Change the schema, the example, and `tests/contracts/test_contracts.py` together (add a test for the new rule, and a broken case that must be rejected).
 3. **Reviewers are R1 and every role that reads the contract** (see the Flow column). Disagree in the PR, not in a side chat.
 4. Merge when CI is green and those roles approve. Small, frequent changes beat one big rewrite.
 
-Known open questions: how well `Quote` and `answers` fit real transcripts (R6, R3), and whether `CallResult` carries what Eval needs (R3).
+Open questions about the contracts are tracked in [architecture §10](../docs/architecture.md#10-limitations-and-open-questions).
 
 ## Conventions
 
@@ -40,7 +41,7 @@ Known open questions: how well `Quote` and `answers` fit real transcripts (R6, R
 - **Names** (`category`, slot keys, field names) are `snake_case`.
 - **Evidence-backed fields** (Quote): `value` is set only when `status` is `found`. `found`, `refused` and `unclear` must carry `evidence_quote`, `evidence_turn` and `confidence`; only `not_mentioned` has them all `null`. Numbers hold either an exact `value` or a `value_min`/`value_max` range (e.g. "ساعة لساعتين"), never both. A field's type (number, choice, text, yes/no) and allowed choices come from the category template, not from the schema.
 - **A Quote has `offers`** (one per option the shop quoted: part tier, variant, new or used), **`fields`** (values for the whole call) and **`answers`** (one per question the user wrote, same order as `custom_questions`, at most 2).
-- **No personal data about the user** goes into a `CallJob` (architecture §11).
+- **No personal data about the user** goes into a `CallJob` ([architecture §9](../docs/architecture.md#9-ethics-privacy-and-safety-non-negotiable)).
 
 ## Rules a schema cannot check
 
@@ -66,5 +67,5 @@ JSON Schema validates shape, not meaning. These rules are enforced in code, and 
 ## Known limits (deliberate)
 
 - v1 covers electronics repair, stock checks and (stretch) car repair as templates. Anything a template can't express is still open: raise it in a `contract-change` PR.
-- A call is capped at 150 s (`max_duration_s`). With two custom questions that may be tight; R2 reports after the first role-play calls.
+- A call is capped at 150 s (`max_duration_s`). With two custom questions that may be tight (open question for R2).
 - No `schema_version` field: four weeks, one team; `contract-change` PRs are enough.
