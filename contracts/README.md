@@ -19,7 +19,8 @@ The shapes parts of the system hand to each other (architecture §6). **These fi
 
 - **Build against the examples.** Load `examples/*.json` as fixtures. You never need another role's code to start.
 - **Check your output** against the schema (Python: `jsonschema`, JavaScript: `ajv`). Use a format checker, or `date-time` is silently ignored.
-- **Run the tests:** `pip install -r requirements-dev.txt`, then `python -m pytest tests/contracts`.
+  In this repo's Python code, use `app.contracts.validate("quote", obj)`: it does exactly that and raises `ContractError` listing every problem.
+- **Run the tests:** `pip install -r requirements-dev.txt`, then `python -m pytest tests/contracts` (or `python -m pytest` for everything).
 ## These are v0, not law
 
 R1 drafted these before anyone had built against them. They are a starting point, and **you are expected to challenge them**: if a shape doesn't fit what you're building, or real calls show something missing, change it.
@@ -52,7 +53,7 @@ JSON Schema validates shape, not meaning. These rules are enforced in code, and 
 | A value that fails these checks is dropped and recorded in `evidence_issues` | R6 evidence checker |
 | `TaskSpec.category` names a real file in `/templates` | Planner (R1) |
 | `CallJob.to_number` is on the allowlist until sign-off | Telephony (R4) |
-| Events for a task have increasing `seq` with no gaps | Backend (R5) |
+| Events for a task have increasing `seq` with no gaps | Orchestrator (R1) numbers them as it emits; Backend (R5) stores and streams them in that order |
 | The ElevenLabs speaker `user` is converted to `shop` | Voice (R2), at the boundary |
 | No call is placed while `TaskSpec.missing_slots` is non-empty | Orchestrator (R1) |
 | Every value matches its field's type in the template, uses only that template's `offer_fields` / `quote_fields`, covers every `required_field`, and has `value_min` ≤ `value_max` | R6 (`template_problems` in `tests/contracts` is a starting point) |
