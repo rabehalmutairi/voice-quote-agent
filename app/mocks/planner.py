@@ -7,32 +7,16 @@ purpose: tests must be repeatable. Real language understanding is LLMRequestPars
 
 from __future__ import annotations
 
-import re
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
 
 from app.planner.parser import ParsedRequest
+from app.planner.text import contains_phrase as _matches
+from app.planner.text import normalize
 
 LEXICON_PATH = Path(__file__).parent / "fixtures" / "planner_lexicon.yaml"
-
-_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
-_MARKS = re.compile(r"[ً-ْٰـ]")  # Arabic diacritics + tatweel
-
-
-def normalize(text: str) -> str:
-    """Make Arabic/English text comparable: unify letter forms and digits, drop punctuation."""
-    text = _MARKS.sub("", text.translate(_DIGITS).lower())
-    text = re.sub("[إأآ]", "ا", text).replace("ة", "ه").replace("ى", "ي")
-    text = re.sub(r"[^\w\s]", " ", text)
-    return " ".join(text.split())
-
-
-def _matches(normalized_text: str, pattern: str) -> bool:
-    # Arabic words may carry prefixes (ال، ب، و), so only Latin letters and digits mark a
-    # word boundary: "آيفون 15" must not match "آيفون 155".
-    return re.search(rf"(?<![0-9a-z]){re.escape(pattern)}(?![0-9a-z])", normalized_text) is not None
 
 
 @lru_cache(maxsize=1)
