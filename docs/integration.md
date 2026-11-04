@@ -5,6 +5,10 @@ How each role plugs its component into R1's code **without editing it**. The con
 defined in `app/orchestrator/interfaces.py` and `app/planner/`; what to deliver when is in
 [mock-first-plan.md](mock-first-plan.md).
 
+> **Planned, not implemented:** Quick Call adds `orchestrator.find_candidates()` /
+> `select_business()` and a `TaskSpec.target` key; everything below stays valid. See
+> [ADR 002](decisions/002-two-mode-product.md).
+
 ```
                  R5 API                       R1                                   providers (injected)
 POST /tasks ───► planner.plan() ──TaskSpec──► orchestrator.submit()
@@ -213,7 +217,7 @@ Order per task: `task.created` → (`task.needs_input` …) → `business.found`
   writes **only events, one JSON object per line**; all other text goes to stderr.
   Also `all_failed`, `retry`, `timeout`, `no_shops`.
 - **Don't hard-code 3 shops.** Today a task calls up to 3. An approved, not yet built change
-  ([plan §5](mock-first-plan.md#5-approved-next-step-backup-shops-not-implemented)) will
+  ([plan §5](mock-first-plan.md#5-after-the-mvp-quick-call-then-backup-shops-neither-implemented)) will
   replace a shop that gives no usable quote with another one, so more than 3
   `business.found` events may arrive over time, with at most 3 calls at once. Render shop
   cards from the events you receive.

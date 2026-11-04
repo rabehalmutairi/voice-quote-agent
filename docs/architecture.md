@@ -31,6 +31,9 @@ in the demo is backed by a number.
 | **Stretch** (only if Gate C passes) | **Car repair, standardized requests only** (brake pads, tires, lights) | Open-ended diagnosis ("my car makes a noise") |
 | **Always** | Asking questions, comparing answers, up to 2 user-written questions per task | **Any action for the user**: bookings, reservations, payments, sharing personal data. Hospitals, hotels |
 
+- **Two modes on one pipeline** ([ADR 002](decisions/002-two-mode-product.md)): *Compare Shops*
+  (this MVP) and *Quick Call*, one user-chosen business asked an ordinary question in any
+  category (planned, not implemented). The ADR lists the full exclusions and the callable-number rule.
 - A few reliable, well-evaluated workflows beat many weak ones. If time gets tight, we cut
   the stretch, never the evaluation.
 - **One engine, many templates.** Everything category-specific lives in `/templates/*.yaml`.
@@ -86,6 +89,8 @@ What is blocked and when: [mock-first-plan.md](mock-first-plan.md).
   backend process. Simple and enough for a prototype; the limits are in §10.
 - **The orchestrator numbers events** (1, 2, 3… per task, no gaps); the backend stores them and
   streams them over Server-Sent Events (SSE), replaying on reconnect.
+- **Only direct mobile/landline numbers are called**; 920 and 800 numbers (phone menus) are
+  skipped, never navigated ([ADR 002](decisions/002-two-mode-product.md)). Planned, not yet in code.
 - **Today: at most 3 shops per task.** *Approved future direction, not implemented:* discover
   ~6 candidates, keep at most 3 calls running, and replace a shop that gives no usable quote
   with the next candidate, until 3 verified usable quotes or a limit (attempts, time, cost)
@@ -265,6 +270,8 @@ files are the source of truth; conventions and the rules a schema can't check ar
 - API access date from Tuwaiq; chased every Thursday (R1).
 - Exact submission date at the end of Week 13 (R1, with the AI track leader).
 - Written approvals in §9 (R1).
+- Quick Call `contract-change` PR (`TaskSpec.target`, template `kind`), and the go/no-go at the
+  12 Nov checkpoint ([ADR 002](decisions/002-two-mode-product.md)) (R1).
 - Contract proposal for backup shops: separate target usable quotes, max businesses, max
   parallel calls and max attempts; migration for R5 and R7 (R1, after 7 Nov).
 - Per-category usable-quote rules, e.g. electronics needs a verified relevant price, stock
