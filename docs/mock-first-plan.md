@@ -13,7 +13,7 @@ Weeks run Sunday–Thursday. Something exists only once it is merged to `main`.
 | **Thu 5 Nov** | Progress checkpoint | Every role shows what runs so far (merged or on a branch) and names its blockers |
 | **Fri 6 Nov** | **First working PR from every member** | Your "Fri 6" item below is open as a PR: it may be incomplete, but it runs and has at least one test |
 | **Sat 7 Nov** | **Integrated mock MVP** | Through R5's API, on mocks: request → follow-up questions → `TaskSpec` → 3 concurrent mock calls → `CallResult`s stored → quotes → comparison → every event in order over SSE → R7's UI, with no manual refresh. One failed call doesn't stop the other two. Mocks stand in for any component that isn't ready: the MVP doesn't require every role's component to be complete. (This is Gate A-mock and Gate B-mock) |
-| **Thu 12 Nov** | Full integration checkpoint + **Gate C** | Every component that needs no API key is real; mocks remain only where a key is missing. Gate C decided (below) |
+| **Thu 12 Nov** | Full integration checkpoint + **Gate C** | Every component that needs no API key is real; mocks remain only where a key is missing. Gate C decided (below). Quick Call go/no-go for the freeze ([ADR 002](decisions/002-two-mode-product.md)) |
 | **Sat 14 Nov** | **Feature freeze** | Bug fixes only. Real providers may still be activated and validated afterwards under the policy in §4 |
 | **Wed 18 Nov** | Internal submission-ready target | Final README, metrics, slides, demo and recorded fallback. If keys are still missing, we submit on mocks and **say so plainly**; we claim no metric we didn't measure |
 | **Thu 19 Nov** (provisional) | Expected submission, end of KSU Week 13 | Date to be confirmed by the AI track leader. Days between 18 Nov and the deadline go to evaluation and rehearsal, not features |
@@ -151,7 +151,13 @@ A saved response proves the parsing, not the connection or its reliability; only
 does. After the 14 Nov freeze, **activation and validation** (flags, keys, smoke tests, fixes that
 make an existing adapter work) are allowed; **new behaviour** is a feature and is not.
 
-## 5. Approved next step: backup shops (not implemented)
+## 5. After the MVP: Quick Call, then backup shops (neither implemented)
+
+**Quick Call** (one user-chosen business, one ordinary question) comes first: design, slices,
+owners and the 12 Nov go/no-go are in [ADR 002](decisions/002-two-mode-product.md). Teammates'
+slices are small and start only after the 7 Nov MVP and R1's contract-change PR.
+
+**Backup shops** (lower priority than Quick Call):
 
 Today a task calls at most 3 shops and stops, however many usable quotes it got. Approved
 direction: discover ~6 candidates, keep at most 3 calls running, and replace a shop that gives no

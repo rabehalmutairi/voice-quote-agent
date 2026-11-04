@@ -13,7 +13,8 @@ and it compares the shops or says why they can't be compared.
   extraction + comparison (R6), web UI (R7).
 - **Blocked:** our ElevenLabs, Twilio, Google Places and LLM subscriptions haven't arrived, so
   every external service is a mock for now. No real calls yet.
-- **Next (approved, not built):** replace shops that give no usable quote with backup shops.
+- **Next (approved, not built):** *Quick Call*, asking one chosen business any ordinary question
+  ([ADR 002](docs/decisions/002-two-mode-product.md)); then backup shops for Compare Shops.
 
 ## Quick start
 
