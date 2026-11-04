@@ -63,6 +63,13 @@ sequence; `business.found` for the chosen business), and every interface signatu
   `{ "query": "محل طباعة", "business": null | Business }`. Rules: `target` set ⇒
   `max_businesses = 1`; ready ⇒ `target.business` is set. Until the user chooses, `"business"`
   sits in `missing_slots`, so the existing `task.needs_input` event asks for it.
+  **`business` is not an ordinary planner slot:** no template question or `planner.answer()`
+  fills it. R1 code manages it explicitly: `find_candidates` (discovery, stored per task),
+  `select_business` (sets `target.business`, removes `business` from `missing_slots`), and only
+  then the transition to a ready TaskSpec.
+- `target` is a **required** key (every key is always present), so every existing producer,
+  example, event fixture, mock and test must include `"target": null` for Compare Shops. A JSON
+  Schema `default` fills nothing in automatically.
 - Examples and contract tests updated together, with broken cases (target with
   `max_businesses: 3`, ready with no business, `inquiry` template with a field).
 
@@ -76,11 +83,17 @@ The LLM interprets the request: mode, business type, and the 1–2 questions. Co
 - **Which business:** only one returned by our discovery for this task can be selected
   (`orchestrator.select_business(task_id, place_id)` checks the stored candidates). A phone
   number from the client is never used.
-- **Callable or not:** `number_type` must be `mobile` or `landline`, in both modes.
+- **Callable or not:** `number_type` must be `mobile` or `landline`, in both modes. Places
+  returns phone numbers, not our classification: R5 normalizes each number to E.164, classifies
+  it (`mobile`, `landline`, `unified_920`, `toll_free_800`) and drops numbers it can't classify.
+  Quick Call refuses 920 and 800 numbers.
 - **Outbound content:** the existing policy check (`app/planner/policy.py`) on every question;
   it stays a small rule, not a verb dictionary.
-- **No call before confirmation, at most 1 call (Quick Call) or 3 (Compare), at most one
-  retry**, the same timeouts, cost cap, cancellation and event order.
+- **Selecting a business never starts a call.** The user confirms with the existing Start
+  action (`orchestrator.start()`), and the backend checks the chosen `place_id` against the
+  candidates stored server-side for that task.
+- **At most 1 call (Quick Call) or 3 (Compare), at most one retry**, the same timeouts, cost
+  cap, cancellation and event order.
 - **Evidence:** every answer's quote must be in a shop turn (R6's checker). An answer without
   evidence is `not_mentioned`, never guessed.
 
@@ -112,7 +125,8 @@ support (future work).
 ## Consequences
 
 - One pipeline, one set of events and one UI flow with a mode switch; no new services or dependencies.
-- TaskSpec gains one nullable key; templates gain `kind`. Producers that ignore Quick Call only add `"target": null`.
+- TaskSpec gains one required, nullable key; templates gain `kind`. Everything that builds a
+  TaskSpec for Compare Shops must add `"target": null`.
 - Backup shops move behind Quick Call in priority.
 - Risks: late contract review (mitigation: additive, defaults to null, decided at the 12 Nov
   gate); unfaithful answers to open questions (evidence check, at most 2 questions, R3
