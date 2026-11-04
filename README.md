@@ -35,7 +35,9 @@ use fake phone numbers, so nothing costs money.
 ## Your role
 
 **Every member:** first working PR by **Fri 6 Nov** (incomplete is fine; it must run and have
-a test), and your part working in the **integrated mock MVP on Sat 7 Nov**.
+a test). **Sat 7 Nov** is the integrated mock MVP: the whole flow runs end to end, with mocks
+standing in for any component that isn't ready. It does not require every role's component
+to be complete; plug in what works.
 
 | Role | Owner | Work in | Read first | Your deliverables |
 |---|---|---|---|---|
@@ -47,7 +49,8 @@ a test), and your part working in the **integrated mock MVP on Sat 7 Nov**.
 | **R6** Extraction + comparison | Ahmed | `app/extraction/`, `app/comparison/` | `contracts/quote.schema.json`, `comparison.schema.json`, `contracts/examples/quote.json`, `templates/*.yaml` (`fields`), [integration §5](docs/integration.md#5-r6-extractor-and-comparator) | [plan: R6](docs/mock-first-plan.md#r6-extraction--comparison) |
 | **R7** Frontend + demo | Saleh Aljarwan | `web/` | `contracts/examples/events/`, [integration §6](docs/integration.md#6-r7-the-event-stream) | [plan: R7](docs/mock-first-plan.md#r7-frontend--demo) |
 
-R2–R7 folders don't exist yet: create yours in your first PR. **Only change your own folders.**
+R2–R7 folders don't exist yet: create yours in your first PR. You may also add tests for your
+code in `tests/<your area>/` (e.g. `tests/telephony/`). **Only change your own folders.**
 Need a change in another folder, a contract or a template? Ask its owner (contracts and templates: R1).
 
 ## Before you code (about 15 minutes)
@@ -81,7 +84,7 @@ Start your session with this, filled in for your role:
 I am R<n> (<role>) on the Voice Quote Agent repo. Before coding, read README.md,
 docs/architecture.md §1-4 and my component in §6, my section of docs/mock-first-plan.md,
 contracts/README.md, and my section of docs/integration.md.
-Rules: work only in <my folders>. Use the contracts in /contracts exactly; test against
+Rules: work only in <my folders> and tests/<my area>/. Use the contracts in /contracts exactly; test against
 contracts/examples/ and app/mocks. Do not change contracts, templates, app/planner,
 app/orchestrator or another role's folder: ask me first. Explain your plan before writing
 code, and run `python -m pytest` before you finish.

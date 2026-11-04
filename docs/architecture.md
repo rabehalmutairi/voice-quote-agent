@@ -122,7 +122,8 @@ the folder's owner or backup.
 | R6 Extraction + comparison | Ahmed | @Ahmed-Aw | R3 | `app/extraction/`, `app/comparison/` |
 | R7 Frontend, evidence view, demo | Saleh Aljarwan | @CsSaleh17 | R5 | `web/` |
 
-Tests live in `tests/<area>/`, owned by the area's owner. **Never commit** `.env`, API keys,
+Tests live in `tests/<area>/`, owned by the area's owner: each role writes the tests for its
+own code there (e.g. `tests/telephony/`, `tests/extraction/`). **Never commit** `.env`, API keys,
 call audio, transcripts of real people or SADA clips; keep them in `data/` (gitignored).
 
 What each component must do (current deliverables and dates are in the plan):

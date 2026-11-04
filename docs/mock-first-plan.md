@@ -12,7 +12,7 @@ Weeks run Sunday–Thursday. Something exists only once it is merged to `main`.
 |---|---|---|
 | **Thu 5 Nov** | Progress checkpoint | Every role shows what runs so far (merged or on a branch) and names its blockers |
 | **Fri 6 Nov** | **First working PR from every member** | Your "Fri 6" item below is open as a PR: it may be incomplete, but it runs and has at least one test |
-| **Sat 7 Nov** | **Integrated mock MVP** | Through R5's API, on mocks: request → follow-up questions → `TaskSpec` → 3 concurrent mock calls → `CallResult`s stored → quotes → comparison → every event in order over SSE → R7's UI, with no manual refresh. One failed call doesn't stop the other two. (This is Gate A-mock and Gate B-mock) |
+| **Sat 7 Nov** | **Integrated mock MVP** | Through R5's API, on mocks: request → follow-up questions → `TaskSpec` → 3 concurrent mock calls → `CallResult`s stored → quotes → comparison → every event in order over SSE → R7's UI, with no manual refresh. One failed call doesn't stop the other two. Mocks stand in for any component that isn't ready: the MVP doesn't require every role's component to be complete. (This is Gate A-mock and Gate B-mock) |
 | **Thu 12 Nov** | Full integration checkpoint + **Gate C** | Every component that needs no API key is real; mocks remain only where a key is missing. Gate C decided (below) |
 | **Sat 14 Nov** | **Feature freeze** | Bug fixes only. Real providers may still be activated and validated afterwards under the policy in §4 |
 | **Wed 18 Nov** | Internal submission-ready target | Final README, metrics, slides, demo and recorded fallback. If keys are still missing, we submit on mocks and **say so plainly**; we claim no metric we didn't measure |
@@ -65,7 +65,9 @@ implement. "Blocked" items wait for API keys (§3).
 - **Sat 7:** your `RetryPolicy` (max one retry after 10 min, calling hours) used by the
   orchestrator in the mock pipeline.
 - **Thu 12:** `docs/telephony.md` test plan (caller ID, number types, outcomes); Unifonic's answer
-  recorded; the call provider written against the interface, tested on saved responses.
+  recorded; the call provider written against the interface. Until we have API access, test it
+  on **representative synthetic responses** (hand-written from Twilio's and ElevenLabs' public
+  docs, marked as synthetic); replace them with saved real responses once keys arrive.
 - **Blocked:** Twilio account, caller-ID test, every real call, reach rate.
 
 ### R5: backend + discovery
@@ -129,7 +131,9 @@ providers are swapped only in R5's startup wiring; mock results are never report
 1. Key goes in `.env`, never in git. R1 checks the spend against the $500 budget first.
 2. Write the adapter in your own folder, implementing the interface; validate its output with
    `app.contracts.validate`.
-3. Test it without the network on a saved response (no personal data). CI never calls a paid API.
+3. Test it without the network on a saved response (no personal data). Before access, a
+   representative synthetic response built from the provider's docs is fine; swap in a real
+   one when you have it. CI never calls a paid API.
 4. Smoke test by hand, behind a flag, to allowlisted numbers only.
 5. Switch it on in R5's wiring (`PROVIDER_MODE=mock|real`, mock by default; real mode refuses to
    start without its keys). Mocks stay for CI, demos and the recorded fallback.
