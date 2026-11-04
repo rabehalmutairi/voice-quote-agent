@@ -56,6 +56,7 @@ JSON Schema validates shape, not meaning. These rules are enforced in code, and 
 | Events for a task have increasing `seq` with no gaps | Orchestrator (R1) numbers them as it emits; Backend (R5) stores and streams them in that order |
 | The ElevenLabs speaker `user` is converted to `shop` | Voice (R2), at the boundary |
 | No call is placed while `TaskSpec.missing_slots` is non-empty | Orchestrator (R1) |
+| `CallJob.custom_questions` and `dynamic_variables` ask for no action (booking, payment) and carry no obvious personal data (phones, emails, IDs) | Planner + orchestrator (R1, `app/planner/policy.py`), best-effort; the voice agent's instructions (R2) are the backstop |
 | Every value matches its field's type in the template, uses only that template's `offer_fields` / `quote_fields`, covers every `required_field`, and has `value_min` ≤ `value_max` | R6 (`template_problems` in `tests/contracts` is a starting point) |
 | Each `answers[i].summary_ar` is faithful to its evidence quotes | R3 measures it in the eval; code can't check it |
 | The agent never denies being an AI when asked (ADR 001) | R2 scenario test |

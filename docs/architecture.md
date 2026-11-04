@@ -5,7 +5,7 @@
 > If you use an AI coding assistant, give it this file first (see §12).
 
 Team 2 · Tuwaiq Club AI Track · King Saud University
-Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **KSU Week 13 (Nov 15–21)** · Tuwaiq showcase: **Thu 10 Dec 2026** · Last updated: 3 Nov 2026
+Lead: Rabeh · Feature freeze: **Sat 14 Nov 2026** (end of KSU Week 12) · Submission: **end of KSU Week 13, provisionally Thu 19 Nov** (internal target Wed 18 Nov) · Tuwaiq showcase: **Thu 10 Dec 2026** · Last updated: 3 Nov 2026
 
 > **Mock-first (from 3 Nov):** our API subscriptions (ElevenLabs, Twilio, Google Places, LLM) are
 > delayed. We build everything against mock providers behind fixed interfaces and swap in the real
@@ -303,7 +303,7 @@ Roles were assigned on 27 Oct 2026. The GitHub handle is for assigning PR review
 - **Planner:** request text → `TaskSpec` with a strong LLM in JSON mode; returns follow-up questions from the template when slots are missing; keeps up to 2 of the user's own questions as `custom_questions`; refuses out-of-scope requests (booking, hospitals, open diagnosis) with a clear message.
 - **Orchestrator:** task state machine (`created → needs_input → discovering → calling → extracting → done | failed`), launches up to 3 calls in parallel, emits events (§6.7), retries per R4's rules, stops a task that runs over budget or time.
 - Decision records in `/docs/decisions/` (voice platform, queue, car-stretch go/no-go).
-**First milestone (Week 10, Thu 29 Oct):** request → `TaskSpec` → one controlled call → transcript back (§10 Gate A). *Real call blocked by API access; mock version Thu 5 Nov (`docs/mock-first-plan.md`).*
+**First milestone (Week 10, Thu 29 Oct):** request → `TaskSpec` → one controlled call → transcript back (§10 Gate A). *Real call blocked by API access; mock version Sat 7 Nov (`docs/mock-first-plan.md`).*
 **Done when:** a request runs end-to-end on fixtures (no real calls) and the UI receives every event in order.
 **Not your job:** writing other roles' code. Review it, unblock it, integrate it.
 
@@ -418,8 +418,9 @@ the long tail cheaply.
 
 ## 10. Plan, gates and integration rhythm
 
-**Deadline: submission in KSU Week 13 (Nov 15–21).** The exact submission day is confirmed
-with the AI track leader; we aim to be **submission-ready by Wed 18 Nov** either way.
+**Deadline: submission at the end of KSU Week 13, provisionally Thu 19 Nov** (Week 13 is
+Nov 15–21; the exact day is being confirmed with the AI track leader). We aim to be
+**submission-ready by Wed 18 Nov** (internal target) either way.
 
 **Principle:** Week 9 is light setup only. Week 10 proves one minimal working call while
 every other role builds against the contracts. Weeks 11–12 bring the full system together.
@@ -440,7 +441,7 @@ part isn't merged, it doesn't exist yet. Blocked for more than a day → tell R1
 |---|---|---|
 | **9** | Oct 18–24 | **Light setup only:** roles, repo, architecture read-through, account/API requests if convenient |
 | **10** | Oct 25–31 | **Minimal working call:** user request → `TaskSpec` → one controlled call → transcript returned. All other roles start their components against fixtures |
-| **11** | Nov 1–7 | *Mock-first from 3 Nov: Thu 5 Nov checkpoint, Sat 7 Nov mock integration (see the plan).* **Core components come together:** discovery + backend, full voice flow, telephony outcomes, extraction + evidence on real transcripts, live UI; from one call to 3 parallel calls; speech benchmark |
+| **11** | Nov 1–7 | *Mock-first from 3 Nov: Thu 5 Nov checkpoint, Fri 6 Nov first PRs, Sat 7 Nov integrated mock MVP (see the plan).* **Core components come together:** discovery + backend, full voice flow, telephony outcomes, extraction + evidence on real transcripts, live UI; from one call to 3 parallel calls; speech benchmark |
 | **12** | Nov 8–14 | **Full integration:** 3 parallel calls → extraction → evidence check → comparison / can't-compare → live UI; evaluation runs on ≥50 labelled calls; reliability fixes. **Feature freeze Sat 14 Nov** |
 | **13** | Nov 15–21 | **Submission:** final metrics, README, architecture diagram, presentation, live demo + recorded fallback, bug fixes only |
 
@@ -479,16 +480,16 @@ fallback video**; bug fixes only, no new features.
 ### Gates (decisions with numbers, recorded in `/docs/decisions/`)
 
 > **Status 3 Nov:** Gate A and Gate B (real) are **blocked pending API access, not passed**. Mock
-> versions: Gate A-mock Thu 5 Nov, Gate B-mock Sat 7 Nov. Until real tests exist, the voice stack stays
+> versions: Gate A-mock and Gate B-mock, both Sat 7 Nov. Until real tests exist, the voice stack stays
 > ElevenLabs (§4); see `docs/mock-first-plan.md` §6.
 
 - **Gate A, Thu 29 Oct → "we can make a call":** one controlled call completes and its transcript is stored against a `TaskSpec`. If it fails, R1/R2/R4/R5 fix it first thing Sunday 1 Nov; everyone else keeps building on fixtures.
 - **Gate B, Tue 3 Nov → voice stack:** stay on ElevenLabs if the real test calls work and Scribe's number accuracy on phone-quality clips is acceptable. Otherwise switch to Vapi/Retell with Deepgram `ar-SA`, after confirming that platform actually accepts `ar-SA` (one Vapi support thread showed it rejected). With this calendar, any switch must be decided by Tue 3 Nov, and only on clear evidence; after that date the stack is final.
 - **Gate C, Thu 12 Nov → car stretch:** only if the full electronics and stock-check workflows run end-to-end and, on the labelled calls, critical-field accuracy is ≥ 85% and hallucination ≤ 2% (team confirms the exact bar in Week 11). Cars = a new template + scenario cards only, no engine changes, added only by someone whose own part is done, before the freeze. Otherwise cars are listed as future work in the README.
-- **Feature freeze, Sat 14 Nov:** after this, only bug fixes. A real provider adapter merged and tested
-  on a saved response before the freeze may be switched on afterwards when its key arrives.
-- **Submission-ready, Wed 18 Nov** (KSU Week 13). If real-provider validation is still blocked, the
-  submission says so plainly and reports no metric we didn't measure.
+- **Feature freeze, Sat 14 Nov:** after this, only bug fixes. Real providers may still be activated and
+  validated afterwards under the activation policy (`docs/mock-first-plan.md` §5: smoke test, flag, rollback).
+- **Submission-ready, Wed 18 Nov** (internal target); expected submission end of Week 13, provisionally
+  Thu 19 Nov. If real-provider validation is still blocked, the submission says so plainly and reports no metric we didn't measure.
 - **Tuwaiq showcase, Thu 10 Dec:** separate from the KSU submission. Real-call work that missed the
   submission is finished for the showcase.
 

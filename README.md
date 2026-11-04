@@ -10,7 +10,7 @@ Read these in order. You don't need anything else to start.
 
 1. **This page.**
 2. **[docs/architecture.md](docs/architecture.md)**: only §1–3 (what we build, the flow), §6 (the contracts) and **your own role in §8**. Come back to the rest when you need it.
-3. **[docs/mock-first-plan.md](docs/mock-first-plan.md) §3**: your deliverables for Thu 5 Nov and Sat 7 Nov, and what is blocked.
+3. **[docs/mock-first-plan.md](docs/mock-first-plan.md) §3**: your deliverables for Fri 6 Nov and Sat 7 Nov, and what is blocked.
 4. **[contracts/README.md](contracts/README.md)**: the rules every piece of data follows.
 5. Your row in the table below.
 
@@ -71,4 +71,4 @@ Other scenarios: `all_failed`, `timeout`, `retry`, `provider_error`, `no_shops`.
 
 ## Key dates
 
-**Thu 5 Nov** integration checkpoint · **Sat 7 Nov** full mock integration · **Thu 12 Nov** full integration + Gate C · **Sat 14 Nov** feature freeze · **Wed 18 Nov** submission-ready (KSU Week 13) · **Thu 10 Dec** Tuwaiq showcase (separate)
+**Thu 5 Nov** progress checkpoint · **Fri 6 Nov** everyone's first working PR · **Sat 7 Nov** integrated mock MVP · **Thu 12 Nov** full integration + Gate C · **Sat 14 Nov** feature freeze · **Wed 18 Nov** internal submission-ready · **Thu 19 Nov** expected submission, end of KSU Week 13 (to be confirmed) · **Thu 10 Dec** Tuwaiq showcase (separate)

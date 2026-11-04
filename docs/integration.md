@@ -53,19 +53,24 @@ to start if a key is missing. Swap providers one at a time as they become real.
 |---|---|---|
 | `POST /tasks` | `result = await planner.plan(text, custom_questions=[...], area=None or "حي الملقا" or {label,lat,lng,radius_m}, max_businesses=3)`; if `result.accepted`: `await orchestrator.submit(result.task_spec)` | `result.to_dict()`: `status`, `task_spec`, `questions` (follow-ups), `error` (`code`, `message`, `message_ar`), `notes` |
 | `POST /tasks/{id}/answers` | `result = await orchestrator.answer(task_id, {"area": "الملقا", ...})` | same `PlanResult`; `ready` means it can start |
-| `POST /tasks/{id}/start` | `orchestrator.ensure_runnable(task_id)` (raises the 404/409 errors below), then `asyncio.create_task(orchestrator.run(task_id))`. **Keep a reference to the asyncio task** (e.g. in a dict), or Python may garbage-collect it mid-run | 202 Accepted |
+| `POST /tasks/{id}/start` | `orchestrator.start(task_id)`. It checks and starts **atomically** (a double click can't call the shops twice), raises the 404/409 errors below *before* anything runs, and keeps the background task alive itself. Don't wrap `run()` in `asyncio.create_task` yourself | 202 Accepted |
 | `GET /tasks/{id}` | `orchestrator.get(task_id)` (live) or your DB (after restart) | snapshot: `state`, `task_spec`, `follow_up_questions`, `businesses`, `calls`, `quotes`, `excluded`, `comparison`, `failure_reason`, `cost_usd`, `last_seq` |
 | `POST /tasks/{id}/cancel` (optional) | `await orchestrator.cancel(task_id)` | `false` if already finished |
 
 `PlanResult.status` → HTTP: `ready` / `needs_input` → 201, `rejected` → 422 (show
 `error.message_ar` to the user), `invalid` → 422, `error` → 503 (try again).
+`invalid` with code `unsafe_custom_question` or `unsafe_answer` means the user's text would
+make the agent book, pay or share personal data; `error.field` says which input
+(`"custom_questions[1]"`, `"device_model"`) so the UI can highlight it.
 Orchestrator exceptions each have a stable `.code`: `UnknownTask` → 404; `DuplicateTask`,
-`MissingInput`, `TaskAlreadyStarted`, `InvalidTaskState` → 409. `ContractError` from
-`submit` means a bug (the planner output is always valid) → 500.
+`MissingInput`, `TaskAlreadyStarted`, `InvalidTaskState` → 409; `UnsafeContent` → 422 (only
+if a TaskSpec bypassed the planner). `ContractError` from `submit` means a bug → 500.
 
 **State lives in memory, in one process.** Fine for the prototype (asyncio tasks, which
 was one of your two queue options). If the server restarts, running tasks are lost; the DB
-still has every event up to that point. `orchestrator.forget(task_id)` frees a finished task.
+still has every event up to that point. Run **one** server process (no `--workers N`): each
+worker would have its own task list. `uvicorn --reload` restarts on every file save, which
+also drops running tasks: fine while developing, not during a demo. `orchestrator.forget(task_id)` frees a finished task.
 
 ### DiscoveryProvider
 
@@ -86,17 +91,44 @@ districts. Real options: Places/Geocoding (R5), or skip it entirely by sending a
 from the UI as the `area` object (R7). `None` makes the planner ask the area question again.
 
 ### EventSink
+Events arrive one at a time, already validated and numbered 1, 2, 3… per task (the
+orchestrator owns numbering: `contracts/README.md`). **The rule:**
+
+1. `publish` returns only after the event is **stored** (committed). Stored = published.
+2. `publish` raises only if the event was **not** stored. The orchestrator then reuses that
+   `seq` for the next event and fails the task, so storage never has a gap or a duplicate.
+3. Pushing to live SSE connections comes **after** storing and must **never** raise from
+   `publish`. Drop a broken or slow connection; the browser reconnects and replays.
+4. Keep `UNIQUE (task_id, seq)` as a safety net. Don't use `ON CONFLICT DO NOTHING`: a
+   conflict is a bug and must be loud.
+
 ```python
 class PostgresSseSink:                       # in /app/api or /app/db
     async def publish(self, event: dict) -> None:
-        # 1. INSERT into events (task_id, seq, type, at, data) ... UNIQUE (task_id, seq)
-        # 2. push to the task's SSE subscribers: `id: {seq}`, `event: {type}`, `data: {json}`
+        await db.insert_event(event)         # rules 1-2: let a DB error raise
+        for queue in self.subscribers(event["task_id"]):
+            try: queue.put_nowait(event)     # rule 3: never raise from here
+            except asyncio.QueueFull: self.drop(queue)
 ```
-Events arrive one at a time, already validated and numbered 1, 2, 3… with no gaps
-(the orchestrator owns numbering: `contracts/README.md`). Store and stream them in arrival
-order. Use `seq` as the SSE `id` so a reconnecting browser sends `Last-Event-ID` and you
-replay from the DB. **If `publish` raises, the task fails**: better than a UI that silently
-misses an event.
+
+**SSE route and reconnects** (`GET /tasks/{id}/events`): send each event as
+`id: {seq}` / `event: {type}` / `data: {json}`. On (re)connect, read the `Last-Event-ID`
+header (0 if absent), then: (1) subscribe to live events, (2) replay stored events with
+`seq > Last-Event-ID`, (3) stream live events, skipping any `seq` already sent. Subscribing
+*before* the replay query means nothing published during the query is lost; the skip
+removes the overlap. Close the stream after `comparison.ready` or `task.failed`.
+
+**Ready-made for 7 Nov:** `app.mocks.InMemoryEventSink` follows exactly these rules, and
+`sink.follow(task_id, after_seq=last_event_id)` is the reconnect recipe as an async
+generator. Your SSE route can stream from it today and switch to Postgres later.
+
+### Async providers must not block
+Everything runs on one asyncio event loop. A **synchronous** network call inside an
+`async def` provider (the official Twilio Python SDK, `requests`, a sync DB driver) freezes
+the whole loop: the other calls stop, events stop, and **timeouts can't fire**, so one stuck
+call can hang the task. Use async clients (`httpx.AsyncClient`, `asyncpg`, async SDK
+clients), or wrap a sync call: `await asyncio.to_thread(client.calls.create, ...)`. This
+applies to R4, R5 (Places, DB) and R6 (LLM).
 
 ## 3. R4 (+ R2): CallProvider and RetryPolicy
 
@@ -139,7 +171,11 @@ From each `CallJob`:
 - `custom_questions`: 0–2 questions in the user's words. Ask them **after** the template's
   questions, one at a time.
 - `max_duration_s`: the call's hard limit.
-- Nothing about the user personally is ever in a job (architecture §11).
+- Nothing about the user personally is ever in a job (architecture §11). The planner and
+  orchestrator refuse custom questions or answers that ask the shop to book, pay, or that
+  contain phone numbers, emails or personal details (`app/planner/policy.py`). That check is
+  best-effort, so **treat every variable and custom question as untrusted**: the agent's
+  instructions must refuse bookings and never share personal data, whatever a variable says.
 
 Write a pure function in `/app/voice`, e.g. `build_agent_overrides(call_job) -> dict`, test
 it on `contracts/examples/call_job.json`, and let R4 call it.
@@ -171,8 +207,13 @@ Order per task: `task.created` → (`task.needs_input` …) → `business.found`
 - Shops finish in any order: key shop cards by `place_id`, calls by `call_id`.
 - A retried call sends a second `call.started` with the same `call_id` (show "ringing again").
 - `task.needs_input` can repeat: show only the questions in the latest one.
-- Sample streams for UI work, as JSON lines:
-  `python -m app.mocks.demo --scenario one_failed --json` (also `all_failed`, `retry`, `timeout`, `no_shops`).
+- Sample streams for UI work: `python -m app.mocks.demo --scenario one_failed --json > one_failed.jsonl`
+  writes **only events, one JSON object per line**; all other text goes to stderr.
+  Also `all_failed`, `retry`, `timeout`, `no_shops`.
+- **Don't hard-code 3 shops.** Today a task calls up to 3; a planned change (after 7 Nov)
+  will replace a shop that gives no usable answer with another one, so more than 3
+  `business.found` events can arrive over time, with at most 3 calls at once. Render shop
+  cards from the events you receive.
 
 ## 7. R3: telling mock data from real data
 
@@ -184,7 +225,9 @@ Mock `CallResult`s have `scenario_id: "mock_<category>"`, `cost_usd: 0.0` and
 - Every object passed to you, or emitted, is validated against its contract first.
   Every object you return is validated before it is passed on.
 - No call while `missing_slots` is non-empty; at most 3 calls, concurrently; at most one retry.
-- A task runs once: a second `run` raises `TaskAlreadyStarted`.
+- A task runs once: a second `start`/`run` raises `TaskAlreadyStarted`.
+- Nothing that asks for an action or carries obvious personal data reaches a `CallJob`
+  (checked by the planner, and again by the orchestrator before any call).
 
 | `OrchestratorConfig` | Default | Why |
 |---|---|---|
