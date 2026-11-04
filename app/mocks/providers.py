@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import copy
 import json
+import logging
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -26,6 +27,8 @@ from pathlib import Path
 import yaml
 
 from app.contracts import CONTRACTS_DIR, timestamp
+
+log = logging.getLogger(__name__)
 
 CALLS_PATH = Path(__file__).parent / "fixtures" / "calls.yaml"
 EXAMPLES_DIR = CONTRACTS_DIR / "examples"
@@ -303,17 +306,78 @@ class MockComparator:
         }
 
 
+FINAL_EVENTS = frozenset({"comparison.ready", "task.failed"})
+
+
 @dataclass
 class InMemoryEventSink:
-    """Keeps every event in a list. `on_event` (optional) is called for each, e.g. to print."""
+    """Reference EventSink: what R5's Postgres + SSE sink must guarantee, in memory.
+
+    - `publish` STORES the event first. Storing is what makes the publish succeed.
+    - Then it pushes the event to live subscribers. That part is best-effort and can never
+      make `publish` raise: a subscriber that can't keep up is dropped, and it catches up
+      by reconnecting with its last `seq` (`follow(task_id, after_seq)`).
+    - `on_event` (optional) is called for each stored event, e.g. to print. Its errors are
+      logged and ignored for the same reason.
+
+    Good enough for the mock MVP (one process); R5 swaps the list for a table.
+    """
 
     events: list[dict] = field(default_factory=list)
     on_event: Callable[[dict], None] | None = None
+    queue_size: int = 100
+    _subscribers: dict[str, set[asyncio.Queue]] = field(default_factory=dict, repr=False)
 
     async def publish(self, event: dict) -> None:
-        self.events.append(copy.deepcopy(event))
+        self.events.append(copy.deepcopy(event))  # 1. durable step: after this, the event exists
+        for queue in list(self._subscribers.get(event["task_id"], ())):  # 2. best-effort fan-out
+            try:
+                queue.put_nowait(copy.deepcopy(event))
+            except asyncio.QueueFull:
+                self._subscribers[event["task_id"]].discard(queue)  # it will reconnect and replay
         if self.on_event:
-            self.on_event(event)
+            try:
+                self.on_event(event)
+            except Exception:
+                log.exception("on_event callback failed; event %s is stored anyway", event["seq"])
 
     def for_task(self, task_id: str) -> list[dict]:
         return [e for e in self.events if e["task_id"] == task_id]
+
+    def replay(self, task_id: str, after_seq: int = 0) -> list[dict]:
+        """Stored events with seq > after_seq, in order: what an SSE reconnect sends first."""
+        return [copy.deepcopy(e) for e in self.for_task(task_id) if e["seq"] > after_seq]
+
+    async def follow(self, task_id: str, after_seq: int = 0):
+        """Every event after `after_seq`, then live ones, each exactly once and in order;
+        stops after the task's final event. This is the SSE reconnect recipe
+        (`after_seq` = the browser's Last-Event-ID):
+
+        1. subscribe first, so nothing published during step 2 is missed;
+        2. replay what is stored after `after_seq`;
+        3. stream live events, skipping any seq already sent.
+        """
+        subscribers = self._subscribers.setdefault(task_id, set())
+        queue: asyncio.Queue = asyncio.Queue(self.queue_size)
+        subscribers.add(queue)
+        last = after_seq
+        try:
+            pending = self.replay(task_id, after_seq)
+            while True:
+                for event in pending:
+                    if event["seq"] <= last:
+                        continue  # already sent
+                    last = event["seq"]
+                    yield event
+                    if event["type"] in FINAL_EVENTS:
+                        return
+                if queue not in subscribers and queue.empty():
+                    # We were dropped for being slow and have drained what we had:
+                    # subscribe again, then catch up from storage (same recipe as a reconnect).
+                    queue = asyncio.Queue(self.queue_size)
+                    subscribers.add(queue)
+                    pending = self.replay(task_id, last)
+                    continue
+                pending = [await queue.get()]
+        finally:
+            self._subscribers.get(task_id, set()).discard(queue)

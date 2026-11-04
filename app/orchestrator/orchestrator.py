@@ -2,7 +2,8 @@
 
     submit(task_spec)  -> task.created (+ task.needs_input if slots are missing)
     answer(id, ...)    -> fills missing slots through the planner
-    run(id)            -> discovering -> calling -> extracting -> done | failed
+    start(id)          -> runs it in the background: discovering -> calling -> extracting -> done | failed
+    run(id)            -> the same, but waits for the end (tests, scripts)
     cancel(id)         -> stops a task; it ends in `failed` with reason "cancelled"
 
 During `run`, each shop gets its own branch, and the branches run concurrently:
@@ -46,6 +47,7 @@ from app.orchestrator.interfaces import (
 )
 from app.orchestrator.states import TaskState, check_transition
 from app.planner import NEEDS_INPUT, Planner, PlanResult
+from app.planner.policy import check_outbound
 
 log = logging.getLogger(__name__)
 
@@ -109,6 +111,12 @@ class TaskAlreadyStarted(OrchestratorError):
 
 class InvalidTaskState(OrchestratorError):
     code = "invalid_task_state"
+
+
+class UnsafeContent(OrchestratorError):
+    """The TaskSpec holds something that must never be said to a shop (app/planner/policy.py)."""
+
+    code = "unsafe_content"
 
 
 class _TaskFailed(Exception):
@@ -183,6 +191,7 @@ class Orchestrator:
         self._clock = clock
         self._new_call_id = new_call_id
         self._tasks: dict[str, _Task] = {}
+        self._running: set[asyncio.Task] = set()  # strong refs: asyncio only keeps weak ones
 
     # -- public API ----------------------------------------------------------------
 
@@ -194,6 +203,9 @@ class Orchestrator:
         if task_id in self._tasks:
             raise DuplicateTask(f"task {task_id} already exists")
         self._planner.template(task_spec["category"])  # KeyError if no such template
+        problems = check_outbound(task_spec["slots"], task_spec["custom_questions"])
+        if problems:  # the planner refuses these; this catches a TaskSpec built elsewhere
+            raise UnsafeContent("; ".join(f"{field}: {issue.detail}" for field, issue in problems))
         task = _Task(spec=copy.deepcopy(task_spec))
         self._tasks[task_id] = task  # registered before any await, so a second submit fails
 
@@ -226,19 +238,45 @@ class Orchestrator:
                 self._transition(task, TaskState.CREATED)
             return result
 
-    async def run(self, task_id: str) -> dict:
-        """Run the task to the end and return its final snapshot.
+    def start(self, task_id: str) -> asyncio.Task:
+        """Start the task in the background and return its asyncio.Task. For R5's POST /start.
 
-        Raises MissingInput while slots are missing (no call is placed), and
-        TaskAlreadyStarted if the task is running or finished. Everything that goes
-        wrong after that ends the task in `failed` with a task.failed event, not an
-        exception, except cancellation, which is re-raised after cleanup.
+        Atomic: the checks and the state change happen with no `await` in between, so a
+        second start (or run) raises TaskAlreadyStarted instead of calling the shops twice.
+        Raises UnknownTask, TaskAlreadyStarted or MissingInput before anything is scheduled.
+        The orchestrator keeps a reference to the returned task until it finishes, so it
+        can't be garbage-collected mid-run. Call it from inside the running event loop
+        (any FastAPI `async def` route is).
         """
         task = self._get(task_id)
         self.ensure_runnable(task_id)
-        # Changing state before the first await makes a second run() call fail above.
+        loop = asyncio.get_running_loop()  # RuntimeError outside a loop, before any state change
         self._transition(task, TaskState.DISCOVERING)
-        task.runner = asyncio.current_task()
+        coro = self._execute(task)
+        try:
+            runner = loop.create_task(coro, name=f"task-{task_id}")
+        except BaseException:
+            coro.close()
+            # Nothing ran: undo the state change so the task can be started again. This is the
+            # only place a task goes back from `discovering`, so it bypasses the state machine.
+            task.state = TaskState.CREATED
+            task.history.pop()
+            raise
+        task.runner = runner
+        self._running.add(runner)
+        runner.add_done_callback(lambda done: self._runner_done(task, done))
+        return runner
+
+    async def run(self, task_id: str) -> dict:
+        """Start the task and wait for it to finish; returns the final snapshot.
+
+        Same checks as start(). Everything that goes wrong after the start ends the task in
+        `failed` with a task.failed event, not an exception. Cancelling the caller cancels
+        the task (it ends in `failed`, reason "cancelled") and re-raises CancelledError.
+        """
+        return await self.start(task_id)
+
+    async def _execute(self, task: _Task) -> dict:
         try:
             async with asyncio.timeout(self.config.task_timeout_s):
                 await self._pipeline(task)
@@ -250,18 +288,27 @@ class Orchestrator:
             await self._fail(task, "cancelled")
             raise
         except Exception as exc:  # a bug or a broken event sink: never leave a task half-running
-            log.exception("task %s crashed", task_id)
+            log.exception("task %s crashed", task.spec["task_id"])
             while isinstance(exc, ExceptionGroup):  # raised inside a call branch: name the real cause
                 exc = exc.exceptions[0]
             await self._fail(task, f"internal error ({type(exc).__name__})")
-        finally:
+        return self.get(task.spec["task_id"])
+
+    def _runner_done(self, task: _Task, runner: asyncio.Task) -> None:
+        self._running.discard(runner)
+        if task.runner is runner:
             task.runner = None
-        return self.get(task_id)
+        if runner.cancelled() and not task.state.is_final:
+            # Cancelled before its first step, so _execute never ran its cleanup: do it now.
+            cleanup = asyncio.get_running_loop().create_task(self._fail(task, "cancelled"))
+            self._running.add(cleanup)
+            cleanup.add_done_callback(self._running.discard)
+        elif not runner.cancelled() and runner.exception() is not None:
+            log.error("task %s runner crashed", task.spec["task_id"], exc_info=runner.exception())
 
     def ensure_runnable(self, task_id: str) -> None:
-        """Raise what run() would raise before it starts: UnknownTask, TaskAlreadyStarted
-        (running or finished) or MissingInput. Lets R5 answer POST /start with a 409 before
-        scheduling run() in the background."""
+        """Raise what start() would raise: UnknownTask, TaskAlreadyStarted (running or
+        finished) or MissingInput. A read-only check, e.g. to grey out a Start button."""
         task = self._get(task_id)
         if task.state not in (TaskState.CREATED, TaskState.NEEDS_INPUT):
             raise TaskAlreadyStarted(f"task {task_id} is {task.state.value}")
@@ -274,7 +321,7 @@ class Orchestrator:
         if task.state.is_final:
             return False
         if task.runner is not None:
-            task.runner.cancel()  # run() catches it, emits task.failed and re-raises
+            task.runner.cancel()  # the runner emits task.failed (see _execute / _runner_done)
         else:
             await self._fail(task, "cancelled")
         return True
@@ -313,6 +360,10 @@ class Orchestrator:
     async def _pipeline(self, task: _Task) -> None:
         template = self._planner.template(task.spec["category"])
         self._check_call_variables(task.spec, template)
+        problems = check_outbound(task.spec["slots"], task.spec["custom_questions"])
+        if problems:  # last check before anything is said to a shop
+            fields = ", ".join(field for field, _ in problems)
+            raise _TaskFailed(f"refused before calling: {fields} failed the outbound content check")
 
         businesses = await self._discover(task)
         if not businesses:

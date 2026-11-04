@@ -6,7 +6,7 @@ no real numbers, no cost).
     python -m app.mocks.demo
     python -m app.mocks.demo --scenario one_failed
     python -m app.mocks.demo --request "عندكم آيفون 16 في العليا؟"
-    python -m app.mocks.demo --scenario all_failed --json      # print raw events as JSON
+    python -m app.mocks.demo --scenario all_failed --json > events.jsonl   # events only, JSON Lines
 
 Scenarios: see app/mocks/scenarios.py.
 """
@@ -62,17 +62,24 @@ async def run_demo(
     *,
     speed: float = 1.0,
     out=None,
+    err=None,
     as_json: bool = False,
 ) -> dict:
-    """Run one full mock task. Prints to `out` (None = silent). Returns plan, final task and events."""
-    say = (lambda *a: print(*a, file=out)) if out else (lambda *a: None)
+    """Run one full mock task and return the plan, final task and events.
+
+    Text output goes to `out` (None = silent). With `as_json`, `out` gets ONLY the events,
+    one JSON object per line (JSON Lines), and every human-readable line goes to `err`.
+    """
+    text_out = err if as_json else out
+    say = (lambda *a: print(*a, file=text_out)) if text_out else (lambda *a: None)
     custom_questions = [DEFAULT_QUESTION] if custom_questions is None else custom_questions
     clock = {"start": time.monotonic()}
     names: dict[str, str] = {}
 
     def show(event: dict) -> None:
         if as_json:
-            say(json.dumps(event, ensure_ascii=False))
+            if out:
+                print(json.dumps(event, ensure_ascii=False), file=out, flush=True)
         else:
             elapsed = time.monotonic() - clock["start"]
             say(f"  +{elapsed:5.2f}s  #{event['seq']:<3}{event['type']:<17}{_describe(event, names)}")
@@ -138,14 +145,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-question", action="store_true", help="no custom questions")
     parser.add_argument("--area", default=DEFAULT_AREA, help="answer to the area question if asked")
     parser.add_argument("--speed", type=float, default=1.0, help="scale fake call durations (0 = instant)")
-    parser.add_argument("--json", action="store_true", help="print raw events as JSON lines")
+    parser.add_argument("--json", action="store_true",
+                        help="stdout: events only, one JSON object per line; everything else goes to stderr")
     args = parser.parse_args(argv)
 
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")  # Arabic on the Windows console
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")  # Arabic on the Windows console
     questions = [] if args.no_question else args.question
     result = asyncio.run(
-        run_demo(args.scenario, args.request, questions, args.area, speed=args.speed, out=sys.stdout, as_json=args.json)
+        run_demo(
+            args.scenario, args.request, questions, args.area,
+            speed=args.speed, out=sys.stdout, err=sys.stderr, as_json=args.json,
+        )
     )
     task = result["task"]
     return 0 if task is not None and task["state"] in ("done", "failed") else 1

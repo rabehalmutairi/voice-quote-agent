@@ -27,6 +27,7 @@ from typing import Protocol
 
 from app.contracts import contract_errors, load_templates, timestamp, validate
 from app.planner.parser import OUT_OF_SCOPE_REASONS, ParsedRequest, RequestParser
+from app.planner.policy import check_outbound
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class PlanError:
     code: str
     message: str
     message_ar: str | None = None  # set when the message is meant for the end user
+    field: str | None = None  # which input was refused, e.g. "custom_questions[1]" or "device_model"
 
 
 @dataclass(frozen=True)
@@ -141,6 +143,9 @@ class Planner:
         questions, problem = _clean_custom_questions(custom_questions)
         if problem:
             return problem
+        unsafe = _unsafe(check_outbound({}, questions), "unsafe_custom_question")
+        if unsafe:
+            return unsafe
 
         if isinstance(max_businesses, bool) or not isinstance(max_businesses, int) or not 1 <= max_businesses <= 3:
             return _invalid("invalid_max_businesses", "max_businesses must be an integer from 1 to 3")
@@ -195,11 +200,16 @@ class Planner:
         if resolved_area is None:
             resolved_area = await self._resolve_area(area_text or parsed.area_text, notes)
 
+        slots = _clean_slots(template, parsed.slots)
+        unsafe = _unsafe(check_outbound(slots, []), "unsafe_answer")
+        if unsafe:
+            return unsafe
+
         spec = {
             "task_id": self._new_task_id(),
             "category": parsed.category,
             "request_text": text,
-            "slots": _clean_slots(template, parsed.slots),
+            "slots": slots,
             "custom_questions": questions,
             "area": resolved_area,
             "max_businesses": max_businesses,
@@ -249,6 +259,9 @@ class Planner:
                     return _invalid("invalid_answers", f"answer to {key!r} must be text")
                 if value.strip():
                     spec["slots"][key] = value.strip()[:MAX_ANSWER_CHARS]
+        unsafe = _unsafe(check_outbound(spec["slots"], []), "unsafe_answer")
+        if unsafe:
+            return unsafe
         return self._finish(spec, template, notes)
 
     def questions_for(self, category: str, missing_slots: Iterable[str]) -> list[dict]:
@@ -297,6 +310,18 @@ class Planner:
         if area is None:
             notes.append("area_not_found")
         return copy.deepcopy(area)
+
+
+def _unsafe(problems: list, code: str) -> PlanResult | None:
+    """An `invalid` result for the first outbound-policy problem, or None."""
+    if not problems:
+        return None
+    field_name, issue = problems[0]
+    message, message_ar = OUT_OF_SCOPE_REASONS[issue.reason]
+    return PlanResult(
+        status=INVALID,
+        error=PlanError(code, f"{field_name}: contains {issue.detail}. {message}", message_ar, field_name),
+    )
 
 
 def _clean_custom_questions(raw: object) -> tuple[list[str], PlanResult | None]:

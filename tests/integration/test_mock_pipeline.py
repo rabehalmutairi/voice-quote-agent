@@ -100,3 +100,28 @@ def test_demo_command_prints_a_summary():
 def test_demo_cli_exit_code(capsys):
     assert main(["--scenario", "all_failed", "--speed", "0"]) == 0
     assert "task.failed" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("scenario", ["default", "one_failed", "all_failed", "no_shops"])
+def test_json_mode_stdout_is_pure_json_lines(scenario):
+    # Run the real command, as R7 would, and parse stdout line by line.
+    import json
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    proc = subprocess.run(
+        [sys.executable, "-m", "app.mocks.demo", "--json", "--speed", "0", "--scenario", scenario],
+        cwd=root, capture_output=True, encoding="utf-8", env=env, timeout=60,
+    )
+    assert proc.returncode == 0, proc.stderr
+    lines = proc.stdout.splitlines()
+    assert lines, "no events on stdout"
+    events = [json.loads(line) for line in lines]  # fails on any non-JSON line
+    for event in events:
+        assert contract_errors("event", event) == []
+    assert [e["seq"] for e in events] == list(range(1, len(events) + 1))
+    assert "MOCK MODE" in proc.stderr  # the human-readable text still exists, on stderr

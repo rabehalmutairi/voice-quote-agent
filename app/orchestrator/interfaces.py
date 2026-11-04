@@ -72,10 +72,22 @@ class Comparator(Protocol):
 
 
 class EventSink(Protocol):
-    """R5: stores each event and streams it to the UI over SSE (`seq` = SSE event id).
+    """R5: stores each event, then streams it to the UI over SSE (`seq` = SSE event id).
 
-    Events arrive one at a time, already numbered with no gaps. Store them in that order.
-    Raising here stops the task: we'd rather fail than let the UI miss an event.
+    Events arrive one at a time, already validated and numbered 1, 2, 3... per task.
+
+    The rule (the orchestrator's "no gaps" guarantee depends on it):
+    - `publish` returns ONLY after the event is durably stored (committed).
+    - `publish` raises ONLY if the event was NOT stored. The orchestrator then gives the
+      next event the same `seq`, so storage never has a gap or a duplicate, and the task
+      fails (we'd rather stop than let the UI miss an event).
+    - Pushing to live SSE connections happens after storing and must NEVER raise from
+      `publish`: a broken or slow connection is dropped, and the browser reconnects with
+      `Last-Event-ID` and gets the missed events replayed from storage.
+    - Keep a UNIQUE (task_id, seq) constraint as a safety net, but don't use
+      "ON CONFLICT DO NOTHING": a conflict means a bug and must be loud.
+
+    Reference implementation: app.mocks.InMemoryEventSink (`publish`, `replay`, `follow`).
     """
 
     async def publish(self, event: dict) -> None: ...

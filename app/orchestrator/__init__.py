@@ -18,6 +18,7 @@ from app.orchestrator.orchestrator import (
     OrchestratorError,
     TaskAlreadyStarted,
     UnknownTask,
+    UnsafeContent,
 )
 from app.orchestrator.states import ALLOWED_TRANSITIONS, InvalidTransition, TaskState, check_transition
 
@@ -40,5 +41,6 @@ __all__ = [
     "TaskAlreadyStarted",
     "TaskState",
     "UnknownTask",
+    "UnsafeContent",
     "check_transition",
 ]
