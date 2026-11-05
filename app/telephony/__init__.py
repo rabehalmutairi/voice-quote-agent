@@ -6,21 +6,27 @@
 - outcomes.py: Twilio + ElevenLabs call status -> our `outcome` value.
 - calling_hours.py: shop hours in Riyadh, prayer times, Friday morning.
 - retry.py: R4RetryPolicy, at most one retry after 10 minutes, within calling hours.
+- provider.py: TwilioElevenLabsCalls, the real CallProvider (not activated yet: needs keys
+  and a live smoke test, plan §4). http.py is its dependency-free HTTP layer.
 
-Coming next: the CallProvider (Thu 12 Nov).
-See docs/mock-first-plan.md (R4) and docs/integration.md §3.
+See docs/telephony.md, docs/mock-first-plan.md (R4) and docs/integration.md §3.
 """
 
 from app.telephony.allowlist import Allowlist, NumberNotAllowed, mask
 from app.telephony.calling_hours import blocked, is_callable
 from app.telephony.outcomes import CallNotFinished, map_outcome, shop_spoke
+from app.telephony.provider import MissingSetting, OutsideCallingHours, TelephonyConfig, TwilioElevenLabsCalls
 from app.telephony.retry import R4RetryPolicy
 
 __all__ = [
     "Allowlist",
     "CallNotFinished",
+    "MissingSetting",
     "NumberNotAllowed",
+    "OutsideCallingHours",
     "R4RetryPolicy",
+    "TelephonyConfig",
+    "TwilioElevenLabsCalls",
     "blocked",
     "is_callable",
     "map_outcome",
