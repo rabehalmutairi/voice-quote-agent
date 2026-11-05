@@ -309,8 +309,6 @@ def test_orchestrator_accepts_its_call_results():
 
 
 def test_orchestrator_timeout_hangs_up_the_call():
-    from dataclasses import replace
-
     shop_1 = mock_businesses()[0]
     ringing = with_status(payload("no_answer")["twilio_call"], "ringing")
     transport = FakeTransport(routes([ringing]))  # never ends: the orchestrator's timeout must stop it
