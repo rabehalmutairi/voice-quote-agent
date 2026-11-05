@@ -183,7 +183,7 @@ def test_voicemail_call():
 
 
 def test_platform_refuses_to_start():
-    started = {"success": False, "message": "agent misconfigured", "conversation_id": None, "callSid": None}
+    started = {"success": False, "message": None, "conversation_id": None, "callSid": None}
     transport = FakeTransport(routes([{}], started=started))
     result = run(provider(transport).place_call(JOB))
     assert result["outcome"] == "failed" and result["conversation_id"] is None

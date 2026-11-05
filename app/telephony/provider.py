@@ -144,7 +144,7 @@ class TwilioElevenLabsCalls:
         started = await self._start(call_job, client_data)
         call_sid, conversation_id = started.get("callSid"), started.get("conversation_id")
         if not started.get("success") or not (call_sid or conversation_id):
-            log.warning("call %s was not started: %s", call_job["call_id"], started.get("message", "")[:200])
+            log.warning("call %s was not started: %s", call_job["call_id"], (started.get("message") or "")[:200])
             return self._result(call_job, "failed", None, None, conversation_id, pre_arranged)
         log.info("call %s started to %s (attempt %d)", call_job["call_id"], mask(number), call_job["attempt"])
 
