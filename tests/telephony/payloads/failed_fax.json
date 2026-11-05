@@ -1,0 +1,20 @@
+{
+  "_note": "SYNTHETIC: hand-written from Twilio's and ElevenLabs' public API docs (Nov 2026), not a saved real response. Replace with a real one (no personal data) once keys arrive.",
+  "about": "a fax machine answered",
+  "expected_outcome": "failed",
+  "twilio_call": {
+    "sid": "CA00000000000000000000000000000001",
+    "account_sid": "AC00000000000000000000000000000000",
+    "to": "+966500000001",
+    "from": "+15005550006",
+    "status": "completed",
+    "direction": "outbound-api",
+    "answered_by": "fax",
+    "start_time": "Thu, 05 Nov 2026 15:01:30 +0000",
+    "end_time": "Thu, 05 Nov 2026 15:02:40 +0000",
+    "duration": "3",
+    "price": null,
+    "price_unit": "USD"
+  },
+  "conversation": null
+}
