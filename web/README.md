@@ -2,6 +2,62 @@
 
 Arabic-first React interface for requesting repair quotes, checking stock, following shop-call events, comparing returned results and inspecting transcript evidence. All application files in this delivery live under `web/`.
 
+## Video walkthrough
+
+Watch the actual mock app in this 33-second silent walkthrough: repair request → tracking → comparison → transcript evidence → Quick Call selection, confirmation and answer. All data is synthetic and no real calls are made. Click the preview to play the MP4.
+
+[![Play the 33-second interface walkthrough](https://github.com/user-attachments/assets/47fd8502-d32e-4c55-b17f-cfa9753d75c4)](https://github.com/user-attachments/assets/475a2a9a-2854-4861-821e-f1b9ca076092)
+
+[▶ Play the full walkthrough — MP4, 33 seconds](https://github.com/user-attachments/assets/475a2a9a-2854-4861-821e-f1b9ca076092)
+
+## Screenshots
+
+### Introduction — desktop, dark theme
+
+![Service introduction with one clearly simulated offer](https://github.com/user-attachments/assets/8ca0671e-d885-41d1-a1c5-8f6c755f5c5f)
+
+<details>
+<summary>Request details and tracking</summary>
+
+![Structured repair request before submitting](https://github.com/user-attachments/assets/ffeda1c0-1ff8-4a53-b622-87fad241f325)
+
+![Tracking the simulated shop calls and their returned states](https://github.com/user-attachments/assets/8e031468-44c8-4a25-9ae2-8851863d10f8)
+
+</details>
+
+<details>
+<summary>Comparison and transcript evidence</summary>
+
+![Returned comparison with partial results and exclusions](https://github.com/user-attachments/assets/47fd8502-d32e-4c55-b17f-cfa9753d75c4)
+
+![Price evidence linked to its exact synthetic shop transcript turn](https://github.com/user-attachments/assets/58918194-4af4-47ac-8315-5a16516f6e67)
+
+</details>
+
+<details>
+<summary>Quick Call — selection, explicit confirmation and result</summary>
+
+![Callable candidates and disabled unified or toll-free numbers](https://github.com/user-attachments/assets/7f6d0221-ecae-401f-b0c4-79444c4db55c)
+
+![Reviewing the selected shop and question before explicitly starting](https://github.com/user-attachments/assets/f6bbb6f2-6a11-4754-bc9e-e6898d59b0ba)
+
+![The scripted A2 printing answer and its evidence](https://github.com/user-attachments/assets/e98a9060-9c4c-4122-b06b-dc21ab8772b8)
+
+</details>
+
+<details>
+<summary>Mobile, light theme and internal mock metrics</summary>
+
+![Mobile introduction in the light theme](https://github.com/user-attachments/assets/bfea04c1-3e07-4d04-9415-d6a6e125b805)
+
+![Populated comparison cards on a narrow mobile screen](https://github.com/user-attachments/assets/971cb464-8456-4f9f-a589-3ef53f0f3e9f)
+
+![Internal metrics explicitly marked as simulated](https://github.com/user-attachments/assets/7f746fa7-7fab-484b-92b6-22bd6f0b8dd9)
+
+</details>
+
+The same screenshots and recording are also available in [pull request #9](https://github.com/rabehalmutairi/voice-quote-agent/pull/9).
+
 ## Delivery status
 
 - Compare Shops runs against local mock tasks, including missing-input, failed, partial and cannot-compare outcomes.
@@ -74,7 +130,3 @@ Each displayed evidence claim must match the indicated shop transcript turn. Unk
 All bundled requests, prices, shops and transcripts are synthetic. No paid provider is called. Keep API keys out of the frontend and all VITE variables; only .env.example belongs in version control. Render external content as text, validate URL protocols and do not log requests, phone numbers or transcripts to analytics. Production HTTP/SSE needs HTTPS and backend authorization. The browser stores only theme preference; drafts/tasks are in memory and clear on reload.
 
 Noto Sans Arabic is distributed locally with its SIL OFL license in public/fonts/OFL-NotoSansArabic.txt. Responsive and keyboard checks target accessible operation; no complete WCAG certification, physical-device run or real screen-reader session is claimed.
-
-## Review media
-
-Additional screenshots and the silent walkthrough are attached directly to [pull request #9](https://github.com/rabehalmutairi/voice-quote-agent/pull/9). They show the mock app's request, tracking, comparison, transcript evidence and Quick Call confirmation flow. The interface itself is unchanged by this media update.
