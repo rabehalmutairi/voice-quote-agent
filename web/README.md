@@ -11,7 +11,7 @@ Arabic-first React interface for requesting repair quotes, checking stock, follo
 - Requests and drafts stay in session memory. Reloading the page starts a new session. Only the theme preference is stored locally.
 - Real HTTP/SSE integration is pending R5's API and R1's approved contract changes. No live calls, external discovery or production metrics are enabled. This meets the first mock-frontend delivery; integrated SSE remains follow-up work.
 
-See [QUICK_CALL.md](QUICK_CALL.md) for the local ADR draft and integration dependencies.
+Quick Call draft details and integration dependencies are documented below.
 
 ## Run locally
 
@@ -37,7 +37,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Latest validation: 141 unit/component tests and 48 desktop/mobile Playwright cases passed, plus lint and production build. Responsive checks include 320–2560px, both themes and 200% text. These are browser checks, not a claim of a complete accessibility audit or physical-device/screen-reader testing. Details: [TESTING.md](TESTING.md).
+Latest validation: 141 unit/component tests and 48 desktop/mobile Playwright cases passed, plus lint and production build. Responsive checks include 320–2560px, both themes and 200% text. These are browser checks, not a claim of a complete accessibility audit or physical-device/screen-reader testing. The tests cover state reduction, malformed/replayed events, request validation, session drafts, explicit confirmation, evidence checks and UI journeys.
 
 ## Review routes
 
@@ -54,9 +54,27 @@ Direct tracking/comparison links without a task show an unavailable state. For a
 
 ## Architecture and scope
 
-React/JavaScript, Vite, React Router, plain CSS, runtime payload validation, event-derived state, separated transport hooks and accessible evidence dialogs. Components do not call backend endpoints directly. Contracts in the repository root remain unchanged. Read [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md) for boundaries.
+React/JavaScript, Vite, React Router, plain CSS, runtime payload validation, event-derived state, separated transport hooks and accessible evidence dialogs. Components do not call backend endpoints directly. Contracts in the repository root remain unchanged. The UI, state reduction and transport layers are separated. New backend adapters must validate snapshots and events before they enter state.
 
 The default locale is `ar-SA` and RTL. Noto Sans Arabic is hosted locally under `public/fonts/` with its OFL license. Screenshots use synthetic data:
 
 - [Desktop introduction](docs/screenshots/landing-desktop.png)
 - [Mobile introduction, light theme](docs/screenshots/landing-mobile.png)
+
+## Integration details
+
+The existing request/answer/start/snapshot/subscribe boundary is ready for a future HTTP + native EventSource adapter. Fixtures use provisional frontend payload schemas. Quick Call's target draft and findCandidates/selectBusiness methods are local ADR previews, pending R1's contract-change PR and R5's candidate/selection endpoints. Do not send the local draft unchanged to the current backend. R1 owns planning and shared contracts; R5 owns HTTP/SSE and discovery; R6 owns live extraction and comparison.
+
+Business selection never starts a call. Only a returned callable candidate can be selected; unified 920 and toll-free 800 numbers are disabled. No chosen business is substituted. One or two explicit questions are supported. UI content checks are best-effort feedback; backend authorization, calling policy and rate limits remain backend responsibilities.
+
+Each displayed evidence claim must match the indicated shop transcript turn. Unknown, missing, unclear and refused values remain distinguishable. Copied summaries preserve option identity, returned ranking and simulation provenance; untraceable values are omitted. Mock metrics derive from synthetic fixture records and do not measure production performance.
+
+## Data and security
+
+All bundled requests, prices, shops and transcripts are synthetic. No paid provider is called. Keep API keys out of the frontend and all VITE variables; only .env.example belongs in version control. Render external content as text, validate URL protocols and do not log requests, phone numbers or transcripts to analytics. Production HTTP/SSE needs HTTPS and backend authorization. The browser stores only theme preference; drafts/tasks are in memory and clear on reload.
+
+Noto Sans Arabic is distributed locally with its SIL OFL license in public/fonts/OFL-NotoSansArabic.txt. Responsive and keyboard checks target accessible operation; no complete WCAG certification, physical-device run or real screen-reader session is claimed.
+
+## Review media
+
+Additional screenshots and the silent walkthrough are attached directly to [pull request #9](https://github.com/rabehalmutairi/voice-quote-agent/pull/9). They show the mock app's request, tracking, comparison, transcript evidence and Quick Call confirmation flow. The interface itself is unchanged by this media update.

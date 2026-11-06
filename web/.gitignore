@@ -14,3 +14,7 @@ AGENTS.md
 .claude/
 UX_REVIEW.md
 design/
+
+# Only README is published as Markdown
+*.md
+!README.md
