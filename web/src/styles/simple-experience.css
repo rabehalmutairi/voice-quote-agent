@@ -1,0 +1,266 @@
+/* Task-first presentation. Loaded after legacy screen styles during migration. */
+.main-content { min-inline-size: 0; }
+.skip-link:not(:focus-visible) { clip-path: inset(50%); inline-size: 1px; block-size: 1px; overflow: hidden; padding: 0; white-space: nowrap; }
+.product-mode, .quick-call { inline-size: min(100%, 48rem); margin-inline: auto; }
+.main-content:has(.product-mode) { padding-block-start: 2rem; }
+.product-mode { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-block: 1.5rem 2rem; }
+.product-mode button { background: var(--surface-raised); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 1rem; text-align: start; min-block-size: 80px; }
+.product-mode button[aria-pressed="true"] { border-color: var(--action-primary); box-shadow: inset 0 -3px var(--action-primary); }
+.product-mode strong, .product-mode span { display: block; }
+.product-mode span { font-size: .85rem; color: var(--text-secondary); margin-block-start: .25rem; }
+.quick-call { padding-block-end: 3rem; color: var(--text-primary); }
+.quick-call header { margin-block: 1.5rem; }
+.quick-call h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.5; margin-block: .3rem .6rem; }
+.quick-call h2 { font-size: 1.2rem; line-height: 1.6; margin-block: .4rem; }
+.quick-call p { line-height: 1.8; }
+.quiet-label, .quiet-note, .simulation-line { color: var(--text-secondary); font-size: .85rem; }
+.simulation-line { padding-block: .65rem; border-block-end: 1px solid var(--border-default); }
+.inquiry-form { display: grid; gap: 1.25rem; }
+.inquiry-form header { margin-block: 0 .5rem; }
+.inquiry-form label, .preview-options label { display: grid; gap: .5rem; color: var(--text-primary); font-weight: 500; }
+.inquiry-form input, .inquiry-form textarea, .inquiry-form select { inline-size: 100%; background: var(--surface-raised); color: var(--text-primary); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: .85rem; font: inherit; min-block-size: 48px; }
+.inquiry-form textarea { resize: vertical; }
+.inquiry-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.inquiry-question { display: grid; gap: .5rem; min-inline-size: 0; }
+.quick-call button { min-block-size: 44px; white-space: normal; }
+.quick-call .primary-button, .quick-call .secondary-button { display: inline-flex; justify-content: center; align-items: center; border-radius: var(--radius-sm); padding: .8rem 1.25rem; }
+.quick-call .text-button { justify-self: start; }
+.preview-options { border-block-start: 1px solid var(--border-default); padding-block: .75rem; }
+.preview-options summary, .answer-evidence summary { cursor: pointer; padding-block: .6rem; min-block-size: 44px; color: var(--text-primary); }
+.preview-options[open] { display: grid; }
+.preview-options label { margin-block-start: 1rem; }
+.candidate-list { padding: 0; list-style: none; border-block-start: 1px solid var(--border-default); }
+.candidate-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1.25rem; border-block-end: 1px solid var(--border-default); }
+.candidate-list p { margin: .25rem 0; font-size: .875rem; color: var(--text-secondary); }
+.candidate-list button { flex-shrink: 0; }
+.quick-call button:disabled { opacity: .5; cursor: not-allowed; }
+.inquiry-review { padding-block: 1rem; border-block: 1px solid var(--border-default); margin-block: 1.5rem; }
+.inquiry-review li { padding-block: .6rem; }
+.inquiry-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.inquiry-answer { border-block-start: 1px solid var(--border-default); padding-block: 1.5rem; }
+.inquiry-answer > p { font-size: 1.15rem; }
+.answer-evidence blockquote { margin-inline: 0; border-inline-start: 3px solid var(--action-primary); padding-inline-start: 1rem; line-height: 1.9; }
+.quick-call :is(button,input,textarea,select,summary):focus-visible, .product-mode button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+/* Give the existing comparison form one reading column and reveal optional fields. */
+.task-entry { max-inline-size: 48rem; margin-inline: auto; display: block; padding-block: 0 2rem; }
+.task-entry .task-entry__intro { display: block; min-block-size: 0; padding: 0; margin-block-end: 1.5rem; }
+.task-entry .task-entry__intro { background: none; border: 0; border-radius: 0; overflow: visible; }
+.task-entry .task-entry__intro::before, .task-entry .task-entry__intro::after, .task-entry .request-form::before { display: none; }
+.task-entry .task-entry__copy { max-inline-size: none; padding: 0; }
+.task-entry .task-entry__copy .eyebrow { display: none; }
+.task-entry h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.5; }
+.task-entry .lead { font-size: 1rem; max-inline-size: none; }
+.task-entry .request-form { margin: 0; padding: 1.5rem; box-shadow: none; border-radius: var(--radius-md); }
+.task-entry .request-form__details { display: grid; grid-template-columns: 1fr 1fr; margin-block: 1rem; }
+.site-header { box-shadow: none; }
+.site-header .brand__tagline { display: none; }
+.site-navigation a { font-size: .875rem; }
+.reference-screen { box-shadow: none; }
+.reference-page__description { max-inline-size: 50rem; }
+.reference-tracking__context { box-shadow: none; }
+.reference-status-grid { gap: 1rem; }
+.reference-status-card { box-shadow: none; }
+@media (max-width: 600px) {
+  .site-header { padding-block: .75rem; }
+  .site-header .site-header__layout { gap: .5rem; }
+  .site-header .brand-mark { inline-size: 2rem; block-size: 2rem; }
+  .site-navigation ul { gap: .2rem .5rem; }
+  .site-navigation a { padding-block: .5rem; }
+  .product-mode { gap: .5rem; margin-block: 1rem 1.5rem; }
+  .product-mode button { padding: .8rem; }
+  .inquiry-fields, .task-entry .request-form__details { grid-template-columns: 1fr; }
+  .candidate-list li { align-items: stretch; flex-direction: column; }
+  .quick-call { padding-inline: .25rem; }
+  .inquiry-actions { flex-direction: column; align-items: stretch; }
+  .task-entry .request-form { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quick-call *, .product-mode * { animation: none !important; transition: none !important; }
+}
+
+/* Wide workspaces, readable text, and a single-column mobile flow. */
+.main-content, .site-header .site-header__layout, .site-footer { inline-size: min(calc(100% - clamp(2rem, 5vw, 6rem)), 90rem); }
+.product-mode, .quick-call, .task-entry { inline-size: 100%; max-inline-size: 74rem; margin-inline: auto; }
+.task-entry .task-entry__intro h1, .task-entry.task-entry--product h1 { max-inline-size: 100%; font-size: clamp(1.8rem, 2.6vw, 3rem); line-height: 1.45; letter-spacing: normal; }
+.task-entry .request-form { min-inline-size: 0; inline-size: 100%; gap: 1rem; }
+.task-entry .request-form__trust { margin-block: 0; line-height: 1.8; }
+.task-entry :is(input, select, textarea), .inquiry-form :is(input, select, textarea) { min-inline-size: 0; max-inline-size: 100%; }
+.product-mode button { min-inline-size: 0; }
+.quick-call h1 { font-size: clamp(1.8rem, 2.5vw, 2.8rem); line-height: 1.45; }
+.quick-call :is(h1, h2, p, li), .task-entry :is(h1, p) { overflow-wrap: anywhere; }
+.quick-call .primary-button { inline-size: 100%; max-inline-size: none; margin-block-start: .5rem; }
+.candidate-list li > div { min-inline-size: 0; }
+.inquiry-answers { max-inline-size: 58rem; }
+.reference-screen, .metrics-page { min-inline-size: 0; inline-size: 100%; }
+.reference-status-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+.app-shell--reference .reference-comparison-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); align-items: start; }
+.app-shell--reference .reference-evidence-card { align-self: start; min-block-size: 0; block-size: auto; }
+html[data-theme] .app-shell--reference .reference-offer-detail .reference-evidence-link { display: inline-flex; align-items: center; min-block-size: 44px; font-size: .875rem; line-height: 1.6; font-weight: 600; }
+html[data-theme] .app-shell--reference .reference-tracking__context { color: var(--text-secondary); background: var(--surface-subtle); border-color: var(--border-default); }
+html[data-theme] .app-shell--reference .reference-tracking__context > span { color: inherit; }
+html[data-theme="light"] .app-shell--reference .site-header .site-navigation a { color: var(--text-secondary); }
+html[data-theme="light"] .app-shell--reference .site-header .site-navigation a[aria-current="page"] { color: var(--text-primary); }
+html[data-theme="light"] .app-shell--reference .site-header .theme-toggle { color: var(--text-primary); background: var(--surface-raised); border-color: var(--border-strong); }
+html[data-theme="light"] .app-shell--reference .reference-screen :is(.reference-card-action, .reference-share-button) { color: var(--action-primary-hover); background: var(--surface-subtle); border-color: var(--border-strong); }
+@media (min-width: 1100px) {
+  .task-entry { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; gap: clamp(2rem, 4vw, 4.5rem); }
+  .task-entry .task-entry__intro { padding-block-start: 1.5rem; }
+  .task-entry .lead { max-inline-size: 30rem; line-height: 1.9; }
+  .inquiry-form { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); column-gap: clamp(2rem, 4vw, 4.5rem); }
+  .inquiry-form > * { grid-column: 2; min-inline-size: 0; }
+  .inquiry-form > header { grid-column: 1; grid-row: 1 / span 7; align-self: start; }
+  .candidate-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
+}
+@media (max-width: 1099px) {
+  .product-mode, .quick-call, .task-entry { max-inline-size: 48rem; }
+  .site-header .site-header__layout { flex-wrap: wrap; justify-content: center; }
+  .site-header .site-navigation { inline-size: 100%; }
+  .site-header .site-navigation ul { justify-content: center; }
+}
+@media (max-width: 767px) {
+  .app-shell--reference .reference-comparison-grid { grid-template-columns: minmax(0, 1fr); }
+  .app-shell--reference .reference-offer-detail dt { font-size: .85rem; }
+  html[data-theme="light"] .app-shell--reference .site-header__layout { inline-size: calc(100% - 2rem); align-items: center; overflow: visible; }
+  html[data-theme="light"] .app-shell--reference .site-header .site-navigation { overflow: visible; }
+  html[data-theme="light"] .app-shell--reference .site-header .site-navigation ul { inline-size: 100%; min-inline-size: 0; flex-wrap: wrap; justify-content: center; }
+  .main-content, .site-header .site-header__layout, .site-footer { inline-size: calc(100% - 2rem); }
+  .main-content, .main-content:has(.product-mode) { padding-block: 1rem 2rem; }
+  .site-header .site-header__layout { align-items: center; gap: .75rem; }
+  .site-header .site-navigation ul { gap: .25rem .5rem; }
+  .site-header .site-navigation a { font-size: .8rem; min-block-size: 44px; padding-inline: .35rem; }
+  .product-mode { margin-block: .5rem 1.5rem; }
+  .product-mode button { padding: .8rem; min-block-size: 84px; }
+  .product-mode span { font-size: .8rem; line-height: 1.7; }
+  .task-entry .task-entry__intro { margin-block-end: 1.25rem; }
+  .task-entry .request-form { padding: 1rem; }
+  .task-entry .request-form__details, .inquiry-fields { grid-template-columns: 1fr; }
+  .task-entry .primary-button, .inquiry-actions > button { inline-size: 100%; max-inline-size: none; }
+  .quick-call { padding-inline: 0; padding-block-end: 1rem; }
+  .inquiry-actions { align-items: stretch; flex-direction: column; }
+  .candidate-list li { align-items: stretch; flex-direction: column; }
+  .candidate-list button { inline-size: 100%; }
+}
+/* Current journey components: use semantic tokens and native controls. */
+.ui-icon { inline-size: 1.25rem; block-size: 1.25rem; flex-shrink: 0; }
+html[data-theme] .quick-call :is(.primary-button, .secondary-button), html[data-theme] .task-entry :is(.primary-button, .secondary-button) { font-size: 1rem; font-weight: 600; }
+html[data-theme] .copy-summary .secondary-button { font-size: .9rem; }
+html[data-theme] .task-entry .request-form label { font-size: .875rem; }
+html[data-theme] .task-entry .field-hint { font-size: .85rem; line-height: 1.8; }
+html[data-theme] .task-entry button, html[data-theme] .copy-summary button { min-block-size: 44px; }
+html[data-theme] .task-entry .task-entry__intro { box-shadow: none; }
+.quick-call .text-button, .task-entry .text-button { font-size: .875rem; }
+html[data-theme="light"] .text-button { color: var(--action-primary-hover); }
+.task-entry :is(input, textarea)::placeholder, .inquiry-form :is(input, textarea)::placeholder { color: var(--text-secondary); opacity: 1; }
+.site-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.site-footer nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.site-footer nav a { color: var(--text-secondary); padding-block: .5rem; }
+.task-tabs { display: flex; flex-wrap: wrap; gap: .5rem; inline-size: min(100%, 74rem); margin: 0 auto 1rem; }
+.task-tabs a { padding: .7rem 1.25rem; border-block-end: 2px solid transparent; color: var(--text-secondary); text-decoration: none; }
+.task-tabs a[aria-current="page"] { border-color: var(--action-primary); color: var(--text-primary); }
+.journey-progress { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; list-style: none; padding: 0; margin-block: .75rem 1.5rem; }
+.journey-progress li { display: flex; gap: .5rem; align-items: center; color: var(--text-secondary); font-size: .875rem; }
+.journey-progress li > span { border: 1px solid var(--border-strong); border-radius: 50%; inline-size: 1.65rem; block-size: 1.65rem; display: grid; place-items: center; }
+.journey-progress [data-state="current"] { color: var(--text-primary); font-weight: 700; }
+.journey-progress [data-state="current"] > span { background: var(--action-primary); border-color: var(--action-primary); color: #18242b; }
+html[data-theme="light"] .journey-progress [data-state="current"] > span { color: #fff; }
+.provenance-compact { padding-block: .5rem; border-block-end: 1px solid var(--border-default); font-size: .875rem; color: var(--text-secondary); }
+.provenance-compact summary { padding-block: .5rem; cursor: pointer; min-block-size: 44px; }
+.provenance-compact p { line-height: 1.8; margin-block: .5rem; }
+.task-entry .input-method { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.input-method button { border: 1px solid var(--border-default); background: var(--surface-subtle); color: var(--text-primary); border-radius: var(--radius-sm); padding: .75rem; min-block-size: 44px; font: inherit; }
+.input-method button[aria-pressed="true"] { border-color: var(--action-primary); box-shadow: inset 0 -2px var(--action-primary); }
+.task-entry .request-form__details { margin-block: 0; gap: 1rem; }
+.task-entry .request-form__details input, .task-entry .request-form__details select { inline-size: 100%; min-block-size: 48px; padding: .75rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font: inherit; }
+.task-entry .request-form__details [aria-invalid="true"] { border-color: var(--color-danger); }
+.task-entry #request-note { min-block-size: 5rem; }
+.request-summary { padding: 1rem; border-inline-start: 2px solid var(--action-primary); background: var(--surface-subtle); line-height: 1.9; }
+.request-summary p { margin: .4rem 0 0; }
+.task-entry .request-form > .text-button { justify-self: start; }
+.completion-notice { padding: 1rem; border-inline-start: 3px solid var(--action-primary); background: var(--surface-subtle); margin-block: 1rem; line-height: 1.8; }
+.completion-notice .primary-button { display: inline-flex; padding: .7rem 1.25rem; }
+.copy-summary { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.copy-summary .secondary-button { margin: 0; }
+.copy-summary p { font-size: .875rem; }
+.copy-summary textarea { inline-size: 100%; font: inherit; background: var(--surface-raised); color: var(--text-primary); }
+.app-shell--reference .reference-comparison-result { margin-block: 1rem 1.5rem; }
+.reference-comparison-result .result-status { font-size: 1.25rem; font-weight: 700; }
+.app-shell--reference .reference-comparison-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; padding: 1.5rem; font-size: .95rem; line-height: 1.8; box-shadow: none; }
+.app-shell--reference .reference-comparison-result h2 { font-size: 1.25rem; font-weight: 700; }
+.app-shell--reference .reference-comparison-result h3 { font-size: 1rem; margin-block: .75rem .4rem; }
+.app-shell--reference .reference-comparison-result p, .app-shell--reference .reference-comparison-result li { font-size: .95rem; }
+.app-shell--reference .reference-comparison-result .result-status { font-size: 1.4rem; color: var(--text-primary); }
+.app-shell--reference .reference-ranking { margin-block: .5rem 1rem; }
+.app-shell--reference .reference-offer-card { box-shadow: none; }
+.app-shell--reference .reference-offer-card__heading h2 { font-size: 1.1rem; }
+.app-shell--reference .reference-offer-card__details .reference-offer-detail { display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); align-items: center; gap: .75rem; padding-block: .7rem; }
+.app-shell--reference .reference-offer-card__details .reference-offer-detail dt { font-size: .875rem; }
+.app-shell--reference .reference-offer-card__details .reference-offer-detail dd { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .25rem .75rem; font-size: 1rem; }
+.app-shell--reference .reference-offer-card__details .reference-offer-detail:first-child dd { font-size: 1.4rem; }
+.app-shell--reference .reference-offer-card__note { font-size: .8rem; }
+.result-proof { margin-block: 1rem; }
+.result-proof summary { cursor: pointer; padding-block: .75rem; min-block-size: 44px; }
+.result-proof .reference-evidence-card { max-inline-size: 42rem; }
+@media (max-width: 767px) {
+  .app-shell--reference .reference-comparison-result { grid-template-columns: minmax(0, 1fr); gap: .75rem; padding: 1rem; }
+  .journey-progress { gap: .5rem 1rem; }
+  .journey-progress li { font-size: .8rem; }
+  .site-footer { flex-direction: column; align-items: start; }
+  .copy-summary { align-items: stretch; flex-direction: column; }
+  .copy-summary button { inline-size: 100%; }
+}
+/* Shared product language. These rules own the shell and current task surfaces. */
+html[data-theme] body, html[data-theme] .app-shell { background: var(--surface-page); color: var(--text-primary); font-family: var(--font-sans); }
+html[data-theme] .app-shell { --font-arabic: var(--font-sans); --board-shadow: none; --reference-shadow: none; }
+html[data-theme] .app-shell :is(button,input,textarea,select) { font-family: var(--font-sans); }
+html[data-theme] .app-shell :is(h1,h2,h3,h4) { font-family: var(--font-display); letter-spacing: normal; }
+html[data-theme] .app-shell .site-header { width: 100%; inline-size: 100%; padding-block: 1rem; border-block-end: 1px solid var(--border-default); background: var(--surface-page); box-shadow: none; }
+html[data-theme] .app-shell .site-header__layout, html[data-theme] .app-shell .main-content, html[data-theme] .app-shell .site-footer { inline-size: min(calc(100% - clamp(2rem,5vw,6rem)), 80rem); margin-inline: auto; }
+html[data-theme] .app-shell .site-header__layout { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; }
+html[data-theme] .app-shell .brand { gap: .75rem; flex-shrink: 0; }
+html[data-theme] .app-shell .brand-mark { width: 2.75rem; height: 2.75rem; inline-size: 2.75rem; block-size: 2.75rem; border-radius: .8rem; background: var(--action-primary); color: var(--on-action); box-shadow: none; }
+html[data-theme] .app-shell .brand-mark svg { width: 1.8rem; height: 1.8rem; }
+html[data-theme] .app-shell .brand__copy { display: grid; gap: .1rem; }
+html[data-theme] .app-shell .brand__name { font: 700 1.1rem / 1.65 var(--font-sans); color: var(--text-primary); letter-spacing: normal; }
+html[data-theme] .app-shell .brand__tagline { display: block; font: 400 .6875rem / 1.6 var(--font-sans); color: var(--text-secondary); letter-spacing: .01em; }
+html[data-theme] .app-shell .site-navigation { inline-size: auto; }
+html[data-theme] .app-shell .site-navigation ul { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+html[data-theme] .app-shell .site-navigation :is(a,.theme-toggle) { display: inline-flex; align-items: center; justify-content: center; min-block-size: 44px; gap: .5rem; padding: .55rem .85rem; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); font: 500 .8125rem / 1.7 var(--font-sans); box-shadow: none; text-decoration: none; }
+html[data-theme] .app-shell .site-navigation a[aria-current="page"] { background: var(--surface-subtle); color: var(--text-primary); border-color: var(--border-default); }
+html[data-theme] .app-shell .site-navigation :is(a,.theme-toggle):hover { color: var(--text-primary); background: var(--surface-subtle); }
+html[data-theme] .app-shell .main-content { padding-block: 2rem 3rem; }
+html[data-theme] .app-shell .main-content:has(.landing-page) { padding-block: 0 3rem; }
+html[data-theme] .app-shell .site-footer { border-color: var(--border-default); padding-block: 1.5rem; font-size: .75rem; line-height: 1.9; color: var(--text-secondary); }
+html[data-theme] .app-shell .site-footer p { font-size: inherit; }
+html[data-theme] .app-shell .site-footer nav a { min-block-size: 44px; display: inline-flex; align-items: center; }
+html[data-theme] .app-shell .task-entry .task-entry__intro { background: transparent; min-block-size: 0; }
+html[data-theme] .app-shell .task-entry h1, html[data-theme] .app-shell .quick-call h1 { font-size: clamp(1.75rem,2.6vw,2.6rem); line-height: 1.65; font-weight: 700; }
+html[data-theme] .app-shell .task-entry .lead, html[data-theme] .app-shell .inquiry-form header > p:last-child { font-size: 1rem; line-height: 2; color: var(--text-secondary); }
+html[data-theme] .app-shell .request-form, html[data-theme] .app-shell .reference-status-card, html[data-theme] .app-shell .reference-offer-card, html[data-theme] .app-shell .reference-comparison-result { background: var(--surface-raised); border-color: var(--border-default); border-radius: var(--radius-md); box-shadow: none; }
+html[data-theme] .app-shell .product-mode button { border-radius: var(--radius-md); background: transparent; padding: 1rem 1.25rem; }
+html[data-theme] .app-shell .product-mode button[aria-pressed="true"] { background: var(--surface-raised); box-shadow: inset 0 -2px var(--action-primary); }
+html[data-theme] .app-shell .product-mode strong { font-size: 1rem; font-weight: 600; }
+html[data-theme] .app-shell .product-mode span { font-size: .8125rem; line-height: 1.9; }
+html[data-theme] .app-shell :is(.primary-button,.secondary-button) { font-size: .9375rem; line-height: 1.8; font-weight: 600; min-block-size: 48px; border-radius: var(--radius-sm); box-shadow: none; }
+html[data-theme] .app-shell .primary-button { background: var(--action-primary); color: var(--on-action); border-color: var(--action-primary); }
+html[data-theme] .app-shell .primary-button:hover { background: var(--action-primary-hover); transform: none; }
+html[data-theme] .app-shell .secondary-button { background: transparent; color: var(--text-primary); border-color: var(--border-strong); }
+html[data-theme] .app-shell .request-form :is(input,textarea,select), html[data-theme] .app-shell .inquiry-form :is(input,textarea,select) { font-size: 1rem; border-radius: var(--radius-sm); background: var(--surface-page); border-color: var(--border-strong); }
+html[data-theme] .app-shell .request-form label, html[data-theme] .app-shell .inquiry-form label { font-size: .875rem; font-weight: 500; line-height: 1.9; }
+html[data-theme] .app-shell .reference-page__title { font-size: clamp(1.75rem,2.8vw,2.75rem); line-height: 1.65; }
+html[data-theme] .app-shell .reference-page__description { color: var(--text-secondary); font-size: .9375rem; line-height: 1.9; }
+html[data-theme] .app-shell .reference-screen { padding-inline: 0; padding-block: .5rem 1rem; }
+html[data-theme] .app-shell :is(.task-tabs,.journey-progress) { font-size: .875rem; }
+html[data-theme] .app-shell .reference-status-card h2 { font-size: 1.0625rem; }
+html[data-theme] .app-shell .reference-status-card :is(.reference-shop-address,.reference-shop-meta) { font-size: .8125rem; }
+html[data-theme] .app-shell .reference-comparison-result { border-block-start-color: var(--action-primary); }
+@media (max-width: 1099px) {
+  html[data-theme] .app-shell .site-header__layout { justify-content: center; }
+  html[data-theme] .app-shell .site-navigation { inline-size: 100%; }
+}
+@media (max-width: 767px) {
+  html[data-theme] .app-shell .site-header { padding-block: .75rem; }
+  html[data-theme] .app-shell .site-header__layout { gap: .5rem; }
+  html[data-theme] .app-shell .site-navigation :is(a,.theme-toggle) { padding-inline: .65rem; font-size: .75rem; }
+  html[data-theme] .app-shell .main-content { padding-block: 1.5rem 2rem; }
+  html[data-theme] .app-shell .site-footer { align-items: start; gap: .5rem; }
+}
