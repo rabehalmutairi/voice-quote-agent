@@ -1,0 +1,50 @@
+{
+  "_note": "SYNTHETIC: hand-written from Twilio's and ElevenLabs' public API docs (Nov 2026), not a saved real response. Replace with a real one (no personal data) once keys arrive.",
+  "about": "ElevenLabs reports voicemail",
+  "expected_outcome": "voicemail",
+  "twilio_call": {
+    "sid": "CA00000000000000000000000000000001",
+    "account_sid": "AC00000000000000000000000000000000",
+    "to": "+966500000001",
+    "from": "+15005550006",
+    "status": "completed",
+    "direction": "outbound-api",
+    "answered_by": null,
+    "start_time": "Thu, 05 Nov 2026 15:01:30 +0000",
+    "end_time": "Thu, 05 Nov 2026 15:02:40 +0000",
+    "duration": "8",
+    "price": null,
+    "price_unit": "USD"
+  },
+  "conversation": {
+    "agent_id": "agent_synthetic01",
+    "conversation_id": "conv_synthetic01",
+    "status": "done",
+    "transcript": [],
+    "metadata": {
+      "start_time_unix_secs": 1793977290,
+      "call_duration_secs": 70,
+      "cost_fiat": 0.09,
+      "termination_reason": "",
+      "phone_call": {
+        "type": "twilio",
+        "direction": "outbound",
+        "call_sid": "CA00000000000000000000000000000001",
+        "agent_number": "+15005550006",
+        "external_number": "+966500000001",
+        "phone_number_id": "phnum_synthetic01",
+        "call_result": "voicemail"
+      }
+    },
+    "analysis": {
+      "call_successful": "success",
+      "transcript_summary": "synthetic summary",
+      "evaluation_criteria_results": {},
+      "data_collection_results": {}
+    },
+    "has_audio": true,
+    "has_user_audio": true,
+    "has_response_audio": true,
+    "has_auxiliary_audio": false
+  }
+}
