@@ -4,11 +4,9 @@ Arabic-first React interface for requesting repair quotes, checking stock, follo
 
 ## Video walkthrough
 
-Watch the actual mock app in this 33-second silent walkthrough: repair request → tracking → comparison → transcript evidence → Quick Call selection, confirmation and answer. All data is synthetic and no real calls are made. Click the preview to play the MP4.
+Watch the actual mock app in this 33-second silent walkthrough: repair request → tracking → comparison → transcript evidence → Quick Call selection, confirmation and answer. All data is synthetic and no real calls are made. Use the video player below to watch the MP4.
 
-[![Play the 33-second interface walkthrough](https://github.com/user-attachments/assets/47fd8502-d32e-4c55-b17f-cfa9753d75c4)](https://github.com/user-attachments/assets/475a2a9a-2854-4861-821e-f1b9ca076092)
-
-[▶ Play the full walkthrough — MP4, 33 seconds](https://github.com/user-attachments/assets/475a2a9a-2854-4861-821e-f1b9ca076092)
+https://github.com/user-attachments/assets/475a2a9a-2854-4861-821e-f1b9ca076092
 
 ## Screenshots
 
