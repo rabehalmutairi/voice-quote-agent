@@ -51,7 +51,7 @@ and date, and never delete a row: a failed test stays on record.
 | # | Test | How | Expected | Result | Date |
 |---|---|---|---|---|---|
 | T1 | Caller ID, US number | Call a teammate's Saudi mobile | Note exactly what is displayed (number, "unknown", spam label) and whether they would answer | not run | |
-| T2 | Caller ID, Saudi number | Same, through Unifonic or another SIP provider (§5), if available | A local number is displayed | not run | |
+| T2 | Caller ID, Saudi number | Through a Saudi SIP provider | A local number is displayed | not planned (§5) | 6 Nov 2026 |
 | T3 | Saudi mobile, answered | Teammate answers and plays the shop | `human_completed`, transcript has `shop` turns | not run | |
 | T4 | Saudi landline, answered | A friendly shop's landline | `human_completed` | not run | |
 | T5 | No answer | Let it ring out | `no_answer` after about 30 s (ringing timeout) | not run | |
@@ -71,17 +71,14 @@ and date, and never delete a row: a failed test stays on record.
 | T19 | Call-back to our number | Callee calls our number back | Logged against the right task (needs an inbound route from R5) | not designed yet | |
 | **Smoke** | Activation (plan §4) | 3 calls to allowlisted numbers | All 3 give a valid `CallResult`, stored against a `TaskSpec` (Gate A) | not run | |
 
-## 5. Saudi caller ID: Unifonic
+## 5. Saudi caller ID: not pursued
 
-Saudi carriers' SIP trunks need a commercial registration, so we asked Unifonic:
+Saudi carriers' SIP trunks need a commercial registration. The plan was to ask Unifonic for an
+outbound SIP trunk with a Saudi caller ID, but on **6 Nov 2026 we decided not to contact them**
+(Unifonic publishes no sales email, only a sales form).
 
-> *Can you provide an outbound SIP trunk with a Saudi caller ID that we connect to ElevenLabs Agents?*
-
-| Asked | By | Answer | Date |
-|---|---|---|---|
-| email | R4 | waiting | |
-
-If no Saudi caller ID is possible, we use the US number and record T1's effect on reach rate.
+We call from the **US Twilio number** for the whole prototype. T1 records what shops see, and
+the reach rate is reported with that caveat. A Saudi caller ID stays future work.
 
 ## 6. Assumptions to check on the first real calls
 
