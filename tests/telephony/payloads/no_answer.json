@@ -1,0 +1,20 @@
+{
+  "_note": "SYNTHETIC: hand-written from Twilio's and ElevenLabs' public API docs (Nov 2026), not a saved real response. Replace with a real one (no personal data) once keys arrive.",
+  "about": "rang out",
+  "expected_outcome": "no_answer",
+  "twilio_call": {
+    "sid": "CA00000000000000000000000000000001",
+    "account_sid": "AC00000000000000000000000000000000",
+    "to": "+966500000001",
+    "from": "+15005550006",
+    "status": "no-answer",
+    "direction": "outbound-api",
+    "answered_by": null,
+    "start_time": "Thu, 05 Nov 2026 15:01:30 +0000",
+    "end_time": "Thu, 05 Nov 2026 15:02:40 +0000",
+    "duration": "0",
+    "price": null,
+    "price_unit": "USD"
+  },
+  "conversation": null
+}
