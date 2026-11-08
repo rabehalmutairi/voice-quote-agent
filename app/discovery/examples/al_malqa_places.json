@@ -1,0 +1,160 @@
+{
+  "places": [
+    {
+      "id": "sample-menu",
+      "displayName": {
+        "text": "صيانة القائمة الآلية",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-menu",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "9200 00001"
+    },
+    {
+      "id": "sample-mobile",
+      "displayName": {
+        "text": "ورشة الجوالات التجريبية",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-mobile",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "٠٥٠ ٠٠٠ ٠٠٠١"
+    },
+    {
+      "id": "sample-mobile",
+      "displayName": {
+        "text": "ورشة الجوالات التجريبية (مكرر)"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-mobile",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "٠٥٠ ٠٠٠ ٠٠٠١"
+    },
+    {
+      "id": "sample-missing",
+      "displayName": {
+        "text": "صيانة بدون رقم",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-missing",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3
+    },
+    {
+      "id": "sample-landline",
+      "displayName": {
+        "text": "مركز الشاشة التجريبي",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-landline",
+      "internationalPhoneNumber": "+966 (11) 000-0002"
+    },
+    {
+      "id": "sample-invalid",
+      "displayName": {
+        "text": "صيانة برقم غير صالح",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-invalid",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "+971 50 000 0003"
+    },
+    {
+      "id": "sample-closed",
+      "displayName": {
+        "text": "صيانة مغلقة",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-closed",
+      "currentOpeningHours": {
+        "openNow": false
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "050 000 0004"
+    },
+    {
+      "id": "sample-tollfree",
+      "displayName": {
+        "text": "مركز الرقم المجاني",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-tollfree",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "800 000 0005"
+    },
+    {
+      "id": "sample-extra",
+      "displayName": {
+        "text": "ورشة احتياطية تجريبية",
+        "languageCode": "ar"
+      },
+      "formattedAddress": "حي الملقا، الرياض (بيانات تجريبية)",
+      "location": {
+        "latitude": 24.8,
+        "longitude": 46.61
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=sample-sample-extra",
+      "currentOpeningHours": {
+        "openNow": true
+      },
+      "rating": 4.3,
+      "nationalPhoneNumber": "050 000 0006"
+    }
+  ]
+}
