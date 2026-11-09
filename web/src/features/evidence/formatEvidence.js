@@ -6,13 +6,16 @@ const PART_TYPE_LABELS = {
 };
 
 const AVAILABILITY_LABELS = {
+  in_stock: "متوفر الآن",
+  needs_order: "يحتاج طلبًا",
+  out_of_stock: "غير متوفر",
   available: "متوفرة",
   unavailable: "غير متوفرة",
   unknown: "غير محددة",
 };
 
 export function formatNumber(value) {
-  return new Intl.NumberFormat("ar-SA", { maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("ar-SA", { maximumFractionDigits: 2 }).format(value);
 }
 
 export function formatPartType(value) {
@@ -33,4 +36,13 @@ export function formatMinutes(value) {
 
 export function formatAvailability(value) {
   return AVAILABILITY_LABELS[value] ?? "غير محددة";
+}
+
+export function formatCondition(value) {
+  return ({ new: "جديد", used: "مستعمل", refurbished: "مجدد", unknown: "غير محدد" })[value] ?? "غير محدد";
+}
+
+export function formatEvidenceValue(field, formatter = String) {
+  if (field?.valueMin !== undefined && field?.valueMax !== undefined) return `${formatter(field.valueMin)} – ${formatter(field.valueMax)}`;
+  return formatter(field?.value);
 }

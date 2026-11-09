@@ -1,4 +1,5 @@
 import { isEvidenceFieldTraceable } from "../../utils/evidence";
+import { formatEvidenceValue } from "./formatEvidence";
 
 const STATUS_MESSAGES = {
   not_mentioned: "لم يذكر المحل هذه المعلومة.",
@@ -20,7 +21,7 @@ function getDisplayValue(field, formatter, status, isVerified) {
     return STATUS_MESSAGES.unverified;
   }
 
-  return formatter(field.value);
+  return formatEvidenceValue(field, formatter);
 }
 
 /**
@@ -36,7 +37,7 @@ export function EvidenceField({
   onInspect,
 }) {
   const status = getFieldStatus(field);
-  const isVerified = status === "found" && isEvidenceFieldTraceable(field, transcript);
+  const isVerified = isEvidenceFieldTraceable(field, transcript);
   const displayStatus = status === "found" && !isVerified ? "unverified" : status;
   const accessibleContext = context ? ` من ${context}` : "";
 

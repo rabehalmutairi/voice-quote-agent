@@ -93,7 +93,7 @@ export function transcriptContainsEvidence(transcriptText, evidenceQuote) {
 export function getTranscriptTurnForEvidence(field, transcript = []) {
   if (
     !Array.isArray(transcript)
-    || field?.status !== "found"
+    || !["found", "refused", "unclear"].includes(field?.status)
     || typeof field.evidenceQuote !== "string"
     || !Number.isInteger(field.evidenceTurn)
   ) {

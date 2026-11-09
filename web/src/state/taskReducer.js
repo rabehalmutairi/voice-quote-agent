@@ -238,7 +238,7 @@ function applyKnownEvent(state, event) {
 
       const next = updateShop(state, event.data.placeId, {
         status: "calling",
-        attempt: state.shops[event.data.placeId]?.status === "failed" ? 2 : 1,
+        attempt: event.data.attempt ?? (state.shops[event.data.placeId]?.status === "failed" ? 2 : 1),
         callId: event.data.callId,
         outcome: undefined,
         error: undefined,
@@ -351,7 +351,7 @@ function applyKnownEvent(state, event) {
 }
 
 /**
- * Hydrates a validated provisional snapshot without changing replay metadata.
+ * Hydrates a validated view-model snapshot, applying the API watermark when supplied.
  * A snapshot for another task is ignored so reconnects cannot replace active state.
  */
 export function hydrateTaskSnapshot(state, snapshot) {
@@ -371,6 +371,7 @@ export function hydrateTaskSnapshot(state, snapshot) {
     shops: Object.fromEntries(parsed.data.shops.map((shop) => [shop.placeId, shop])),
     comparison: parsed.data.comparison ?? null,
     error: parsed.data.error ?? null,
+    lastSequence: parsed.data.lastSequence ?? state.lastSequence,
   };
 }
 

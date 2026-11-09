@@ -13,6 +13,7 @@ function needsInput(taskState) {
 }
 
 function getUserFacingError(error) {
+  if (error?.userMessage) return error.userMessage;
   if (error instanceof TypeError) {
     return "تحقق من البيانات المطلوبة ثم حاول مرة أخرى.";
   }
@@ -46,13 +47,16 @@ function assertSnapshotForTask(taskId, snapshot) {
  * tests while the active form sends a TaskSpec object.
  * @param {import("../../api/transportContract").TaskTransport} transport
  */
-export function useTaskFlow(transport, { manualStart = false } = {}) {
+export function useTaskFlow(transport, { manualStart = false, beforeCreate } = {}) {
   assertTaskTransport(transport);
 
   const [taskState, setTaskState] = useState(initialTaskState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnswering, setIsAnswering] = useState(false);
   const [error, setError] = useState(null);
+  const [connection, setConnection] = useState({ state: "idle" });
+  const [isRestoring, setIsRestoring] = useState(false);
+  const commandBusyRef = useRef(false);
   const subscriptionRef = useRef(null);
   const activeTaskIdRef = useRef(null);
   const runIdRef = useRef(0);
@@ -83,6 +87,8 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
       }
 
       setTaskState((currentState) => taskReducer(currentState, event));
+    }, (status) => {
+      if (mountedRef.current && runIdRef.current === runId) setConnection(status);
     });
 
     subscriptionRef.current = unsubscribe;
@@ -106,10 +112,17 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
       return;
     }
 
+    if (["done", "partial", "failed"].includes(startedState.phase)) {
+      setConnection({ state: "complete" });
+      return;
+    }
+
     subscribeToTask(taskId, runId);
   }, [subscribeToTask, transport]);
 
   const beginTask = useCallback(async (request) => {
+    if (commandBusyRef.current) return null;
+    commandBusyRef.current = true;
     const normalizedRequest = getRequestText(request);
     const runId = runIdRef.current + 1;
     runIdRef.current = runId;
@@ -127,6 +140,9 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
       const requestPayload = typeof request === "string"
         ? normalizedRequest
         : request;
+      // Ensure the recovery/results screen is available before a mutating request.
+      // Losing the network immediately after Start must not strand a lazy route.
+      if (beforeCreate) await beforeCreate();
       const createdSnapshot = await transport.createTask(requestPayload);
 
       if (!mountedRef.current || runIdRef.current !== runId) {
@@ -151,13 +167,14 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
         setError(getUserFacingError(caughtError));
       }
 
-      return null;
+      return activeTaskIdRef.current;
     } finally {
+      commandBusyRef.current = false;
       if (mountedRef.current && runIdRef.current === runId) {
         setIsSubmitting(false);
       }
     }
-  }, [disposeSubscription, startAndSubscribe, transport, manualStart]);
+  }, [disposeSubscription, startAndSubscribe, transport, manualStart, beforeCreate]);
 
   const submitAnswers = useCallback(async (answers) => {
     const taskId = activeTaskIdRef.current;
@@ -188,6 +205,7 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
       }
 
       setTaskState((currentState) => hydrateTaskSnapshot(currentState, answeredSnapshot));
+      if (answeredSnapshot.phase === "needs_input" && answeredSnapshot.missingQuestions.some((question) => !answeredSnapshot.answers?.[question.key])) return;
       if (manualStart) {
         return;
       }
@@ -202,6 +220,11 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
       setTaskState((currentState) => hydrateTaskSnapshot(currentState, validStartedSnapshot));
 
       if (!startedState.taskId || needsInput(startedState)) {
+        return;
+      }
+
+      if (["done", "partial", "failed"].includes(startedState.phase)) {
+        setConnection({ state: "complete" });
         return;
       }
 
@@ -222,7 +245,8 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
   const confirmStart = useCallback(async () => {
     const taskId = activeTaskIdRef.current;
     const runId = runIdRef.current;
-    if (!taskId || isSubmitting) return false;
+    if (!taskId || isSubmitting || commandBusyRef.current) return false;
+    commandBusyRef.current = true;
     setError(null);
     setIsSubmitting(true);
     try {
@@ -232,9 +256,39 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
       if (mountedRef.current && runIdRef.current === runId) setError(getUserFacingError(caughtError));
       return false;
     } finally {
+      commandBusyRef.current = false;
       if (mountedRef.current && runIdRef.current === runId) setIsSubmitting(false);
     }
   }, [isSubmitting, startAndSubscribe]);
+
+  const resumeTask = useCallback(async (taskId) => {
+    const runId = runIdRef.current + 1;
+    runIdRef.current = runId;
+    disposeSubscription();
+    setIsRestoring(true);
+    setError(null);
+    if (activeTaskIdRef.current !== taskId) {
+      activeTaskIdRef.current = null;
+      setTaskState(initialTaskState);
+    }
+    setConnection({ state: "connecting" });
+    try {
+      const snapshot = assertSnapshotForTask(taskId, await transport.getTask(taskId));
+      if (!mountedRef.current || runId !== runIdRef.current) return;
+      activeTaskIdRef.current = taskId;
+      setTaskState(hydrateTaskSnapshot(initialTaskState, snapshot));
+      if (["done", "partial", "failed"].includes(snapshot.phase)) setConnection({ state: "complete" });
+      else if (!["idle", "needs_input"].includes(snapshot.phase)) subscribeToTask(taskId, runId);
+      else setConnection({ state: "idle" });
+    } catch (caughtError) {
+      if (mountedRef.current && runId === runIdRef.current) {
+        setError(getUserFacingError(caughtError));
+        setConnection({ state: "disconnected" });
+      }
+    } finally {
+      if (mountedRef.current && runId === runIdRef.current) setIsRestoring(false);
+    }
+  }, [disposeSubscription, subscribeToTask, transport]);
 
   const reset = useCallback(() => {
     runIdRef.current += 1;
@@ -244,6 +298,8 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
     setError(null);
     setIsSubmitting(false);
     setIsAnswering(false);
+    setConnection({ state: "idle" });
+    setIsRestoring(false);
   }, [disposeSubscription]);
 
   return {
@@ -251,6 +307,10 @@ export function useTaskFlow(transport, { manualStart = false } = {}) {
     isSubmitting,
     isAnswering,
     error,
+    connection,
+    isRestoring,
+    resumeTask,
+    transportMode: transport.mode ?? "mock",
     beginTask,
     submitAnswers,
     confirmStart,

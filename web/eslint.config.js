@@ -4,10 +4,10 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist", "playwright-report", "test-results", ".vite-temp", ".vitest-cache-landing"] },
+  { ignores: ["dist", "playwright-report", "test-results", "test-results-api", ".vite-temp", ".vitest-cache-landing"] },
   js.configs.recommended,
   {
-    files: ["**/*.{js,jsx}"],
+    files: ["**/*.{js,jsx,mjs}"],
     languageOptions: {
       ecmaVersion: "latest",
       globals: {

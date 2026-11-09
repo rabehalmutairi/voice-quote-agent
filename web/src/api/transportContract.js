@@ -16,7 +16,7 @@ const REQUIRED_METHODS = Object.freeze([
  */
 
 /**
- * Runtime assertion for mock and future real task transports.
+ * Runtime assertion for standalone fixture and HTTP/SSE task transports.
  * This validates the frontend integration boundary, not backend authorization.
  * @template T
  * @param {T} transport

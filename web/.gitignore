@@ -18,3 +18,4 @@ design/
 # Only README is published as Markdown
 *.md
 !README.md
+test-results-api/

@@ -1,8 +1,7 @@
-const DEFAULT_API_BASE_URL = "http://localhost:8000";
-const SUPPORTED_TRANSPORTS = new Set(["mock", "real"]);
+const DEFAULT_API_BASE_URL = "/api";
+const SUPPORTED_TRANSPORTS = new Set(["mock", "api"]);
 
-const rawTransport = import.meta.env.VITE_TRANSPORT ?? "mock";
-const transportMode = SUPPORTED_TRANSPORTS.has(rawTransport) ? rawTransport : "mock";
+const transportMode = import.meta.env.VITE_TRANSPORT ?? (import.meta.env.MODE === "mock" ? "mock" : "api");
 
 export const frontendConfig = Object.freeze({
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL,
@@ -10,23 +9,22 @@ export const frontendConfig = Object.freeze({
 });
 
 /**
- * Resolves a future backend path without performing network I/O in PR 1.
+ * Resolves a backend path while preserving the same-origin proxy prefix.
  */
 export function resolveApiUrl(path) {
-  if (typeof path !== "string" || !path.startsWith("/")) {
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) {
     throw new TypeError("API paths must start with '/'.");
   }
 
-  return new URL(path, frontendConfig.apiBaseUrl).toString();
+  return `${frontendConfig.apiBaseUrl.replace(/\/+$/, "")}${path}`;
 }
 
 /**
- * PR 1 deliberately supports only the fixture transport. This boundary makes the
- * configuration explicit without pretending real API/SSE connectivity exists yet.
+ * API mode talks to R5's mock server; mock mode keeps the standalone fixtures.
  */
 export function assertSupportedTransport() {
-  if (frontendConfig.transportMode !== "mock") {
-    throw new Error("The real transport is reserved for a later integration phase.");
+  if (!SUPPORTED_TRANSPORTS.has(frontendConfig.transportMode)) {
+    throw new Error("VITE_TRANSPORT must be 'api' or 'mock'.");
   }
 
   return frontendConfig.transportMode;

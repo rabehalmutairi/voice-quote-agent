@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { getTranscriptTurnForEvidence } from "../utils/evidence";
 
-// These schemas are deliberately frontend-provisional. They validate fixture payloads and
-// the adapter boundary only; they must be replaced or mapped when R1 publishes /contracts.
+// Frontend view-model schemas for fixtures and normalized API data. Canonical wire
+// payloads are validated separately against /contracts in backendContracts.js.
 const nonEmptyString = z.string().trim().min(1);
 const optionalNonEmptyString = nonEmptyString.optional();
 
@@ -50,7 +50,7 @@ export const transcriptTurnSchema = z.object({
   text: nonEmptyString,
 });
 
-export const transcriptSchema = z.array(transcriptTurnSchema).max(200).superRefine((turns, context) => {
+export const transcriptSchema = z.array(transcriptTurnSchema).superRefine((turns, context) => {
   const seenIndexes = new Set();
 
   turns.forEach((turn, index) => {
@@ -66,10 +66,12 @@ export const transcriptSchema = z.array(transcriptTurnSchema).max(200).superRefi
   });
 });
 
-function createEvidenceFieldSchema(valueSchema) {
+function createEvidenceFieldSchema(valueSchema, allowRange = false) {
   return z
     .object({
       value: valueSchema.optional(),
+      valueMin: z.number().finite().nonnegative().optional(),
+      valueMax: z.number().finite().nonnegative().optional(),
       status: evidenceStatusSchema,
       confidence: z.number().min(0).max(1).optional(),
       evidenceQuote: optionalNonEmptyString,
@@ -79,15 +81,19 @@ function createEvidenceFieldSchema(valueSchema) {
       const hasValue = field.value !== undefined && field.value !== null;
       const hasEvidenceQuote = field.evidenceQuote !== undefined;
       const hasEvidenceTurn = field.evidenceTurn !== undefined;
+      const hasRange = allowRange && field.valueMin !== undefined && field.valueMax !== undefined && field.valueMin <= field.valueMax;
 
-      if (field.status === "found" && (!hasValue || !hasEvidenceQuote || !hasEvidenceTurn)) {
+      if (field.status === "found" && ((!hasValue && !hasRange) || (hasValue && hasRange) || !hasEvidenceQuote || !hasEvidenceTurn)) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Found evidence fields require a typed value, evidenceQuote, and evidenceTurn.",
         });
       }
 
-      if (field.status !== "found" && (hasValue || hasEvidenceQuote || hasEvidenceTurn)) {
+      if ((field.status !== "found" && (hasValue || field.valueMin !== undefined || field.valueMax !== undefined))
+        || (field.status === "not_mentioned" && (hasEvidenceQuote || hasEvidenceTurn))
+        || (hasEvidenceQuote !== hasEvidenceTurn)
+        || (!hasRange && (field.valueMin !== undefined || field.valueMax !== undefined))) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Only verified found evidence fields may contain evidence data.",
@@ -96,22 +102,25 @@ function createEvidenceFieldSchema(valueSchema) {
     });
 }
 
-export const evidenceFieldSchema = createEvidenceFieldSchema(z.unknown());
+export const evidenceFieldSchema = createEvidenceFieldSchema(z.unknown(), true);
 
 const partTypeEvidenceFieldSchema = createEvidenceFieldSchema(
   z.enum(["original", "pulled_original", "commercial", "unknown"]),
 );
 const priceEvidenceFieldSchema = createEvidenceFieldSchema(
   z.number().finite().nonnegative(),
+  true,
 );
 const durationEvidenceFieldSchema = createEvidenceFieldSchema(
   z.number().finite().nonnegative(),
+  true,
 );
 const availabilityEvidenceFieldSchema = createEvidenceFieldSchema(
-  z.enum(["available", "unavailable", "unknown"]),
+  z.enum(["available", "unavailable", "unknown", "in_stock", "needs_order", "out_of_stock"]),
 );
 
 export const businessSchema = z.object({
+  simulated: z.boolean().default(true),
   placeId: nonEmptyString,
   name: nonEmptyString,
   phoneE164: z.string().regex(/^\+[1-9]\d{7,14}$/).optional(),
@@ -126,6 +135,9 @@ const quoteOptionSchema = z.object({
   partType: partTypeEvidenceFieldSchema,
   priceSar: priceEvidenceFieldSchema,
   warrantyDays: durationEvidenceFieldSchema.optional(),
+  variant: evidenceFieldSchema.optional(),
+  condition: evidenceFieldSchema.optional(),
+  availability: availabilityEvidenceFieldSchema.optional(),
 });
 
 export const inquiryAnswerSchema = z.object({
@@ -142,7 +154,7 @@ export const inquiryAnswerSchema = z.object({
 });
 
 export const quoteSchema = z.object({
-  options: z.array(quoteOptionSchema).max(5).default([]),
+  options: z.array(quoteOptionSchema).default([]),
   answers: z.array(inquiryAnswerSchema).max(2).default([]),
   turnaroundMinutes: durationEvidenceFieldSchema.default({ status: "not_mentioned" }),
   availability: availabilityEvidenceFieldSchema.optional(),
@@ -150,10 +162,6 @@ export const quoteSchema = z.object({
   // Some early fixtures place transcript data inside the quote. Accept it while the
   // adapter settles on the event-level enrichment used by the current fixtures.
   transcript: transcriptSchema.optional(),
-}).superRefine((quote, context) => {
-  if (!quote.options.length && !quote.answers.length) {
-    context.addIssue({ code: z.ZodIssueCode.custom, message: "A quote needs offers or answers." });
-  }
 });
 
 function getQuoteEvidenceIssue(field, transcript) {
@@ -197,13 +205,14 @@ function addQuoteEvidenceIssues(quote, transcript, context, pathPrefix = []) {
       option.warrantyDays
         ? { field: option.warrantyDays, path: ["options", index, "warrantyDays"] }
         : null,
+      ...["variant", "condition", "availability"].map((key) => option[key] ? { field: option[key], path: ["options", index, key] } : null),
     ]),
     { field: quote.turnaroundMinutes, path: ["turnaroundMinutes"] },
     quote.availability ? { field: quote.availability, path: ["availability"] } : null,
   ].filter(Boolean);
 
   for (const { field, path } of fields) {
-    if (field.status !== "found") {
+    if (field.status === "not_mentioned" || !field.evidenceQuote) {
       continue;
     }
 
@@ -327,6 +336,7 @@ export const comparisonSchema = z.object({
 });
 
 export const taskSnapshotSchema = z.object({
+  lastSequence: z.number().int().nonnegative().optional(),
   taskId: nonEmptyString,
   phase: taskPhaseSchema,
   requestText: optionalNonEmptyString,
@@ -338,8 +348,7 @@ export const taskSnapshotSchema = z.object({
 });
 
 const eventEnvelope = z.object({
-  // Both fields are optional on purpose. They are adapter-level replay metadata until the
-  // canonical backend event contract defines stable identity and ordering semantics.
+  // Fixtures may omit replay metadata. The API adapter maps canonical seq into sequence.
   eventId: optionalNonEmptyString,
   sequence: z.number().int().nonnegative().optional(),
   taskId: nonEmptyString,
@@ -371,7 +380,7 @@ const knownEventSchema = z.discriminatedUnion("type", [
   }),
   eventEnvelope.extend({
     type: z.literal("call.started"),
-    data: z.object({ callId: nonEmptyString, placeId: nonEmptyString }),
+    data: z.object({ callId: nonEmptyString, placeId: nonEmptyString, attempt: z.number().int().min(1).max(2).optional() }),
   }),
   eventEnvelope.extend({
     type: z.literal("call.talking"),
@@ -384,6 +393,7 @@ const knownEventSchema = z.discriminatedUnion("type", [
       placeId: nonEmptyString,
       outcome: callOutcomeSchema,
       durationSeconds: z.number().nonnegative().optional(),
+      transcript: transcriptSchema.optional(),
     }),
   }),
   eventEnvelope.extend({

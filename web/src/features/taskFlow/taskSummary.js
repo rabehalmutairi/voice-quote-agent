@@ -1,4 +1,4 @@
-import { formatCurrency, formatNumber, formatPartType } from "../evidence/formatEvidence";
+import { formatCurrency, formatNumber, formatPartType, formatEvidenceValue } from "../evidence/formatEvidence";
 import { getQuoteTranscript, getTranscriptTurnForEvidence } from "../../utils/evidence";
 
 const STATUS = { ranked: "عروض مرتبة", partial: "مقارنة جزئية", side_by_side: "إجابات بدون ترتيب", cannot_compare: "تعذرت المقارنة" };
@@ -16,10 +16,13 @@ export function buildTaskSummary(task) {
     const transcript = getQuoteTranscript(shop.quote, shop.transcript ?? []);
     for (const [index, option] of (shop.quote?.options ?? []).entries()) {
       const price = option.priceSar;
-      const part = getTranscriptTurnForEvidence(option.partType, transcript) ? option.partType : null;
-      if (getTranscriptTurnForEvidence(price, transcript)) {
+      const part = option.partType?.status === "found" && getTranscriptTurnForEvidence(option.partType, transcript) ? option.partType : null;
+      if (price?.status === "found" && getTranscriptTurnForEvidence(price, transcript)) {
         const label = `الخيار ${formatNumber(index + 1)}${part ? ` (${formatPartType(part.value)})` : ""}`;
-        lines.push(`${shop.name} — ${label}: ${formatCurrency(price.value)} — «${price.evidenceQuote}»${part ? `، نوع القطعة: «${part.evidenceQuote}»` : ""}`);
+        lines.push(`${shop.name} — ${label}: ${formatEvidenceValue(price, formatCurrency)} — «${price.evidenceQuote}»${part ? `، نوع القطعة: «${part.evidenceQuote}»` : ""}`);
+      } else if (getTranscriptTurnForEvidence(price, transcript)) {
+        const status = price.status === "refused" ? "المحل رفض ذكر السعر" : "السعر غير واضح";
+        lines.push(`${shop.name} — الخيار ${formatNumber(index + 1)}: ${status} — «${price.evidenceQuote}»`);
       }
     }
     for (const answer of shop.quote?.answers ?? []) {

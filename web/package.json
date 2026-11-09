@@ -5,14 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "vite --mode mock",
     "build": "vite build",
+    "build:mock": "vite build --mode mock",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:api": "node scripts/test-api.mjs"
   },
   "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",

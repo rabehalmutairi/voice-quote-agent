@@ -92,7 +92,7 @@
 .candidate-list li > div { min-inline-size: 0; }
 .inquiry-answers { max-inline-size: 58rem; }
 .reference-screen, .metrics-page { min-inline-size: 0; inline-size: 100%; }
-.reference-status-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+html[data-theme] .app-shell--reference .reference-status-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
 .app-shell--reference .reference-comparison-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); align-items: start; }
 .app-shell--reference .reference-evidence-card { align-self: start; min-block-size: 0; block-size: auto; }
 html[data-theme] .app-shell--reference .reference-offer-detail .reference-evidence-link { display: inline-flex; align-items: center; min-block-size: 44px; font-size: .875rem; line-height: 1.6; font-weight: 600; }

@@ -56,7 +56,7 @@ function JourneyHomePage({ journey, mode }) {
   return (<>
     {mode === "product" && <div className="product-mode" role="group" aria-label="نوع الخدمة">
       <button type="button" aria-pressed={journey.productMode === "compare"} onClick={() => journey.setProductMode("compare")}><strong>قارن لي</strong><span>عروض من محلات قريبة</span></button>
-      <button type="button" aria-pressed={journey.productMode === "quick"} onClick={() => journey.setProductMode("quick")}><strong>اسأل عني</strong><span>إجابة من محل تختاره</span></button>
+      <button type="button" aria-pressed={journey.productMode === "quick"} onClick={() => journey.setProductMode("quick")}><strong>اسأل عني</strong><span>{journey.productFlow.transportMode === "api" ? "عرض تجريبي محلي" : "إجابة من محل تختاره"}</span></button>
     </div>}
     {mode === "product" && journey.productMode === "quick" ? <QuickCallView quick={journey.quickCall} /> :
     <TaskFlowView
@@ -67,7 +67,7 @@ function JourneyHomePage({ journey, mode }) {
       showFixturePicker={mode === "demo"}
       scenarioKey={journey.scenarioKey}
       onScenarioChange={journey.onScenarioChange}
-      onTaskCreated={mode === "product" ? () => navigate("/tracking") : undefined}
+      onTaskCreated={mode === "product" ? (id) => navigate(`/tracking${journey.productFlow.transportMode === "api" ? `?task=${encodeURIComponent(id)}` : ""}`) : undefined}
       entryCopy={ENTRY_COPY[mode] ?? ENTRY_COPY.product}
     />
     }

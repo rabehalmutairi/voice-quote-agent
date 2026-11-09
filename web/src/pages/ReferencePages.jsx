@@ -9,6 +9,8 @@ import {
   formatMinutes,
   formatNumber,
   formatPartType,
+  formatCondition,
+  formatEvidenceValue,
 } from "../features/evidence/formatEvidence";
 import {
   getQuoteTranscript,
@@ -26,7 +28,7 @@ import { QuickCallView } from "../features/quickCall/QuickCallView";
 import { InquiryAnswers } from "../features/quickCall/InquiryAnswers";
 import { FollowUpQuestions } from "../features/taskFlow/FollowUpQuestions";
 import { TaskTabs, JourneyProgress } from "../features/taskFlow/JourneyNavigation";
-import { frontendConfig } from "../api/config";
+import { TaskConnectionNotice } from "../features/taskFlow/TaskConnectionNotice";
 import { CopyTaskSummary } from "../features/taskFlow/CopyTaskSummary";
 import { Icon } from "../components/ui/Icon";
 
@@ -154,14 +156,22 @@ const FIELD_STATUS_COPY = {
 
 const OFFER_FIELD_DEFINITIONS = [
   { key: "price", label: "السعر", getField: ({ option }) => option.priceSar, formatter: formatCurrency },
-  { key: "partType", label: "نوع القطعة", getField: ({ option }) => option.partType, formatter: formatPartType },
+  { key: "partType", label: "نوع القطعة", getField: ({ option }) => option.variant ? undefined : option.partType, formatter: formatPartType },
+  { key: "variant", label: "المواصفات", getField: ({ option }) => option.variant, formatter: String },
+  { key: "condition", label: "حالة المنتج", getField: ({ option }) => option.condition, formatter: formatCondition },
   { key: "warranty", label: "مدة الضمان", getField: ({ option }) => option.warrantyDays, formatter: formatDays },
-  { key: "turnaround", label: "وقت الإنجاز", getField: ({ shop }) => shop.quote.turnaroundMinutes, formatter: formatMinutes },
-  { key: "availability", label: "التوفر", getField: ({ shop }) => shop.quote.availability, formatter: formatAvailability },
+  { key: "turnaround", label: "وقت الإنجاز", getField: ({ shop, option }) => option.variant ? undefined : shop.quote.turnaroundMinutes, formatter: formatMinutes },
+  { key: "availability", label: "التوفر", getField: ({ shop, option }) => option.availability ?? shop.quote.availability, formatter: formatAvailability },
 ];
 
 function ReferenceSimulationNotice() {
-  return <DataProvenanceNotice {...SIMULATION_NOTICE} compact className="reference-provenance" />;
+  const journey = useTaskJourney();
+  const notice = journey?.transportMode === "api" ? {
+    title: "تجربة محاكاة فقط",
+    description: "تصل حالة الطلب والنتائج من خادم التجربة. المكالمات والمحلات والبيانات محاكاة، ولا توجد اتصالات حقيقية.",
+    source: "محاكاة الخادم",
+  } : SIMULATION_NOTICE;
+  return <DataProvenanceNotice {...notice} compact className="reference-provenance" />;
 }
 
 function getOfferFields(offer) {
@@ -170,7 +180,7 @@ function getOfferFields(offer) {
     label,
     field: getField(offer),
     formatter,
-  }));
+  })).filter(({ field }) => field !== undefined);
 }
 
 function getTaskProgressLabel(taskState, shops) {
@@ -200,15 +210,17 @@ function getTaskProgressLabel(taskState, shops) {
 }
 
 function ReferenceUnavailablePage({ title = "لا يوجد طلب متاح", description }) {
+  const journey = useTaskJourney();
   return (
     <ReferenceScreen className="reference-screen--tracking">
       <ReferencePageHeading
         title={title}
-        description={description ?? "ابدأ طلباً جديداً لعرض حالة الاتصالات والنتائج المرتبطة به."}
+        description={journey?.isRestoring ? "نستعيد طلبك وتحديثاته…" : journey?.error ?? description ?? "ابدأ طلباً جديداً لعرض حالة الاتصالات والنتائج المرتبطة به."}
         icon="ⓘ"
         action={<Link className="reference-primary-button tw-primary-action tw-focus-ring" to="/request">ابدأ طلباً جديداً</Link>}
       />
       <ReferenceSimulationNotice />
+      <TaskConnectionNotice flow={journey} />
       <div className="reference-empty-state" role="status">
         <strong>هذه الصفحة لا تعرض بيانات افتراضية.</strong>
         <p>لن نعرض محلات أو عروضاً ما لم توجد مهمة نشطة في هذه الجلسة.</p>
@@ -308,7 +320,7 @@ function ReferenceStatusCard({ shop }) {
     ? SHOP_FAILURE_COPY[shop.outcome] ?? SHOP_FAILURE_COPY.failed
     : copy.detail;
   const address = getShopAddress(shop);
-  const phoneHref = frontendConfig.transportMode === "mock" ? null : getShopPhoneHref(shop);
+  const phoneHref = shop.simulated === false ? getShopPhoneHref(shop) : null;
   const mapsHref = getShopMapsHref(shop);
   const openNow = getShopOpenNow(shop);
 
@@ -361,9 +373,9 @@ export function ReferenceTrackingPage() {
   const journey = useTaskJourney();
   const taskState = journey?.taskState;
 
-  if (journey?.activeProductMode === "quick") return <><TaskTabs /><QuickCallView quick={journey.quickCall} /></>;
+  if (journey?.activeProductMode === "quick" && !(journey.apiEnabled && journey.requestedTaskId)) return <><TaskTabs /><QuickCallView quick={journey.quickCall} /></>;
 
-  if (!taskState?.taskId) {
+  if (!taskState?.taskId || (journey.apiEnabled && journey.requestedTaskId && journey.requestedTaskId !== taskState.taskId)) {
     return <ReferenceUnavailablePage />;
   }
 
@@ -379,6 +391,7 @@ export function ReferenceTrackingPage() {
         icon="☎"
       />
       <ReferenceSimulationNotice />
+      <TaskConnectionNotice flow={journey} />
       <div className="reference-tracking__context" aria-label="تفاصيل الطلب">
         <span role="status" aria-live="polite" aria-atomic="true">{getTaskProgressLabel(taskState, shops)}</span>
         <span><bdi>{taskState.requestText ?? "طلب بدون وصف"}</bdi></span>
@@ -459,11 +472,11 @@ function getReferenceFieldValue(field, formatter, isVerified) {
     return FIELD_STATUS_COPY[field?.status] ?? FIELD_STATUS_COPY.not_mentioned;
   }
 
-  return isVerified ? formatter(field.value) : FIELD_STATUS_COPY.unverified;
+  return isVerified ? formatEvidenceValue(field, formatter) : FIELD_STATUS_COPY.unverified;
 }
 
 function ReferenceOfferField({ label, field, formatter, transcript, context, shop, onInspect }) {
-  const isVerified = field?.status === "found" && isEvidenceFieldTraceable(field, transcript);
+  const isVerified = isEvidenceFieldTraceable(field, transcript);
   const valueClassName = isVerified
     ? "reference-offer-detail__value"
     : "reference-offer-detail__value reference-offer-detail__value--muted";
@@ -591,9 +604,9 @@ export function ReferenceComparisonPage() {
   const taskState = journey?.taskState;
   const [selectedEvidence, setSelectedEvidence] = useState(null);
 
-  if (journey?.activeProductMode === "quick") return <><TaskTabs /><QuickCallView quick={journey.quickCall} /></>;
+  if (journey?.activeProductMode === "quick" && !(journey.apiEnabled && journey.requestedTaskId)) return <><TaskTabs /><QuickCallView quick={journey.quickCall} /></>;
 
-  if (!taskState?.taskId) {
+  if (!taskState?.taskId || (journey.apiEnabled && journey.requestedTaskId && journey.requestedTaskId !== taskState.taskId)) {
     return (
       <ReferenceUnavailablePage
         title="لا توجد مقارنة متاحة"
@@ -624,6 +637,7 @@ export function ReferenceComparisonPage() {
         action={<Link className="reference-share-button" to="/tracking">العودة إلى التتبع <span aria-hidden="true">⌯</span></Link>}
       />
       <ReferenceSimulationNotice />
+      <TaskConnectionNotice flow={journey} />
       <div className="reference-tracking__context" aria-label="ملخص المقارنة">
         <span>العروض المتاحة: {formatNumber(offers.length)}</span>
         <span><bdi>{taskState.requestText ?? "طلب بدون وصف"}</bdi></span>

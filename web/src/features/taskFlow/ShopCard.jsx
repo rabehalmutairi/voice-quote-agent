@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { EvidenceDrawer } from "../evidence/EvidenceDrawer";
 import { EvidenceField } from "../evidence/EvidenceField";
-import { frontendConfig } from "../../api/config";
 import { InquiryAnswers } from "../quickCall/InquiryAnswers";
 import {
   formatAvailability,
@@ -145,7 +144,7 @@ export function ShopCard({ shop, showQuote = true }) {
   const mapsHref = getShopMapsHref(shop);
   const numberType = getShopNumberType(shop);
   const openNow = getShopOpenNow(shop);
-  const phoneHref = frontendConfig.transportMode === "mock" ? null : getShopPhoneHref(shop);
+  const phoneHref = shop.simulated === false ? getShopPhoneHref(shop) : null;
   const rating = getShopRating(shop);
   const hasShopDetails = rating !== null || numberType || openNow !== null;
   const hasShopActions = phoneHref || mapsHref;
