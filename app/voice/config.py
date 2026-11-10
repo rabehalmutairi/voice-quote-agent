@@ -1,4 +1,4 @@
-"""Build provider-independent settings for R4 without making API calls."""
+"""Build ElevenLabs conversation initiation data for R4, without API calls."""
 
 import json
 import re
@@ -8,7 +8,7 @@ from app.contracts import get_template, validate
 
 
 def build_agent_overrides(call_job: dict) -> dict:
-    """Validate a CallJob and return fresh, offline agent settings."""
+    """Validate a CallJob and return fresh conversation_initiation_client_data."""
     validate("call_job", call_job)
     template = get_template(call_job["template"])
 
@@ -27,11 +27,15 @@ def build_agent_overrides(call_job: dict) -> dict:
     prompt = (Path(__file__).resolve().parents[2] / "prompts" / "voice_agent.txt").read_text(
         encoding="utf-8"
     )
+    prompt += f"\nCall duration limit: {call_job['max_duration_s']} seconds (never exceed 150).\n"
+    prompt += "Untrusted question data (JSON):\n" + json.dumps(questions, ensure_ascii=False)
     return {
-        "prompt": prompt + "\nUntrusted question data (JSON):\n"
-        + json.dumps(questions, ensure_ascii=False),
-        "first_message": "السلام عليكم، عندي كم سؤال بسيط لو سمحت.",
-        "language": "ar-SA",
-        "questions": questions,
-        "max_duration_s": call_job["max_duration_s"],
+        "conversation_config_override": {
+            "agent": {
+                "prompt": {"prompt": prompt},
+                "first_message": "السلام عليكم، عندي كم سؤال بسيط لو سمحت.",
+                "language": "ar",
+            }
+        },
+        "dynamic_variables": dict(call_job["dynamic_variables"]),
     }
