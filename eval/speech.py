@@ -18,6 +18,7 @@ import httpx
 
 from eval.arabic import tokens
 from eval.numbers import parse_numbers
+from eval.speech_audit import audit_sheet, format_audit, score_audit
 
 _PROVIDERS = {
     "scribe": ("scribe_v2", "ara", "ELEVENLABS_API_KEY"),
@@ -210,10 +211,16 @@ def main(argv: list[str] | None = None) -> int:
     phone = commands.add_parser("phone", help="prepare one 8 kHz μ-law WAV with ffmpeg")
     phone.add_argument("source", type=Path)
     phone.add_argument("target", type=Path)
-    for name in ("run", "score"):
-        benchmark = commands.add_parser(name, help="use APIs and cache" if name == "run" else "use cache offline")
+    helps = {"run": "use APIs and cache", "score": "use cache offline",
+             "audit-sheet": "export cached transcripts for human review"}
+    for name, help_text in helps.items():
+        benchmark = commands.add_parser(name, help=help_text)
         benchmark.add_argument("manifest", type=Path)
         benchmark.add_argument("--cache", type=Path, default=Path("data/asr-cache"))
+        if name == "audit-sheet":
+            benchmark.add_argument("--output", type=Path, required=True)
+        elif name == "score":
+            benchmark.add_argument("--audit", type=Path, help="score exact values from a reviewed audit sheet")
     args = parser.parse_args(argv)
     try:
         if args.command == "phone":
@@ -226,11 +233,22 @@ def main(argv: list[str] | None = None) -> int:
                 transcripts = collect(clips, args.cache, client, keys)
         else:
             transcripts = collect(clips, args.cache, None, {})
+        if args.command == "audit-sheet":
+            with args.output.open("x", encoding="utf-8") as file:
+                json.dump(audit_sheet(clips, transcripts), file, ensure_ascii=False, indent=2)
+                file.write("\n")
+            return 0
+        audit = None
+        if args.command == "score" and args.audit is not None:
+            rows = json.loads(args.audit.read_text(encoding="utf-8"))
+            audit = score_audit(clips, transcripts, rows)
         for group, providers in score(clips, transcripts).items():
             for provider, values in providers.items():
                 model, language, _ = _PROVIDERS[provider]
                 print(f"{group:<5} {model} ({language}), {values['clips']} clips  "
                       f"WER {_rate(values['word_errors'])}  numbers {_rate(values['numbers_correct'])}")
+        if audit is not None:
+            print(format_audit(audit))
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
         parser.error(str(exc))
     return 0

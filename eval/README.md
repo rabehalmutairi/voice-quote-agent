@@ -67,6 +67,9 @@ and unsupported number idioms.
 
 ## Run the paired speech benchmark
 
+Use the [pilot runbook](pilot.md) to freeze the inputs, audit typed values by offer, and
+compare extraction and live-call outcomes.
+
 1. Select about 20 Saudi-dialect clips from the SADA held-out split and about 10 authorized
    Arabic phone-call clips. Record SADA clip IDs, dialects and selection method. Include examples
    with spoken numbers, and keep references and audio local in `data/`. SADA was released by
@@ -117,3 +120,11 @@ contributes the larger of the reference and hypothesis number counts minus the n
 the numerator, and that larger count to the denominator. This gives credit for equal numeric
 values in different written forms and penalizes extra numbers, including on clips with none
 in the reference. The report shows the SADA and call cohorts separately as well as pooled.
+
+After collecting transcripts, use `audit-sheet` to prepare the three columns for human review.
+Once labelled, pass the sheet to `score --audit` for exact value matches by field and offer.
+
+```sh
+python -m eval.speech audit-sheet data/asr/manifest.json --output data/asr/audit.json
+python -m eval.speech score data/asr/manifest.json --audit data/asr/audit.json
+```
