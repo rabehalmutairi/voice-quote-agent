@@ -1,0 +1,14 @@
+{
+  "expected_fields": {
+    "offers.0.part_type": "original",
+    "offers.0.price_sar": 1200,
+    "offers.1.part_type": "commercial",
+    "offers.1.price_sar": 450,
+    "offers.1.warranty_days": 30,
+    "fields.turnaround_minutes": [60, 120]
+  },
+  "unsupported_fields": [],
+  "baseline": null,
+  "answer_faithful": {"0": true},
+  "usable": true
+}
