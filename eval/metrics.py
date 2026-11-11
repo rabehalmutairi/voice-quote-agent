@@ -13,6 +13,18 @@ from app.contracts import CONTRACTS_DIR, get_template, validate
 
 _HUMAN = {"human_completed", "human_partial"}
 _FIELD_PATH = re.compile(r"(fields|offers\.(?:0|[1-9][0-9]*))\.([a-z][a-z0-9_]*)")
+_LABEL_KEYS = {"expected_fields", "unsupported_fields", "baseline", "answer_faithful", "usable"}
+_OBSERVATION_KEYS = {"turn_latency_s", "task_elapsed_s", "language_switch_ok"}
+
+
+def _object(value: object, name: str, allowed: set[str] | None = None) -> dict:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must be an object or null")
+    if allowed is not None and (unknown := value.keys() - allowed):
+        raise ValueError(f"{name} has unknown keys: {', '.join(map(str, unknown))}")
+    return value
 
 
 def _attempt_result(row: dict) -> dict:
@@ -81,8 +93,9 @@ def _same_value(actual: object, expected: object) -> bool:
 def _score_labels(labels: dict, quote: dict | None, template: dict, counts: Counter) -> Counter:
     values = _field_values(quote)
     accuracy = Counter()
-    for path, expected in labels.get("expected_fields", {}).items():
-        match = _FIELD_PATH.fullmatch(path)
+    expected_fields = _object(labels.get("expected_fields"), "expected_fields")
+    for path, expected in expected_fields.items():
+        match = _FIELD_PATH.fullmatch(path) if isinstance(path, str) else None
         if match is None:
             raise ValueError(f"invalid expected field path: {path}")
         scope, name = match.groups()
@@ -96,7 +109,8 @@ def _score_labels(labels: dict, quote: dict | None, template: dict, counts: Coun
 
     unsupported = labels.get("unsupported_fields")
     if unsupported is not None:
-        if (not isinstance(unsupported, list) or len(set(unsupported)) != len(unsupported)
+        if (not isinstance(unsupported, list) or not all(isinstance(path, str) for path in unsupported)
+                or len(set(unsupported)) != len(unsupported)
                 or not set(unsupported) <= values.keys()):
             raise ValueError("unsupported_fields must list unique returned field paths")
         counts["unsupported"] += len(unsupported)
@@ -104,6 +118,9 @@ def _score_labels(labels: dict, quote: dict | None, template: dict, counts: Coun
 
     baseline = labels.get("baseline")
     if baseline is not None:
+        baseline = _object(baseline, "baseline", {"unsupported", "returned"})
+        if baseline.keys() != {"unsupported", "returned"}:
+            raise ValueError("baseline needs unsupported and returned counts")
         bad, total = baseline["unsupported"], baseline["returned"]
         if type(bad) is not int or type(total) is not int or not 0 <= bad <= total:
             raise ValueError("baseline needs integer counts with 0 <= unsupported <= returned")
@@ -117,6 +134,7 @@ def _score_labels(labels: dict, quote: dict | None, template: dict, counts: Coun
 
     faithfulness = labels.get("answer_faithful")
     if faithfulness is not None:
+        faithfulness = _object(faithfulness, "answer_faithful")
         summaries = {
             str(answer["question_index"]) for answer in (quote or {}).get("answers", [])
             if answer["summary_ar"] is not None
@@ -171,15 +189,31 @@ def measure(attempts: list[dict]) -> dict:
             raise ValueError("cost_usd must be a finite non-negative number or null")
 
         quote = row.get("quote")
+        unknown_quote = human and "quote" not in row
+        counts["unknown_quotes"] += unknown_quote
         if quote is not None:
             validate("quote", quote)
             if (quote["task_id"], quote["call_id"], quote["place_id"]) != (task_id, call_id, place_id):
                 raise ValueError(f"quote IDs must match the call for {key}")
             if not human:
                 raise ValueError("only calls that reached a person may have a quote")
+            question_indices = [answer["question_index"] for answer in quote["answers"]]
+            if len(set(question_indices)) != len(question_indices):
+                raise ValueError("quote answers must have unique question_index values")
 
-        labels = row.get("labels") or {}
+        labels = _object(row.get("labels"), "labels", _LABEL_KEYS)
+        if unknown_quote and any(value is not None for value in labels.values()):
+            raise ValueError("labels need the quote record or explicit null for a human call")
+        if not human and any(labels.get(name) for name in _LABEL_KEYS - {"usable"}):
+            raise ValueError("quality labels require a call that reached a person")
         accuracy.update(_score_labels(labels, quote, template, counts))
+        if human:
+            for name in ("expected_fields", "unsupported_fields", "answer_faithful"):
+                counts[name, "reviewed_calls"] += labels.get(name) is not None
+            counts["eligible_values"] += len(_field_values(quote))
+            counts["eligible_summaries"] += sum(
+                answer["summary_ar"] is not None for answer in (quote or {}).get("answers", [])
+            )
         usable = labels.get("usable")
         if usable is not None and type(usable) is not bool:
             raise ValueError("usable must be a boolean or null")
@@ -190,7 +224,7 @@ def measure(attempts: list[dict]) -> dict:
         elif usable is None and quote is not None:
             counts["unreviewed_usability"] += 1
 
-        observations = row.get("observations") or {}
+        observations = _object(row.get("observations"), "observations", _OBSERVATION_KEYS)
         latency = observations.get("turn_latency_s", [])
         if not isinstance(latency, list) or not all(_number(x) for x in latency):
             raise ValueError("turn_latency_s must contain finite non-negative seconds")
@@ -216,7 +250,7 @@ def measure(attempts: list[dict]) -> dict:
         for name in sorted({name for name, _ in accuracy})
     }
     successes = sum(len(shops) >= 2 for shops in usable_shops.values())
-    known_cost = not counts["unknown_costs"] and not counts["unreviewed_usability"]
+    known_cost = not any(counts[name] for name in ("unknown_costs", "unreviewed_usability", "unknown_quotes"))
     return {
         "mock_excluded": counts["mock_excluded"],
         "attempts": len(seen),
@@ -229,8 +263,15 @@ def measure(attempts: list[dict]) -> dict:
         "baseline_hallucination": (counts["baseline_unsupported"], counts["baseline_returned"]),
         "paired_calls": counts["paired_calls"],
         "faithfulness": (counts["faithful"], counts["summaries"]),
+        "audit_coverage": {
+            name: (counts[name, "reviewed_calls"], counts["human"])
+            for name in ("expected_fields", "unsupported_fields", "answer_faithful")
+        },
+        "returned_value_coverage": (counts["returned"], counts["eligible_values"]),
+        "summary_coverage": (counts["summaries"], counts["eligible_summaries"]),
         "successful_tasks": successes,
         "unknown_costs": counts["unknown_costs"],
+        "unknown_quotes": counts["unknown_quotes"],
         "unreviewed_usability": counts["unreviewed_usability"],
         "cost_per_success": counts["cost"] / successes if known_cost and successes else None,
         "language_switch": (counts["switched"], counts["switch_cases"]),
@@ -264,6 +305,11 @@ def format_report(report: dict) -> str:
         ("Hallucination rate (ours, paired)", _rate(report["paired_hallucination"])),
         ("Hallucination rate (ElevenLabs, paired)", _rate(report["baseline_hallucination"])),
         ("Answer faithfulness", _rate(report["faithfulness"])),
+        ("Human calls with critical-field labels", _rate(report["audit_coverage"]["expected_fields"])),
+        ("Human calls with returned-field audits", _rate(report["audit_coverage"]["unsupported_fields"])),
+        ("Human calls with summary audits", _rate(report["audit_coverage"]["answer_faithful"])),
+        ("Known returned values audited", _rate(report["returned_value_coverage"])),
+        ("Known returned summaries audited", _rate(report["summary_coverage"])),
         ("Cost per successful task", f"${cost:.2f}" if cost is not None else "N/A"),
         ("Mean turn latency", _seconds(report["turn_latency_s"])),
         ("Language-switch success", _rate(report["language_switch"])),
@@ -274,7 +320,8 @@ def format_report(report: dict) -> str:
         f"{report['attempts']} attempts, {report['mock_excluded']} mock attempts excluded, "
         f"{report['paired_calls']} paired baseline calls\n"
         f"{report['successful_tasks']} confirmed successful tasks, {report['unknown_costs']} unknown costs, "
-        f"{report['unreviewed_usability']} quotes with unreviewed usability\n"
+        f"{report['unreviewed_usability']} quotes with unreviewed usability, "
+        f"{report['unknown_quotes']} human calls with missing quote records\n"
     )
     return header + "\n".join(f"{label:<44} {value}" for label, value in rows)
 
@@ -308,4 +355,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    from eval.cli import configure_utf8
+
+    configure_utf8()
     raise SystemExit(main())

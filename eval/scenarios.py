@@ -64,4 +64,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    from eval.cli import configure_utf8
+
+    configure_utf8()
     raise SystemExit(main())

@@ -34,16 +34,35 @@ from eval.numbers import number_in_text, parse_numbers
         ("one and a half", [1.5]),
         ("400,5000", [400, 5000]),
         ("ألف، ألف", [1000, 1000]),
+        ("السعر ألف وخمسمائة", [1500]),
+        ("ثلاثمائة وخمسون", [350]),
+        ("ثلاثة وأربعون", [43]),
+        ("اثنا عشر وأحد عشر وإحدى عشرة واثنتا عشرة", [12, 11, 11, 12]),
+        ("مائة واثني عشر", [112]),
+        ("اثنتان، اثنتين، واحدة", [2, 2, 1]),
+        ("ما عندي أحد في المحل", []),
+        ("نص ساعة بس", []),
+        ("ساعة ونص", []),
+        ("نص ألف", [500]),
+        ("half a hundred", [50]),
+        ("السعر .5 أو ٫٢٥", [0.5, 0.25]),
     ],
 )
 def test_numbers(text, expected):
     assert parse_numbers(text) == expected
 
 
+def test_speech_can_include_bare_fractions_without_changing_price_helper_defaults():
+    assert parse_numbers("نص ريال وربع ساعة", standalone_fractions=True) == [0.5, 0.25]
+    assert parse_numbers("half a hundred", standalone_fractions=True) == [50]
+
+
 def test_evidence_text_helpers():
     assert normalize(" آلـسَّعْر ١٬٢٠٠، و الضَّمَان ") == "السعر 1200 و الضمان"
     assert contains_words("السعر ١٬٢٠٠ رِيَال", "1200 ريال")
     assert not contains_words("السعر ١٬٢٠٠٫٥٠", "1200")
+    assert contains_words("السعر .5 ريال", "0.5 ريال")
+    assert not contains_words("السعر .5 ريال", "5 ريال")
     assert not contains_words("آيفون 155", "ايفون 15")
     assert not contains_words("أي كلام", "؟")
     assert number_in_text(1200, "بألف ومتين")
@@ -61,3 +80,14 @@ def test_prices_in_mock_quotes_are_recognized_in_their_evidence():
                     ]
                     for value in expected:
                         assert number_in_text(value, price["evidence_quote"])
+
+
+def test_written_arabic_numbers_do_not_penalize_an_exact_asr_transcript():
+    from eval.speech import Clip, score
+
+    text = "الأصلي ألف وخمسمائة والتجاري ثلاثمائة وخمسون والضمان اثنا عشر يوم"
+    clip = Clip("formal_numbers", "call", None, text, (1500, 350, 12))
+    report = score([clip], {provider: {clip.id: text} for provider in ("scribe", "deepgram")})
+    for provider in ("scribe", "deepgram"):
+        assert report["all"][provider]["word_errors"][0] == 0
+        assert report["all"][provider]["numbers_correct"] == (3, 3)

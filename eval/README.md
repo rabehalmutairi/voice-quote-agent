@@ -10,6 +10,21 @@ python -m eval.scenarios repair_options greeting price warranty time availabilit
 
 The example report reads the repository's `CallResult` and `Quote` examples with synthetic
 labels. Use it to check the report format. Actual metrics require a separate labelled bundle.
+Command-line output uses UTF-8, including when redirected to a file on Windows.
+
+## Delivery status
+
+| R3 deliverable | Available now | Measurement still needed |
+| --- | --- | --- |
+| Arabic normalization and number parsing | Shared helpers, contract/mock evidence tests | Review unfamiliar number idioms against real transcripts |
+| Scenario cards and shopkeeper | Eight cards, offline scripted replies, injectable LLM interface | Run the free-text simulator with the team's LLM client and review its replies |
+| Architecture §8 metrics | One-command synthetic report and labelled-bundle scorer | Approved, independently labelled call attempts and paired baseline outputs |
+| Speech benchmark | Phone simulation, paired API runner, resumable cache, WER, number and scoped-value audits | Select and label about 20 SADA and 10 approved call clips; run with both API keys |
+| Labelling process | Independent review sheets, reconciliation rules and pilot runbook | Two reviewers and real call data; target at least 50 fully labelled calls |
+
+The tests exercise offline behavior and representative provider responses. They do not establish
+live recognition quality or pass Gate C. Without real labelled calls, the repository's Gate C
+decision remains **no**. See [the pilot runbook](pilot.md) for the measurement procedure.
 
 ## Collect and report call metrics
 
@@ -36,7 +51,7 @@ The input is a JSON array. Each item contains these keys:
 | `attempt` | `1` or `2`, from the CallJob. Retries reuse the same IDs and must have the failed first attempt in the bundle. |
 | `call_result` | The original [CallResult](../contracts/examples/call_result.json) object |
 | `call_failed` | The original [failure event](../contracts/examples/events/call.failed.json), used in place of `call_result` when no result exists. Also supply `pre_arranged`, `scenario_id` and, if known, `cost_usd` from the attempt log. |
-| `quote` | The original [Quote](../contracts/examples/quote.json) for this attempt, or `null` |
+| `quote` | The original [Quote](../contracts/examples/quote.json), or explicit `null` if extraction produced no quote. Omission on a human call means the export is incomplete. |
 | `labels` | Reconciled labels from the [sheet](labelling.md). Omit or use `null` before review. |
 | `observations` | Optional observed `turn_latency_s` (list of seconds), `language_switch_ok` (boolean for an applicable switch) and `task_elapsed_s` (seconds for the whole request, counted once per task) |
 
@@ -46,9 +61,16 @@ missing expected offer at a new index after the returned offers. The overall rat
 labelled value equally. The hallucination denominator counts every `found` offer or call-level
 field on audited calls. Baseline and app rates are compared on the same calls. Faithfulness has its
 own denominator of human-reviewed summaries. Cost includes all attempts in the bundle and is
-reported when costs and quote usability are known and at least one task has two distinct usable
-shops. Report the sample counts with any result. Records with `scenario_id` starting with
+reported when costs, human-call quote records and quote usability are known and at least one task
+has two distinct usable shops. Unknown or misspelled label and observation keys are rejected.
+Report the sample counts with any result. Records with `scenario_id` starting with
 `mock_` are excluded from all calculations. [Architecture §8](../docs/architecture.md#8-evaluation)
+
+The report also shows human-call audit coverage and the fraction of known returned values and
+summaries audited. Unresolved audits remain unmeasured, never clean by default. Calls with
+critical-field labels can still have unresolved individual values; the sheet must record those
+exclusions because their count cannot be inferred from an extraction output. Missing quote
+records also mean the total number of returned values is unknown.
 
 ## Role-play and shared text helpers
 
@@ -64,6 +86,11 @@ R6 can import `normalize`, `tokens` and `contains_words` from `eval.arabic`, and
 and English prices, digit forms, thousands, decimals and spoken ranges. Interpret units such as
 hours and warranty months at the template layer. Context still matters for model numbers, prices
 and unsupported number idioms.
+Bare fractions are excluded by default for compatibility with the R6 price helper. The speech
+scorer opts into `parse_numbers(text, standalone_fractions=True)` to include literal halves and
+quarters. These helpers do not infer units or the price's offer; use the scoped human audit for
+that judgment. For example, a spoken half is `0.5`; converting an hour and a half to 90 minutes
+requires context at the template or audit layer.
 
 ## Run the paired speech benchmark
 

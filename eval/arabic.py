@@ -16,7 +16,8 @@ _DECIMAL = re.compile(r"[0-9]+\.[0-9]+")
 def normalize_digits(text: str) -> str:
     """Unify decimal digits and numeric separators without changing word boundaries."""
     text = western_digits(unicodedata.normalize("NFKC", text))
-    return _GROUPED.sub(lambda match: match[0].replace(",", "").replace("٬", ""), text).replace("٫", ".")
+    text = _GROUPED.sub(lambda match: match[0].replace(",", "").replace("٬", ""), text).replace("٫", ".")
+    return re.sub(r"(?<![\w.])\.(?=[0-9])", "0.", text)
 
 
 def normalize(text: str) -> str:

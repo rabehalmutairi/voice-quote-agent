@@ -9,7 +9,8 @@ from eval.arabic import normalize, normalize_digits
 
 # Normalized spellings, including common Saudi variants.
 _UNITS = {
-    "صفر": 0, "واحد": 1, "وحده": 1, "اثنين": 2, "ثنين": 2, "اثنان": 2,
+    "صفر": 0, "واحد": 1, "واحده": 1, "وحده": 1, "اثنين": 2, "ثنين": 2, "اثنان": 2,
+    "اثنتان": 2, "اثنتين": 2,
     "ثلاث": 3, "ثلاثه": 3, "اربع": 4, "اربعه": 4, "خمس": 5, "خمسه": 5,
     "ست": 6, "سته": 6, "سبع": 7, "سبعه": 7, "ثمان": 8, "ثمانيه": 8,
     "ثمنيه": 8, "تسع": 9, "تسعه": 9, "عشر": 10, "عشره": 10,
@@ -26,6 +27,8 @@ _UNITS = {
 _TENS = {
     "عشرين": 20, "عشرون": 20, "ثلاثين": 30, "اربعين": 40, "خمسين": 50,
     "ستين": 60, "سبعين": 70, "ثمانين": 80, "ثمنين": 80, "تسعين": 90,
+    "ثلاثون": 30, "اربعون": 40, "خمسون": 50, "ستون": 60, "سبعون": 70,
+    "ثمانون": 80, "تسعون": 90,
     "twenty": 20, "thirty": 30, "forty": 40, "fourty": 40, "fifty": 50,
     "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90,
 }
@@ -36,12 +39,18 @@ _HUNDREDS = {
     "اربعمئه": 400, "خمسميه": 500, "خمسمئه": 500, "ستميه": 600,
     "ستمئه": 600, "سبعميه": 700, "سبعمئه": 700, "ثمانميه": 800,
     "ثمنميه": 800, "ثمانمئه": 800, "تسعميه": 900, "تسعمئه": 900,
+    "مائتان": 200, "مائتين": 200, "ثلاثمائه": 300, "اربعمائه": 400,
+    "خمسمائه": 500, "ستمائه": 600, "سبعمائه": 700, "ثمانمائه": 800, "تسعمائه": 900,
 }
 _FRACTIONS = {"نص": 0.5, "نصف": 0.5, "half": 0.5, "ربع": 0.25, "quarter": 0.25}
 _THOUSANDS = {"الف", "الاف", "thousand", "thousands"}
 _VALUES = _UNITS | _TENS | _HUNDREDS | {"الفين": 2000, "الفان": 2000}
 _CONNECTORS = {"و", "and", "a", "an"}
 _PREFIXES = ("", "وب", "ول", "و", "ب", "ل", "ف")
+_TEEN_STARTS = {
+    "احد": "احدعشر", "احدي": "احدعشر", "اثنا": "اثنعش", "اثني": "اثنعش",
+    "اثنتا": "اثنعش", "اثنتي": "اثنعش",
+}
 _TOKEN = re.compile(r"[0-9]+(?:\.[0-9]+)?(?:\s*k\b)?|[^\W\d_]+|[^\w\s]", re.IGNORECASE)
 
 
@@ -50,9 +59,18 @@ def _words(text: str):
     # Normalize whole letter runs so Arabic combining marks stay with the word.
     text = re.sub(r"[ً-ْٰـ]", "", text.lower())
     text = re.sub(r"(?<=[a-z])-(?=[a-z])", " ", text)
-    for match in _TOKEN.finditer(text):
-        token = match[0]
-        yield token if token[0].isdigit() else normalize(token)
+    words = [match[0] if match[0][0].isdigit() else normalize(match[0]) for match in _TOKEN.finditer(text)]
+    index = 0
+    while index < len(words):
+        token = words[index]
+        if index + 1 < len(words) and words[index + 1] in {"عشر", "عشره"}:
+            for prefix in _PREFIXES:
+                if token.startswith(prefix) and token[len(prefix):] in _TEEN_STARTS:
+                    token = prefix + _TEEN_STARTS[token[len(prefix):]]
+                    index += 1
+                    break
+        yield token
+        index += 1
 
 
 def _word(token: str) -> tuple[str, str]:
@@ -78,18 +96,18 @@ def _occupied(current: float, value: int, word: str) -> bool:
     return tail != 0 and (value >= 10 or tail % 10 != 0)
 
 
-def parse_numbers(text: str) -> list[float]:
-    """Return numbers in speaking order, keeping separate prices and ranges separate."""
+def parse_numbers(text: str, *, standalone_fractions: bool = False) -> list[float]:
+    """Read numbers in order; opt into bare halves/quarters for the speech benchmark."""
     numbers: list[float] = []
     total = current = 0.0
-    active = digits = joined = english_prefix = False
+    active = digits = joined = english_prefix = fraction_only = False
 
     def flush() -> None:
-        nonlocal total, current, active, digits, joined, english_prefix
-        if active:
+        nonlocal total, current, active, digits, joined, english_prefix, fraction_only
+        if active and (standalone_fractions or not fraction_only):
             numbers.append(total + current)
         total = current = 0.0
-        active = digits = joined = english_prefix = False
+        active = digits = joined = english_prefix = fraction_only = False
 
     for token in _words(text):
         if not token:
@@ -117,7 +135,7 @@ def parse_numbers(text: str) -> list[float]:
         joined = False
 
         if word in _FRACTIONS:
-            if active:
+            if active and connected:
                 scale = 1
                 if (total and not current) or (current >= 1000 and current % 1000 == 0):
                     scale = 1000
@@ -125,6 +143,10 @@ def parse_numbers(text: str) -> list[float]:
                     scale = 100
                 current += _FRACTIONS[word] * scale
                 flush()
+            else:
+                flush()
+                current, active = _FRACTIONS[word], True
+                fraction_only = True
             continue
         if word in _THOUSANDS:
             if total and not current:
@@ -132,6 +154,7 @@ def parse_numbers(text: str) -> list[float]:
             total += (current if active and current else 1) * 1000
             current = 0
             active, digits, english_prefix = True, False, False
+            fraction_only = False
             continue
 
         value = _VALUES[word]
@@ -150,6 +173,7 @@ def parse_numbers(text: str) -> list[float]:
                 flush()
             current += value
         active, digits = True, False
+        fraction_only = False
         english_prefix = word.isascii() and 0 < value == current < 20 and not total
     flush()
     return numbers

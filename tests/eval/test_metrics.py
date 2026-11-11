@@ -6,7 +6,7 @@ import pytest
 
 from app.contracts import CONTRACTS_DIR
 from app.mocks import MockCallProvider, mock_businesses
-from eval.metrics import main, measure
+from eval.metrics import format_report, main, measure
 
 
 def example(name):
@@ -143,3 +143,104 @@ def test_cli_labels_contract_example_as_synthetic(capsys):
     assert "Critical-field accuracy" in output
     assert "Answer faithfulness" in output
     assert "Cost per successful task" in output
+
+
+@pytest.mark.parametrize("key", ["labels", "observations"])
+@pytest.mark.parametrize("invalid", [False, 0, [], ""])
+def test_optional_objects_do_not_silently_discard_falsey_invalid_exports(key, invalid):
+    row = attempt()
+    row[key] = invalid
+    with pytest.raises(ValueError, match=key):
+        measure([row])
+
+
+@pytest.mark.parametrize("key", ["labels", "observations"])
+def test_optional_objects_allow_null_before_review(key):
+    row = attempt()
+    row[key] = None
+    report = measure([row])
+    assert report["attempts"] == 1
+
+
+@pytest.mark.parametrize("key, misspelled", [
+    ("labels", "expected_feilds"),
+    ("observations", "turn_latancy_s"),
+])
+def test_unknown_export_keys_fail_instead_of_losing_measurements(key, misspelled):
+    row = attempt()
+    row[key] = {misspelled: {}}
+    with pytest.raises(ValueError, match=misspelled):
+        measure([row])
+
+
+@pytest.mark.parametrize("key, value", [
+    ("expected_fields", []),
+    ("baseline", []),
+    ("answer_faithful", []),
+    ("baseline", {"unsupported": 0, "returned": 7, "unsuported": 1}),
+])
+def test_nested_label_objects_fail_with_actionable_errors(key, value):
+    row = attempt()
+    row["labels"][key] = value
+    with pytest.raises(ValueError, match=key):
+        measure([row])
+
+
+def test_missing_human_quote_keeps_cost_unknown_until_absence_is_confirmed():
+    rows = [attempt(), attempt(), attempt()]
+    for index, row in enumerate(rows):
+        for contract in ("call_result", "quote"):
+            row[contract].update(call_id=f"call_{index}", place_id=f"shop{index}")
+        row["call_result"]["cost_usd"] = 1
+    unknown = rows[-1]
+    unknown["call_result"]["task_id"] = "tsk_other"
+    del unknown["quote"]
+    del unknown["labels"]
+
+    report = measure(rows)
+    assert report["successful_tasks"] == 1
+    assert report["unknown_quotes"] == 1
+    assert report["cost_per_success"] is None
+    assert "1 human calls with missing quote records" in format_report(report)
+
+    unknown["quote"] = None
+    report = measure(rows)
+    assert report["unknown_quotes"] == 0
+    assert report["cost_per_success"] == 3
+
+
+def test_missing_quote_cannot_be_scored_as_an_extraction_miss():
+    row = attempt()
+    del row["quote"]
+    row["labels"] = {"expected_fields": {"offers.0.price_sar": 1200}}
+    with pytest.raises(ValueError, match="quote"):
+        measure([row])
+
+    row["quote"] = None
+    assert measure([row])["critical_accuracy"] == (0, 1)
+
+
+@pytest.mark.parametrize("reviewed", [True, False])
+def test_duplicate_question_indices_do_not_shrink_summary_denominator(reviewed):
+    row = attempt()
+    row["quote"]["answers"].append(deepcopy(row["quote"]["answers"][0]))
+    if not reviewed:
+        row["labels"]["answer_faithful"] = None
+    with pytest.raises(ValueError, match="question_index"):
+        measure([row])
+
+
+def test_report_exposes_unresolved_audits_without_counting_them_as_clean():
+    reviewed, unresolved = attempt(), attempt()
+    for contract in ("call_result", "quote"):
+        unresolved[contract].update(call_id="call_unresolved", place_id="unreviewed_shop")
+    unresolved["labels"] = {name: None for name in unresolved["labels"]}
+    report = measure([reviewed, unresolved])
+    assert report["hallucination"] == (1, 7)
+    assert report["audit_coverage"] == {
+        "expected_fields": (1, 2), "unsupported_fields": (1, 2), "answer_faithful": (1, 2),
+    }
+    assert report["returned_value_coverage"] == (7, 14)
+    assert report["summary_coverage"] == (1, 2)
+    assert "50.0% (7/14)" in format_report(report)
+    assert report["cost_per_success"] is None

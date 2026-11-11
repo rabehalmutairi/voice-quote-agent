@@ -88,6 +88,10 @@ language switching and hang-ups. [Paired ASR bootstrap](https://arxiv.org/abs/19
 - Report Gate C's critical-field and hallucination results with counts and uncertainty. A zero
   observed hallucination count in a small pilot can still be consistent with a rate above 2%.
   When values share a call, account for that dependence when estimating uncertainty.
+- Include audit coverage and unresolved judgments beside those rates. An accuracy percentage
+  from only the easy, fully reviewed calls cannot establish performance on the complete pilot.
+  State the number of independent call or speaker groups; do not treat every field in one call
+  as an independent trial. Gate C remains no without real labelled calls under the repo's policy.
 
 [ElevenLabs data collection](https://elevenlabs.io/docs/eleven-agents/customization/agent-analysis/data-collection) ·
 [Spoken-dialogue evaluation](https://aclanthology.org/P97-1035/) ·

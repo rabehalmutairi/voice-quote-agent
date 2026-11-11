@@ -13,6 +13,9 @@ source records. Use IDs rather than names or phone numbers.
 | Call outcome | |
 | Whether R6 considers the returned quote usable | |
 | Notes for adjudication | |
+| Critical-field judgments unresolved / total considered | |
+| Returned-field audit complete? | |
+| Summary audit complete? | |
 
 ### Critical fields
 
@@ -44,6 +47,8 @@ describes the shop's evidence, including conditions, uncertainty and refusals.
    the agreed decision and the shop turn. If the reviewers cannot agree, leave that judgment
    unmeasured. Preserve both original sheets for the audit. For returned-field or summary
    audits, leave the entire audit for that attempt `null` until all its judgments are resolved.
+   Record agreement before reconciliation and the number of unresolved judgments. Include those
+   counts and the script's audit coverage in the report; do not drop difficult calls from the bundle.
 3. Align each expected offer to the matching returned offer by identity, such as part tier or
    stock variant. A missing offer uses an unused index after the returned offers. A wrong value
    stays wrong at its aligned path. The script compares the agreed value at that path and
@@ -56,3 +61,8 @@ describes the shop's evidence, including conditions, uncertainty and refusals.
    the full audit found zero. `baseline` has `unsupported` and `returned` integer counts for
    the same attempt, or `null`. `answer_faithful` maps every returned summary's question
    index (as a string key) to a boolean, or is `null` before review.
+   Use `expected_fields: null` before reviewing critical fields, or an empty object after review
+   if none can be established. Record any unresolved field exclusions in the sheet.
+6. Include the original quote object or explicit `quote: null` when extraction produced none.
+   An omitted quote on a human call is an incomplete export and cannot be scored as an
+   extraction miss or used to determine the cost per successful task.

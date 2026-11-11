@@ -186,7 +186,7 @@ def score(clips: list[Clip], transcripts: dict[str, dict[str, str]]) -> dict:
         for provider, items in transcripts.items():
             transcript = items[clip.id]
             hypothesis = tokens(transcript)
-            numbers = parse_numbers(transcript)
+            numbers = parse_numbers(transcript, standalone_fractions=True)
             word_errors = _distance(reference, hypothesis)
             numeric_total = max(len(clip.numbers), len(numbers))
             numeric_correct = numeric_total - _distance(clip.numbers, numbers)
@@ -255,4 +255,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    from eval.cli import configure_utf8
+
+    configure_utf8()
     raise SystemExit(main())
