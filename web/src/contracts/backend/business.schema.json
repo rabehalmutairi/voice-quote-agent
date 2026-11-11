@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/business.schema.json",
+  "title": "Business",
+  "description": "Discovery -> Orchestrator. One callable shop found on Google Places.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "place_id",
+    "name",
+    "phone_e164",
+    "number_type",
+    "address",
+    "maps_url",
+    "open_now",
+    "rating"
+  ],
+  "properties": {
+    "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
+    "name": { "type": "string", "minLength": 1 },
+    "phone_e164": { "$ref": "common.schema.json#/$defs/phone_e164" },
+    "number_type": { "enum": ["mobile", "landline", "unified_920", "toll_free_800"] },
+    "address": { "type": "string", "minLength": 1 },
+    "maps_url": { "type": "string", "pattern": "^https://" },
+    "open_now": {
+      "type": ["boolean", "null"],
+      "description": "null when Places has no opening hours for this shop."
+    },
+    "rating": {
+      "type": ["number", "null"],
+      "minimum": 1,
+      "maximum": 5,
+      "description": "null when the shop has no reviews."
+    }
+  }
+}

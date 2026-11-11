@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-arabic: "Noto Sans Arabic", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+
+  html {
+    @apply scroll-smooth;
+    font-family: var(--font-arabic);
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  ::selection {
+    background: var(--board-coral-soft, #fae8e0);
+    color: var(--board-white, #4a2028);
+  }
+}
+
+@layer components {
+  .tw-focus-ring {
+    @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
+    outline-color: var(--color-focus, #1d63a9);
+  }
+
+  .tw-primary-action {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-board-sm px-4 font-black transition-colors duration-150;
+    background-color: var(--board-coral, #c95c4a);
+    color: #fffdf9;
+  }
+
+  .tw-primary-action:hover {
+    background-color: var(--board-coral-dark, #b84d3d);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    @apply scroll-auto;
+  }
+}
