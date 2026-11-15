@@ -174,8 +174,11 @@ From each `CallJob`:
   template's planner-question keys except `area` (electronics: `device_model`,
   `repair_type`; stock check: `item`), and values are the user's words. **The orchestrator
   refuses to call if any placeholder has no value**, so you never read `{{device_model}}` aloud.
-- `custom_questions`: 0–2 questions in the user's words. Ask them **after** the template's
-  questions, one at a time.
+- `custom_questions`: 0–1 question in the user's words. Ask it **after** the template's
+  questions, rephrased to speak to the shop ("عندهم" → "عندكم").
+- Keep calls short and natural: each question a few words, never two in one. Repairs ask
+  only the price; if the shop doesn't say original or not, follow up with "أصلية؟" /
+  "وكالة؟" (the comparison needs it). Read back prices only.
 - `max_duration_s`: the call's hard limit.
 - Nothing about the user personally is ever in a job (architecture §9). The planner and
   orchestrator refuse custom questions or answers that ask the shop to book, pay, or that

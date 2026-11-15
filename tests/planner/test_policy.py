@@ -90,7 +90,7 @@ def planner(parser=None):
     "questions, index",
     [
         (["احجز لي موعد بكرة"], 0),
-        ([CUSTOM_QUESTION, "اتصلوا علي على 0551234567"], 1),
+        (["اتصلوا علي على 0551234567"], 0),
         (["راسلوني على a@b.com"], 0),
     ],
 )
@@ -130,5 +130,5 @@ def test_unsafe_slot_copied_by_the_parser_is_refused():
 
 
 def test_safe_request_is_unaffected():
-    result = run(planner().plan(COMPLETE, custom_questions=[CUSTOM_QUESTION, "هل يحتاج موعد؟"]))
+    result = run(planner().plan(COMPLETE, custom_questions=[CUSTOM_QUESTION]))
     assert result.status == "ready"

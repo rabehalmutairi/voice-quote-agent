@@ -106,8 +106,12 @@ def test_template_cross_references(path):
 
     asked = {q["field"] for q in template["call_questions"]}
     assert asked <= defined
-    assert set(template["required_fields"]) <= asked
-    assert set(template["compare_on"]) <= offer & asked
+    assert len(template["call_questions"]) <= 3, "calls stay short: at most 3 template questions"
+    # Fields the agent gets by a short follow-up in prompts/voice_agent.txt instead of a
+    # template question ("أصلية؟" / "وكالة؟" only if the shop gave a price without it).
+    by_follow_up = {"part_type", "part_brand"} & defined
+    assert set(template["required_fields"]) <= asked | by_follow_up
+    assert set(template["compare_on"]) <= offer & (asked | by_follow_up)
 
     planner_keys = {q["key"] for q in template["planner_questions"]}
     placeholders = {
@@ -337,8 +341,9 @@ def test_quote_that_breaks_the_template_is_caught(why, path, value):
 
 def test_missing_required_field_is_caught():
     quote = copy.deepcopy(example("quote"))
-    del quote["fields"]["turnaround_minutes"]
-    assert any("turnaround_minutes" in p for p in template_problems(quote, TEMPLATE_BY_NAME["electronics_repair"]))
+    for offer in quote["offers"]:
+        del offer["part_type"]
+    assert any("part_type" in p for p in template_problems(quote, TEMPLATE_BY_NAME["electronics_repair"]))
 
 
 # 5. Broken data is rejected -------------------------------------------------

@@ -67,5 +67,6 @@ JSON Schema validates shape, not meaning. These rules are enforced in code, and 
 ## Known limits (deliberate)
 
 - v1 covers electronics repair, stock checks and (stretch) car repair as templates. Anything a template can't express is still open: raise it in a `contract-change` PR.
-- A call is capped at 150 s (`max_duration_s`). With two custom questions that may be tight (open question for R2).
+- A call is capped at 150 s (`max_duration_s`). The planner allows 1 custom question (the schema still allows 2
+  until a `contract-change` PR lowers `maxItems`); repairs ask only the price, so calls stay well under the cap.
 - No `schema_version` field: four weeks, one team; `contract-change` PRs are enough.

@@ -168,10 +168,9 @@ def test_answer_rejects_a_broken_task_spec():
 # -- custom questions --------------------------------------------------------------------
 
 
-def test_two_custom_questions_are_kept_word_for_word_and_in_order():
-    questions = ["يصلحونه قدامي؟", "  عندهم   توصيل؟ "]
-    result = plan("أبي أغير شاشة آيفون 15 برو في الملقا", custom_questions=questions)
-    assert result.task_spec["custom_questions"] == ["يصلحونه قدامي؟", "عندهم توصيل؟"]
+def test_custom_question_is_kept_word_for_word():
+    result = plan("أبي أغير شاشة آيفون 15 برو في الملقا", custom_questions=["  يصلحونه   قدامي؟ "])
+    assert result.task_spec["custom_questions"] == ["يصلحونه قدامي؟"]
 
 
 def test_empty_and_duplicate_custom_questions_are_dropped():
@@ -182,7 +181,7 @@ def test_empty_and_duplicate_custom_questions_are_dropped():
 @pytest.mark.parametrize(
     "questions, code",
     [
-        (["1؟", "2؟", "3؟"], "too_many_custom_questions"),
+        (["1؟", "2؟"], "too_many_custom_questions"),  # max 1: calls stay short
         ("سؤال واحد؟", "invalid_custom_questions"),
         ([None], "invalid_custom_questions"),
         (["س" * 301], "custom_question_too_long"),

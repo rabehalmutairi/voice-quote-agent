@@ -16,7 +16,9 @@ call as completed only when `analysis.call_successful` is `success`.
   The prompt also includes each job's limit. For jobs below 150 seconds, R4 must
   enforce the shorter deadline; this payload does not configure a hard timer.
 - [ ] Agent Tools: enable the built-in `voicemail_detection` and `end_call`
-  system tools. Leave the voicemail message empty so detection ends the call
+  system tools. Set `end_call`'s description to: "Call this right after saying the
+  goodbye once, in the same turn. Do not wait for the shop to reply and never repeat
+  the goodbye." (A test call said the goodbye twice without it.) Leave the voicemail message empty so detection ends the call
   without a message. Do not enable keypad navigation. Enable language detection
   and English as an additional language for spoken English switching.
 - [ ] Analysis / Data collection: add **call_outcome**, type **string**, with:
