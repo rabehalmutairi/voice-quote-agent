@@ -169,6 +169,11 @@ def test_price_range_needs_both_numbers_in_the_quote():
         ("التجاري بألف ونص", 1500, True),
         ("التجاري بميتين ونص", 250, True),
         ("التجاري بألف ونص", 1000, False),
+        # digits joined to a word or currency (speech-to-text output)
+        ("التجاري بـ٤٥٠ ريال", 450, True),
+        ("التجاري 450ريال", 450, True),
+        ("التجاري ٣٠٠ر.س", 300, True),
+        ("التجاري بـ٤٥٠ ريال", 400, False),
     ],
 )
 def test_prices_said_in_english_or_with_halves(shop_said, price, kept):

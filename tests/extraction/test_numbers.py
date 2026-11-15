@@ -26,6 +26,11 @@ from app.extraction.numbers import number_in_text, parse_numbers
         ("خمسطعش", [15]),
         ("السعر 450 ريال", [450]),
         ("السعر ١٬٢٠٠ ريال", [1200]),
+        # digits joined to a word or currency, as speech-to-text often writes them
+        ("بـ٤٥٠ ريال", [450]),
+        ("ب450", [450]),
+        ("السعر 450ريال", [450]),
+        ("٣٠٠ر.س", [300]),
         ("3 آلاف", [3000]),
         ("من ٤٠٠ لـ ٥٠٠", [400, 500]),
         ("من أربعمية لخمسمية", [400, 500]),
