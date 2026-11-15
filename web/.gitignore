@@ -9,9 +9,7 @@ coverage/
 
 # Local assistant instructions and work notes
 AGENTS.md
-.codex/
 .agents/
-.claude/
 UX_REVIEW.md
 design/
 
