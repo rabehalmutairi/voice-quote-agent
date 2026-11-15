@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/call_result.schema.json",
+  "title": "CallResult",
+  "description": "Voice/Telephony -> Extraction, Eval. What happened on one call.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "call_id",
+    "task_id",
+    "place_id",
+    "conversation_id",
+    "outcome",
+    "started_at",
+    "duration_s",
+    "language_final",
+    "transcript",
+    "cost_usd",
+    "pre_arranged",
+    "scenario_id"
+  ],
+  "properties": {
+    "call_id": { "$ref": "common.schema.json#/$defs/call_id" },
+    "task_id": { "$ref": "common.schema.json#/$defs/task_id" },
+    "place_id": { "$ref": "common.schema.json#/$defs/place_id" },
+    "conversation_id": {
+      "type": ["string", "null"],
+      "description": "ElevenLabs conversation ID. null if the call failed before the platform created one."
+    },
+    "outcome": { "$ref": "common.schema.json#/$defs/outcome" },
+    "started_at": {
+      "oneOf": [{ "type": "null" }, { "$ref": "common.schema.json#/$defs/timestamp" }],
+      "description": "null if the call never connected."
+    },
+    "duration_s": { "type": "number", "minimum": 0 },
+    "language_final": {
+      "enum": ["ar", "en", null],
+      "description": "Language at the end of the call. null when nobody spoke."
+    },
+    "transcript": {
+      "type": "array",
+      "description": "Turns in order; `i` counts from 0. ElevenLabs' `user` is converted to `shop` at the boundary.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["i", "speaker", "t", "text"],
+        "properties": {
+          "i": { "type": "integer", "minimum": 0 },
+          "speaker": { "enum": ["agent", "shop"] },
+          "t": { "type": "number", "minimum": 0, "description": "Seconds since the call started." },
+          "text": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "cost_usd": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "Platform + LLM + carrier. null until the providers report it."
+    },
+    "pre_arranged": { "type": "boolean" },
+    "scenario_id": {
+      "type": ["string", "null"],
+      "description": "Scenario card ID for role-play calls; null for real shops."
+    }
+  }
+}

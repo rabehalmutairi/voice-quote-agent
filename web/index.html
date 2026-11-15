@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ar-SA" dir="rtl" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preload" href="/fonts/noto-sans-arabic-arabic.woff2" as="font" type="font/woff2" crossorigin />
+    <meta
+      name="description"
+      content="واجهة عربية لمقارنة عروض صيانة الأجهزة مع أدلة من المحادثات."
+    />
+    <title>Voice Quote Agent · قارن عروض الصيانة</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      try {
+        const savedTheme = window.localStorage.getItem("voice-quote-theme");
+        if (savedTheme === "light" || savedTheme === "dark") {
+          document.documentElement.dataset.theme = savedTheme;
+        }
+      } catch {
+        // Keep the dark default when storage is unavailable.
+      }
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

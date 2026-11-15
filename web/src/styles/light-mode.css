@@ -1,0 +1,142 @@
+/*
+ * Theme layer.
+ * Dark remains the product default; light mode reuses the same semantic board
+ * roles with paper surfaces, readable ink, and the existing coral action color.
+ */
+
+.theme-toggle {
+  display: inline-flex;
+  min-block-size: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding-inline: 0.7rem;
+  border: 1px solid var(--board-line);
+  border-radius: var(--board-radius-sm);
+  background: var(--board-surface);
+  color: var(--board-copy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--board-coral);
+  background: var(--board-surface-soft);
+  color: var(--board-white);
+}
+
+.theme-toggle__icon {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+html[data-theme="light"] {
+  --board-page: #f6f3ed;
+  --board-page-deep: #eee7dc;
+  --board-surface: #fffdf9;
+  --board-surface-raised: #fffdf9;
+  --board-surface-soft: #f4efe7;
+  --board-surface-strong: #ebe3d7;
+  --board-line: #d7cfc4;
+  --board-line-soft: #e8dfd4;
+  --board-white: #35262b;
+  --board-copy: #4c595b;
+  --board-muted: #5f6d6b;
+  --board-coral: #c65e4e;
+  --board-coral-soft: #fae5dc;
+  --board-blue: #3f7d96;
+  --board-blue-soft: #e3eff2;
+  --board-green: #66845f;
+  --board-green-soft: #e5f0e1;
+  --board-amber: #b77a1e;
+  --board-amber-soft: #fbefd9;
+  --board-red: #bd5146;
+  --board-red-soft: #f7e1de;
+  --board-shadow: 0 0.75rem 1.75rem rgb(57 42 31 / 11%);
+}
+
+html[data-theme="light"] body {
+  background:
+    radial-gradient(circle at 10% 0%, rgb(194 166 126 / 12%), transparent 32rem),
+    linear-gradient(180deg, var(--board-page) 0%, var(--board-page-deep) 100%);
+}
+
+html[data-theme="light"] .site-header {
+  border-block-end-color: var(--board-line);
+  background: rgb(255 253 249 / 95%);
+}
+
+html[data-theme="light"] .site-navigation a:hover,
+html[data-theme="light"] .site-navigation a[aria-current="page"] {
+  background: rgb(232 222 210 / 72%);
+}
+
+html[data-theme="light"] .site-navigation__login {
+  color: var(--board-coral) !important;
+}
+
+html[data-theme="light"] .request-form {
+  background: linear-gradient(150deg, rgb(255 253 249 / 98%), rgb(244 239 231 / 98%));
+}
+
+html[data-theme="light"] .request-form input,
+html[data-theme="light"] .request-form select,
+html[data-theme="light"] .request-form textarea,
+html[data-theme="light"] .follow-up-form input {
+  background: #fffdf9;
+  color: var(--board-white);
+}
+
+html[data-theme="light"] .request-form input::placeholder,
+html[data-theme="light"] .request-form textarea::placeholder {
+  color: #5f6d6b;
+}
+
+html[data-theme="light"] .task-flow__steps {
+  background: rgb(255 253 249 / 88%);
+}
+
+html[data-theme="light"] .task-flow__steps li span {
+  color: #fffdf9;
+}
+
+html[data-theme="light"] .shops-section,
+html[data-theme="light"] .comparison-summary,
+html[data-theme="light"] .metrics-section,
+html[data-theme="light"] .metrics-panel {
+  background: linear-gradient(150deg, rgb(255 253 249 / 98%), rgb(244 239 231 / 98%));
+}
+
+html[data-theme="light"] .shop-card__details {
+  background: var(--board-surface-soft);
+}
+
+html[data-theme="light"] .metric-bar {
+  background: #d3d9d3;
+}
+
+html[data-theme="light"] .evidence-dialog-backdrop {
+  background: rgb(43 34 30 / 35%);
+}
+
+html[data-theme="light"] .evidence-dialog {
+  background: var(--board-surface-raised);
+}
+
+@media (max-width: 48rem) {
+  .theme-toggle {
+    min-block-size: 2.5rem;
+    padding-inline: 0.55rem;
+    font-size: 0.67rem;
+  }
+}

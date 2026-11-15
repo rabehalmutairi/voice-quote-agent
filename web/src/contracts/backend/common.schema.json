@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rabehalmutairi/voice-quote-agent/contracts/common.schema.json",
+  "title": "Common definitions",
+  "description": "Building blocks shared by every contract. Not a contract on its own.",
+  "$defs": {
+    "task_id": { "type": "string", "pattern": "^tsk_[A-Za-z0-9]+$" },
+    "call_id": { "type": "string", "pattern": "^call_[A-Za-z0-9]+$" },
+    "place_id": { "type": "string", "minLength": 1, "description": "Google Places ID." },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "snake_case identifier: categories, slot keys, field names."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "RFC 3339, always UTC with a trailing Z."
+    },
+    "phone_e164": { "type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$" },
+    "custom_questions": {
+      "type": "array",
+      "maxItems": 2,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Questions the user wrote themselves, in Arabic, asked after the template's questions. At most 2 so a call stays under ~2.5 minutes."
+    },
+    "outcome": {
+      "enum": [
+        "human_completed",
+        "human_partial",
+        "voicemail",
+        "ivr",
+        "no_answer",
+        "busy",
+        "hung_up",
+        "wrong_business",
+        "failed"
+      ]
+    },
+
+    "evidence_base": {
+      "description": "Keys and status rules shared by every evidence-backed value. Value rules live in evidence_field.",
+      "type": "object",
+      "required": ["value", "status", "confidence", "evidence_quote", "evidence_turn"],
+      "properties": {
+        "status": { "enum": ["found", "not_mentioned", "refused", "unclear"] },
+        "confidence": { "type": ["number", "null"] },
+        "evidence_quote": { "type": ["string", "null"] },
+        "evidence_turn": { "type": ["integer", "null"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "not_mentioned" } } },
+          "then": {
+            "properties": {
+              "confidence": { "type": "null" },
+              "evidence_quote": { "type": "null" },
+              "evidence_turn": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "evidence_quote": { "type": "string", "minLength": 1 },
+              "evidence_turn": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        {
+          "if": { "not": { "properties": { "status": { "const": "found" } } } },
+          "then": { "properties": { "value": { "type": "null" } } }
+        }
+      ]
+    },
+
+    "evidence_field": {
+      "description": "One value the shop gave, backed by the shop's own words. Its type (number, choice, text, yes/no) is set by the category template, which this schema cannot see: R6's checker verifies the value against the template. A number is either an exact `value` or a range in `value_min`/`value_max`, never both.",
+      "$ref": "#/$defs/evidence_base",
+      "required": ["value_min", "value_max"],
+      "properties": {
+        "value": { "type": ["number", "string", "boolean", "null"], "minimum": 0 },
+        "value_min": { "type": ["number", "null"], "minimum": 0 },
+        "value_max": { "type": ["number", "null"], "minimum": 0 }
+      },
+      "if": { "properties": { "status": { "const": "found" } } },
+      "then": {
+        "oneOf": [
+          {
+            "title": "exact",
+            "properties": {
+              "value": { "type": ["number", "string", "boolean"] },
+              "value_min": { "type": "null" },
+              "value_max": { "type": "null" }
+            }
+          },
+          {
+            "title": "range",
+            "properties": {
+              "value": { "type": "null" },
+              "value_min": { "type": "number" },
+              "value_max": { "type": "number" }
+            }
+          }
+        ]
+      },
+      "else": {
+        "properties": {
+          "value_min": { "type": "null" },
+          "value_max": { "type": "null" }
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

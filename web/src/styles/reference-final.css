@@ -1,0 +1,1907 @@
+/*
+ * Final light reference system for the four user-facing pages.
+ *
+ * This file is scoped to .app-shell--reference so the existing fixture/demo
+ * journey keeps its behavior and presentation while these routes share one
+ * compact, responsive RTL system.
+ */
+
+.app-shell--reference {
+  --reference-ivory: #fbf8f2;
+  --reference-paper: #fffdf9;
+  --reference-paper-warm: #fff8ef;
+  --reference-line: #ded6cc;
+  --reference-line-soft: #ebe4da;
+  --reference-burgundy: #54202c;
+  --reference-copy: #435158;
+  --reference-muted: #737d80;
+  --reference-coral: #d7624e;
+  --reference-coral-dark: #b84d3d;
+  --reference-blue: #3e84a5;
+  --reference-blue-soft: #e3f2f7;
+  --reference-green: #688961;
+  --reference-green-soft: #e5f0e2;
+  --reference-amber: #b9781e;
+  --reference-amber-soft: #fbefd8;
+  --reference-red: #bc4d43;
+  --reference-red-soft: #fbe5e2;
+  --reference-shadow: 0 0.55rem 1.35rem rgb(87 59 44 / 8%);
+  --reference-radius: 0.65rem;
+  --reference-radius-sm: 0.45rem;
+}
+
+html[data-theme="light"] body {
+  background: var(--reference-ivory);
+  color: var(--reference-copy);
+  font-family: "Noto Sans Arabic", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+html[data-theme="light"] .app-shell--reference {
+  min-height: 100svh;
+  min-inline-size: 0;
+  grid-template-rows: auto auto auto;
+  align-content: start;
+  background: var(--reference-ivory);
+}
+
+html[data-theme="light"] .app-shell--reference .site-header,
+html[data-theme="light"] .app-shell--reference .main-content,
+html[data-theme="light"] .app-shell--reference .site-footer {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+html[data-theme="light"] .app-shell--reference .site-header {
+  width: 100%;
+  padding-block: 0.45rem;
+  border-block-end: 1px solid var(--reference-line);
+  background: rgb(255 253 249 / 96%);
+}
+
+html[data-theme="light"] .app-shell--reference .site-header__layout {
+  width: min(calc(100% - 2rem), 90rem);
+  min-height: 3.2rem;
+  margin-inline: auto;
+  gap: 1rem 2rem;
+}
+
+html[data-theme="light"] .app-shell--reference .brand {
+  flex: 0 0 auto;
+  gap: 0.65rem;
+  color: var(--reference-burgundy);
+}
+
+html[data-theme="light"] .app-shell--reference .brand-mark {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background: var(--reference-coral);
+  color: #fffdf9;
+  box-shadow: 0 0.35rem 0.9rem rgb(215 98 78 / 20%);
+}
+
+html[data-theme="light"] .app-shell--reference .brand-mark svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+html[data-theme="light"] .app-shell--reference .brand__copy {
+  gap: 0.08rem;
+}
+
+html[data-theme="light"] .app-shell--reference .brand__name {
+  color: var(--reference-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+html[data-theme="light"] .app-shell--reference .brand__tagline {
+  color: var(--reference-muted);
+  font-size: 0.61rem;
+  font-weight: 600;
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation ul {
+  gap: 0.15rem;
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation a {
+  position: relative;
+  min-height: 2.35rem;
+  padding-inline: 0.68rem;
+  border: 0;
+  border-radius: 0.3rem;
+  color: #4e575a;
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation a::after {
+  position: absolute;
+  inset-block-end: 0.05rem;
+  inset-inline: 0.68rem;
+  height: 0.15rem;
+  border-radius: 99px;
+  background: transparent;
+  content: "";
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation a:hover,
+html[data-theme="light"] .app-shell--reference .site-navigation a[aria-current="page"] {
+  background: transparent;
+  color: var(--reference-burgundy);
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation a[aria-current="page"]::after {
+  background: var(--reference-coral);
+}
+
+html[data-theme="light"] .app-shell--reference .site-navigation__login {
+  color: var(--reference-coral) !important;
+}
+
+html[data-theme="light"] .app-shell--reference .main-content {
+  display: block;
+  width: min(calc(100% - 2rem), 90rem);
+  min-height: 0;
+  margin-inline: auto;
+  padding-block: clamp(1.15rem, 2.5vw, 2.35rem) 0.8rem;
+}
+
+html[data-theme="light"] .app-shell--reference .site-footer {
+  width: min(calc(100% - 2rem), 90rem);
+  margin-inline: auto;
+  padding-block: 0.65rem 1.05rem;
+  border-block-start: 1px solid var(--reference-line);
+  color: var(--reference-muted);
+  font-size: 0.68rem;
+}
+
+html[data-theme="light"] .app-shell--reference .site-footer p {
+  margin: 0;
+}
+
+.app-shell--reference .reference-screen {
+  display: grid;
+  width: 100%;
+  max-width: 90rem;
+  min-inline-size: 0;
+  gap: 0.95rem;
+  margin-inline: auto;
+  color: var(--reference-copy);
+}
+
+.app-shell--reference .reference-screen > * {
+  min-inline-size: 0;
+}
+
+.app-shell--reference .reference-screen h1,
+.app-shell--reference .reference-screen h2,
+.app-shell--reference .reference-screen h3,
+.app-shell--reference .reference-screen p,
+.app-shell--reference .reference-screen ul,
+.app-shell--reference .reference-screen ol,
+.app-shell--reference .reference-screen dl,
+.app-shell--reference .reference-screen blockquote {
+  margin: 0;
+}
+
+.app-shell--reference .reference-screen button,
+.app-shell--reference .reference-screen input,
+.app-shell--reference .reference-screen select,
+.app-shell--reference .reference-screen textarea {
+  font: inherit;
+}
+
+.app-shell--reference .reference-page__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  min-height: auto;
+  padding-block: 0.25rem 0.1rem;
+}
+
+.app-shell--reference .reference-page__heading-copy {
+  min-inline-size: 0;
+}
+
+.app-shell--reference .reference-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.app-shell--reference .reference-page__heading h1 {
+  color: var(--reference-burgundy);
+  font-size: clamp(2rem, 3.6vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.app-shell--reference .reference-page__title-icon {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--reference-red-soft);
+  color: var(--reference-burgundy);
+  font-size: 1.2rem;
+}
+
+.app-shell--reference .reference-page__description {
+  margin-block-start: 0.3rem !important;
+  color: #657073;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.app-shell--reference .reference-page__eyebrow,
+.app-shell--reference .reference-card-eyebrow {
+  color: var(--reference-coral);
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-page__heading-action {
+  flex: 0 0 auto;
+}
+
+.app-shell--reference .reference-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.app-shell--reference .reference-primary-button,
+.app-shell--reference .reference-card-action,
+.app-shell--reference .reference-share-button,
+.app-shell--reference .reference-date-button {
+  display: inline-flex;
+  min-height: 2.7rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding-inline: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.app-shell--reference .reference-primary-button:hover,
+.app-shell--reference .reference-card-action:hover,
+.app-shell--reference .reference-share-button:hover,
+.app-shell--reference .reference-date-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Landing */
+
+.app-shell--reference .reference-screen--landing {
+  gap: 0.7rem;
+}
+
+.app-shell--reference .reference-landing__hero {
+  display: grid;
+  grid-template-areas: "copy visual";
+  grid-template-columns: minmax(0, 1fr) minmax(24rem, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  min-block-size: 18rem;
+}
+
+.app-shell--reference .reference-landing__copy {
+  grid-area: copy;
+  padding-inline: 0.25rem;
+}
+
+.app-shell--reference .reference-landing__copy h1 {
+  color: var(--reference-burgundy);
+  font-size: clamp(2.65rem, 5vw, 4.35rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.app-shell--reference .reference-landing__copy p {
+  max-inline-size: 32rem;
+  margin-block-start: 0.8rem;
+  color: #606b6e;
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+  line-height: 1.85;
+}
+
+.app-shell--reference .reference-illustration {
+  position: relative;
+  grid-area: visual;
+  min-block-size: 18rem;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 0.75rem;
+  background:
+    radial-gradient(circle at 70% 18%, rgb(255 255 255 / 86%), transparent 8rem),
+    linear-gradient(180deg, #fffaf1 0%, #f3e1cb 100%);
+}
+
+.app-shell--reference .reference-illustration::before {
+  position: absolute;
+  inset-inline: -8%;
+  inset-block-end: -3.6rem;
+  height: 8.5rem;
+  border-radius: 50% 50% 0 0;
+  background: #f2d9bb;
+  box-shadow: 0 -1.1rem 0 rgb(197 146 106 / 12%);
+  content: "";
+  transform: rotate(-3deg);
+}
+
+.app-shell--reference .reference-illustration::after {
+  position: absolute;
+  inset-inline: 6%;
+  inset-block-end: 2rem;
+  height: 0.14rem;
+  background: rgb(173 112 77 / 24%);
+  box-shadow: 0 0.7rem 0 rgb(173 112 77 / 11%);
+  content: "";
+}
+
+.app-shell--reference .reference-illustration__sun {
+  position: absolute;
+  inset-block-start: 1rem;
+  inset-inline-start: 1.2rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  background: #f1bd83;
+  box-shadow: 0 0 0 0.45rem rgb(241 189 131 / 18%);
+}
+
+.app-shell--reference .reference-illustration__buildings {
+  position: absolute;
+  inset-inline: 0.55rem;
+  inset-block-end: 1.85rem;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  height: 8rem;
+  padding-inline: 0.75rem;
+}
+
+.app-shell--reference .reference-illustration__building {
+  position: relative;
+  display: block;
+  width: 24%;
+  height: 5.1rem;
+  border: 1px solid rgb(168 125 93 / 30%);
+  border-radius: 0.15rem 0.15rem 0 0;
+  background: #d49b72;
+  box-shadow: inset 0.5rem 0 rgb(255 255 255 / 26%);
+}
+
+.app-shell--reference .reference-illustration__building::after {
+  position: absolute;
+  inset: 0.65rem 0.5rem auto;
+  height: 3.2rem;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 232 201 / 78%) 0 0.24rem, transparent 0.24rem 0.57rem),
+    repeating-linear-gradient(0deg, transparent 0 0.48rem, rgb(255 232 201 / 53%) 0.48rem 0.64rem);
+  content: "";
+}
+
+.app-shell--reference .reference-illustration__building--one {
+  height: 5.8rem;
+  background: #c88c6d;
+}
+
+.app-shell--reference .reference-illustration__building--two {
+  width: 28%;
+  height: 7.6rem;
+  background: #e3b38c;
+}
+
+.app-shell--reference .reference-illustration__building--three {
+  height: 6.2rem;
+  background: #dca47c;
+}
+
+.app-shell--reference .reference-illustration__palm {
+  position: absolute;
+  z-index: 1;
+  inset-block-end: 2.15rem;
+  width: 0.36rem;
+  height: 5rem;
+  border-radius: 99px;
+  background: #7b614e;
+  transform-origin: bottom center;
+}
+
+.app-shell--reference .reference-illustration__palm::before,
+.app-shell--reference .reference-illustration__palm::after {
+  position: absolute;
+  inset-block-start: -0.8rem;
+  width: 2.8rem;
+  height: 1.55rem;
+  border-radius: 100% 0 100% 0;
+  background: #749071;
+  content: "";
+}
+
+.app-shell--reference .reference-illustration__palm::before {
+  inset-inline-start: -1.25rem;
+  transform: rotate(-26deg);
+}
+
+.app-shell--reference .reference-illustration__palm::after {
+  inset-inline-start: -0.45rem;
+  transform: rotate(26deg) scaleX(-1);
+}
+
+.app-shell--reference .reference-illustration__palm--one {
+  inset-inline-start: 9%;
+  transform: rotate(-7deg);
+}
+
+.app-shell--reference .reference-illustration__palm--two {
+  inset-inline-start: 26%;
+  inset-block-end: 2.2rem;
+  height: 4.25rem;
+  transform: rotate(5deg) scale(0.82);
+}
+
+.app-shell--reference .reference-illustration__phone {
+  position: absolute;
+  inset-block-end: 0.6rem;
+  inset-inline-start: 34%;
+  z-index: 3;
+  width: 6.1rem;
+  height: 10.7rem;
+  padding: 0.4rem;
+  border: 0.23rem solid #263d45;
+  border-radius: 1rem;
+  background: #eef3f0;
+  box-shadow: 0 0.75rem 1rem rgb(78 59 47 / 18%);
+  transform: rotate(-7deg);
+}
+
+.app-shell--reference .reference-illustration__speaker {
+  position: absolute;
+  inset-block-start: 0.3rem;
+  inset-inline: 50% auto;
+  width: 1.05rem;
+  height: 0.12rem;
+  border-radius: 99px;
+  background: #263d45;
+  transform: translateX(-50%);
+}
+
+.app-shell--reference .reference-illustration__phone-screen {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem 0.35rem;
+  border-radius: 0.7rem;
+  background: #fff7ed;
+}
+
+.app-shell--reference .reference-illustration__phone-screen b {
+  color: var(--reference-coral);
+  font-size: 0.55rem;
+}
+
+.app-shell--reference .reference-illustration__phone-screen i {
+  display: block;
+  width: 66%;
+  height: 0.24rem;
+  border-radius: 99px;
+  background: #dbb29b;
+}
+
+.app-shell--reference .reference-illustration__phone-screen i:nth-of-type(2) {
+  width: 56%;
+  background: #9eb394;
+}
+
+.app-shell--reference .reference-illustration__phone-screen i:nth-of-type(3) {
+  width: 42%;
+  background: #e6b65f;
+}
+
+.app-shell--reference .reference-illustration__sign {
+  position: absolute;
+  z-index: 4;
+  inset-block-end: 5.9rem;
+  inset-inline-end: 15%;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.2rem;
+  background: #73926f;
+  color: #fffaf1;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.app-shell--reference .reference-proof-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  padding-block: 0.65rem;
+  border-block: 1px solid var(--reference-line-soft);
+  list-style: none;
+}
+
+.app-shell--reference .reference-proof-list li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-inline-size: 0;
+}
+
+.app-shell--reference .reference-proof-list .reference-icon {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #efad9e;
+  background: #fff7ef;
+  color: var(--reference-coral);
+  font-size: 0.85rem;
+}
+
+.app-shell--reference .reference-proof-list li > span:last-child {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.app-shell--reference .reference-proof-list strong {
+  color: var(--reference-burgundy);
+  font-size: 0.75rem;
+}
+
+.app-shell--reference .reference-proof-list small {
+  color: var(--reference-muted);
+  font-size: 0.64rem;
+}
+
+.app-shell--reference .reference-process {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding-block: 0.25rem 0.45rem;
+  list-style: none;
+}
+
+.app-shell--reference .reference-process::before {
+  position: absolute;
+  inset-block-start: 1.25rem;
+  inset-inline: 7% 7%;
+  height: 1px;
+  background: #efad9e;
+  content: "";
+}
+
+.app-shell--reference .reference-process li {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.22rem;
+  text-align: center;
+}
+
+.app-shell--reference .reference-process li > span:first-child {
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--reference-coral);
+  color: #fffdf9;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-process li strong {
+  color: var(--reference-burgundy);
+  font-size: 0.75rem;
+}
+
+.app-shell--reference .reference-process li small {
+  color: var(--reference-muted);
+  font-size: 0.64rem;
+}
+
+.app-shell--reference .reference-landing__form {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--reference-line);
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.app-shell--reference .reference-field {
+  display: grid;
+  grid-template-areas:
+    "label icon"
+    "input input";
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 4.25rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--reference-line);
+  border-radius: var(--reference-radius-sm);
+  background: #fffefa;
+}
+
+.app-shell--reference .reference-field label {
+  grid-area: label;
+  align-self: center;
+  color: var(--reference-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.app-shell--reference .reference-field__icon {
+  grid-area: icon;
+  align-self: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  color: var(--reference-copy);
+  font-size: 0.85rem;
+}
+
+.app-shell--reference .reference-field input,
+.app-shell--reference .reference-field select {
+  grid-area: input;
+  width: 100%;
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--reference-burgundy);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.app-shell--reference .reference-field input::placeholder {
+  color: #687276;
+  opacity: 1;
+}
+
+.app-shell--reference .reference-field:focus-within {
+  border-color: var(--reference-coral);
+  box-shadow: 0 0 0 0.18rem rgb(215 98 78 / 13%);
+}
+
+.app-shell--reference .reference-primary-button {
+  justify-self: center;
+  width: min(100%, 22rem);
+  background: var(--reference-coral);
+  color: #fffdf9;
+}
+
+.app-shell--reference .reference-primary-button:hover {
+  background: var(--reference-coral-dark);
+}
+
+.app-shell--reference .reference-landing__trust {
+  color: var(--reference-muted);
+  font-size: 0.65rem;
+  text-align: center;
+}
+
+.app-shell--reference .reference-landing__fallback-label {
+  color: var(--reference-muted);
+  font-size: 0.67rem;
+}
+
+.app-shell--reference .reference-landing__fallback {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--reference-line);
+  border-radius: 0.4rem;
+  background: #fffefa;
+  color: var(--reference-copy);
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+/* Tracking */
+
+.app-shell--reference .reference-screen--tracking,
+.app-shell--reference .reference-screen--comparison,
+.app-shell--reference .reference-screen--metrics {
+  gap: 1rem;
+}
+
+.app-shell--reference .reference-tracking__context {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  min-height: 3.4rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #b9dce8;
+  border-radius: var(--reference-radius-sm);
+  background: var(--reference-blue-soft);
+  color: #335a6d;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.app-shell--reference .reference-tracking__context span {
+  min-width: 0;
+  padding-inline: 0.55rem;
+}
+
+.app-shell--reference .reference-tracking__context span + span {
+  border-inline-start: 1px solid #b9dce8;
+}
+
+.app-shell--reference .reference-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.app-shell--reference .reference-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-block-size: 17rem;
+  padding: 1rem;
+  border: 1px solid #b6d7df;
+  border-block-start: 0.25rem solid var(--reference-blue);
+  border-radius: var(--reference-radius);
+  background: #f7fcfd;
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-status-card--amber {
+  border-color: #e5d0a6;
+  border-block-start-color: var(--reference-amber);
+  background: #fffaf0;
+}
+
+.app-shell--reference .reference-status-card--green {
+  border-color: #c8d9c2;
+  border-block-start-color: var(--reference-green);
+  background: #f7fcf5;
+}
+
+.app-shell--reference .reference-status-card--red {
+  border-color: #e5b8b2;
+  border-block-start-color: var(--reference-red);
+  background: #fff8f6;
+}
+
+.app-shell--reference .reference-status-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.app-shell--reference .reference-status-card__heading .reference-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  background: var(--reference-blue-soft);
+  color: var(--reference-blue);
+  font-size: 0.95rem;
+}
+
+.app-shell--reference .reference-status-card--amber .reference-icon {
+  background: var(--reference-amber-soft);
+  color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-status-card--green .reference-icon {
+  background: var(--reference-green-soft);
+  color: var(--reference-green);
+}
+
+.app-shell--reference .reference-status-card--red .reference-icon {
+  background: var(--reference-red-soft);
+  color: var(--reference-red);
+}
+
+.app-shell--reference .reference-status-card h2 {
+  color: var(--reference-burgundy);
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-status-card__status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--reference-blue);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-status-card__status span {
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.app-shell--reference .reference-status-card--amber .reference-status-card__status {
+  color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-status-card--green .reference-status-card__status {
+  color: var(--reference-green);
+}
+
+.app-shell--reference .reference-status-card--red .reference-status-card__status {
+  color: var(--reference-red);
+}
+
+.app-shell--reference .reference-status-card__detail {
+  min-block-size: 4.6rem;
+  color: #606b6e;
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+
+.app-shell--reference .reference-card-action {
+  width: 100%;
+  margin-block-start: auto;
+  border-color: #a7d1de;
+  background: var(--reference-blue-soft);
+  color: var(--reference-blue);
+}
+
+.app-shell--reference .reference-status-card--amber .reference-card-action {
+  border-color: #e0c68f;
+  background: var(--reference-amber-soft);
+  color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-status-card--green .reference-card-action {
+  border-color: #b5caaa;
+  background: var(--reference-green-soft);
+  color: var(--reference-green);
+}
+
+.app-shell--reference .reference-status-card--red .reference-card-action {
+  border-color: #e1aaa2;
+  background: var(--reference-red-soft);
+  color: var(--reference-red);
+}
+
+/* Comparison */
+
+.app-shell--reference .reference-share-button,
+.app-shell--reference .reference-date-button {
+  border-color: #d9a99d;
+  background: var(--reference-paper);
+  color: var(--reference-burgundy);
+}
+
+.app-shell--reference .reference-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.app-shell--reference .reference-offer-card,
+.app-shell--reference .reference-evidence-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-block-size: 22rem;
+  padding: 1rem;
+  border: 1px solid var(--reference-line);
+  border-block-start: 0.25rem solid var(--reference-blue);
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-offer-card--amber {
+  border-block-start-color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-offer-card--green {
+  border-block-start-color: var(--reference-green);
+}
+
+.app-shell--reference .reference-offer-card__heading,
+.app-shell--reference .reference-evidence-card > header,
+.app-shell--reference .reference-metrics-panel > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.app-shell--reference .reference-offer-card__heading .reference-icon,
+.app-shell--reference .reference-evidence-card > header .reference-icon,
+.app-shell--reference .reference-metrics-panel > header .reference-icon {
+  width: 2rem;
+  height: 2rem;
+  background: var(--reference-blue-soft);
+  color: var(--reference-blue);
+  font-size: 0.85rem;
+}
+
+.app-shell--reference .reference-offer-card--amber .reference-icon {
+  background: var(--reference-amber-soft);
+  color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-offer-card--green .reference-icon {
+  background: var(--reference-green-soft);
+  color: var(--reference-green);
+}
+
+.app-shell--reference .reference-offer-card__heading h2 {
+  color: var(--reference-burgundy);
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-offer-card__badge {
+  display: inline-block;
+  margin-block-end: 0.2rem;
+  padding: 0.18rem 0.35rem;
+  border-radius: 0.25rem;
+  background: var(--reference-green-soft);
+  color: var(--reference-green);
+  font-size: 0.6rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-offer-card__details {
+  display: grid;
+  gap: 0;
+  margin-block-start: 0.1rem;
+}
+
+.app-shell--reference .reference-offer-card__details div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-block: 0.55rem;
+  border-block-end: 1px solid var(--reference-line-soft);
+}
+
+.app-shell--reference .reference-offer-card__details dt {
+  color: var(--reference-muted);
+  font-size: 0.68rem;
+}
+
+.app-shell--reference .reference-offer-card__details dd {
+  margin: 0;
+  color: var(--reference-copy);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-align: start;
+}
+
+.app-shell--reference .reference-offer-card__details div:first-child dd {
+  color: var(--reference-burgundy);
+  font-size: 1.25rem;
+}
+
+.app-shell--reference .reference-evidence-card {
+  border-block-start-color: var(--reference-burgundy);
+  background: var(--reference-paper-warm);
+}
+
+.app-shell--reference .reference-evidence-card h2 {
+  margin-block-start: 0.12rem;
+  color: var(--reference-burgundy);
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-evidence-card > header .reference-icon {
+  background: var(--reference-green-soft);
+  color: var(--reference-green);
+}
+
+.app-shell--reference .reference-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.16rem;
+  min-block-size: 3.2rem;
+  padding: 0.45rem;
+  border-radius: 0.4rem;
+  background: var(--reference-green-soft);
+}
+
+.app-shell--reference .reference-wave i {
+  display: block;
+  width: 0.14rem;
+  height: var(--wave-height);
+  min-height: 0.35rem;
+  border-radius: 99px;
+  background: var(--reference-green);
+}
+
+.app-shell--reference .reference-evidence-card blockquote {
+  padding: 0.7rem;
+  border-inline-start: 0.22rem solid var(--reference-amber);
+  background: var(--reference-amber-soft);
+  color: #4a4b48;
+  font-size: 0.78rem;
+  line-height: 1.85;
+}
+
+.app-shell--reference .reference-evidence-card__price {
+  align-self: center;
+  padding: 0.38rem 0.75rem;
+  border-radius: 0.32rem;
+  background: #f0bd61;
+  color: #5b3d18;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-evidence-card p:last-child {
+  color: var(--reference-muted);
+  font-size: 0.65rem;
+  line-height: 1.7;
+}
+
+/* Metrics */
+
+.app-shell--reference .reference-screen--metrics .data-provenance {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid #b9dce8;
+  border-radius: var(--reference-radius-sm);
+  border-inline-start-width: 0.25rem;
+  background: #eef8fa;
+}
+
+.app-shell--reference .reference-screen--metrics .data-provenance__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.app-shell--reference .reference-screen--metrics .data-provenance__badge {
+  padding: 0.2rem 0.42rem;
+  border-radius: 0.3rem;
+  background: #36728b;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-screen--metrics .data-provenance strong {
+  color: #305667;
+  font-size: 0.88rem;
+}
+
+.app-shell--reference .reference-screen--metrics .data-provenance__description,
+.app-shell--reference .reference-screen--metrics .data-provenance__meta {
+  color: #5b737d;
+  font-size: 0.7rem;
+}
+
+.app-shell--reference .reference-metrics-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.app-shell--reference .reference-metric-card {
+  display: grid;
+  gap: 0.5rem;
+  min-block-size: 8.6rem;
+  padding: 0.95rem;
+  border: 1px solid var(--reference-line);
+  border-block-start: 0.25rem solid var(--reference-blue);
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-metric-card--amber {
+  border-block-start-color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-metric-card--green {
+  border-block-start-color: var(--reference-green);
+}
+
+.app-shell--reference .reference-metric-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.app-shell--reference .reference-metric-card h2 {
+  color: var(--reference-copy);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.app-shell--reference .reference-metric-card .reference-icon {
+  width: 1.7rem;
+  height: 1.7rem;
+  color: var(--reference-blue);
+  font-size: 0.8rem;
+}
+
+.app-shell--reference .reference-metric-card--amber .reference-icon {
+  color: var(--reference-amber);
+}
+
+.app-shell--reference .reference-metric-card--green .reference-icon {
+  color: var(--reference-green);
+}
+
+.app-shell--reference .reference-metric-card strong {
+  color: var(--reference-burgundy);
+  font-size: 1.7rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-shell--reference .reference-metric-card__bar,
+.app-shell--reference .reference-outcome-bar {
+  display: block;
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #dcded9;
+}
+
+.app-shell--reference .reference-metric-card__bar i {
+  display: block;
+  width: 86%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--reference-blue);
+}
+
+.app-shell--reference .reference-metric-card--amber .reference-metric-card__bar i {
+  width: 72%;
+  background: var(--reference-amber);
+}
+
+.app-shell--reference .reference-metric-card--green .reference-metric-card__bar i {
+  width: 78%;
+  background: var(--reference-green);
+}
+
+.app-shell--reference .reference-metric-card p {
+  color: var(--reference-muted);
+  font-size: 0.62rem;
+}
+
+.app-shell--reference .reference-metrics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.8fr);
+  gap: 0.8rem;
+}
+
+.app-shell--reference .reference-metrics-panel {
+  display: grid;
+  gap: 0.75rem;
+  min-inline-size: 0;
+  min-height: 15.5rem;
+  padding: 0.95rem;
+  border: 1px solid var(--reference-line);
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-metrics-panel > header h2 {
+  margin-block-start: 0.12rem;
+  color: var(--reference-burgundy);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-metrics-panel > header .reference-icon {
+  background: transparent;
+  color: var(--reference-coral);
+}
+
+.app-shell--reference .reference-metrics-panel:first-child {
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.app-shell--reference .reference-metrics-table {
+  width: 100%;
+  min-width: 39rem;
+  border-collapse: collapse;
+  color: var(--reference-copy);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-shell--reference .reference-metrics-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.app-shell--reference .reference-metrics-table th,
+.app-shell--reference .reference-metrics-table td {
+  padding: 0.58rem 0.42rem;
+  border-block-end: 1px solid var(--reference-line-soft);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.app-shell--reference .reference-metrics-table thead th {
+  background: #fffaf4;
+  color: var(--reference-muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-metrics-table tbody th {
+  color: var(--reference-burgundy);
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-metrics-table tbody td {
+  color: #566063;
+  font-weight: 800;
+}
+
+.app-shell--reference .reference-outcome-list {
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-shell--reference .reference-outcome-list li {
+  display: grid;
+  gap: 0.32rem;
+}
+
+.app-shell--reference .reference-outcome-list li > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  color: var(--reference-copy);
+  font-size: 0.75rem;
+}
+
+.app-shell--reference .reference-outcome-list strong {
+  color: var(--reference-burgundy);
+}
+
+.app-shell--reference .reference-outcome-bar i {
+  display: block;
+  width: 54%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--reference-green);
+}
+
+.app-shell--reference .reference-outcome-bar--amber i {
+  width: 24%;
+  background: var(--reference-amber);
+}
+
+.app-shell--reference .reference-outcome-bar--blue i {
+  width: 14%;
+  background: var(--reference-blue);
+}
+
+.app-shell--reference .reference-outcome-bar--red i {
+  width: 8%;
+  background: var(--reference-red);
+}
+
+.app-shell--reference .reference-metrics__notice {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #b9dce8;
+  border-radius: var(--reference-radius-sm);
+  background: var(--reference-blue-soft);
+  color: #3c7185;
+  font-size: 0.7rem;
+}
+
+.app-shell--reference .reference-metrics__appendix {
+  overflow-x: auto;
+  padding: 0.8rem;
+  border: 1px solid var(--reference-line-soft);
+  border-radius: var(--reference-radius-sm);
+  background: var(--reference-paper);
+}
+
+.app-shell--reference .reference-metrics-table--appendix {
+  min-width: 0;
+  font-size: 0.68rem;
+}
+
+/* Informational routes */
+
+.app-shell--reference .reference-info-steps,
+.app-shell--reference .reference-service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-shell--reference .reference-info-steps li,
+.app-shell--reference .reference-service-grid article {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-block-size: 10rem;
+  padding: 1rem;
+  border: 1px solid var(--reference-line);
+  border-block-start: 0.25rem solid var(--reference-coral);
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-info-steps__number {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--reference-coral);
+  color: #fff;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-info-steps .reference-icon,
+.app-shell--reference .reference-service-grid .reference-icon {
+  width: 2rem;
+  height: 2rem;
+  background: var(--reference-red-soft);
+  color: var(--reference-coral);
+}
+
+.app-shell--reference .reference-info-steps h2,
+.app-shell--reference .reference-service-grid h2 {
+  color: var(--reference-burgundy);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-info-steps p,
+.app-shell--reference .reference-service-grid p {
+  color: #626d70;
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+
+.app-shell--reference .reference-info-callout {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #b9dce8;
+  border-radius: var(--reference-radius-sm);
+  background: var(--reference-blue-soft);
+}
+
+.app-shell--reference .reference-info-callout strong {
+  color: var(--reference-burgundy);
+  font-size: 0.9rem;
+}
+
+.app-shell--reference .reference-info-callout span {
+  color: #536c76;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.app-shell--reference .reference-info-callout .reference-primary-button {
+  width: auto;
+}
+
+.app-shell--reference .reference-info-callout--warm {
+  border-color: #e3c48f;
+  background: var(--reference-amber-soft);
+}
+
+.app-shell--reference .reference-info-callout--warm span {
+  color: #746247;
+}
+
+@media (max-width: 72rem) {
+  html[data-theme="light"] .app-shell--reference .site-header__layout,
+  html[data-theme="light"] .app-shell--reference .main-content,
+  html[data-theme="light"] .app-shell--reference .site-footer {
+    width: min(calc(100% - 1.5rem), 90rem);
+  }
+
+  .app-shell--reference .reference-landing__hero {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 1fr);
+    gap: 1.5rem;
+  }
+
+  .app-shell--reference .reference-landing__copy h1 {
+    font-size: clamp(2.45rem, 5vw, 3.8rem);
+  }
+
+  .app-shell--reference .reference-status-card,
+  .app-shell--reference .reference-offer-card,
+  .app-shell--reference .reference-evidence-card {
+    padding: 0.85rem;
+  }
+}
+
+@media (max-width: 60rem) {
+  html[data-theme="light"] .app-shell--reference .site-header__layout {
+    gap: 0.65rem 1rem;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-navigation a {
+    padding-inline: 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .app-shell--reference .reference-comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell--reference .reference-metrics-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(15rem, 0.8fr);
+  }
+}
+
+@media (max-width: 48rem) {
+  html[data-theme="light"] .app-shell--reference .site-header__layout {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  html[data-theme="light"] .app-shell--reference .brand {
+    align-self: end;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-navigation {
+    width: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-header {
+    max-inline-size: 100%;
+    overflow: hidden;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-header__layout {
+    width: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow: hidden;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-navigation ul {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    min-inline-size: max-content;
+    width: max-content;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-navigation li {
+    flex: 0 0 auto;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-navigation a {
+    min-height: 2.3rem;
+  }
+
+  .app-shell--reference .reference-page__heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .app-shell--reference .reference-page__heading-action {
+    align-self: start;
+  }
+
+  .app-shell--reference .reference-landing__hero {
+    grid-template-areas:
+      "copy"
+      "visual";
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .app-shell--reference .reference-landing__copy {
+    text-align: center;
+  }
+
+  .app-shell--reference .reference-landing__copy p {
+    margin-inline: auto;
+  }
+
+  .app-shell--reference .reference-illustration {
+    min-block-size: 15rem;
+  }
+
+  .app-shell--reference .reference-proof-list,
+  .app-shell--reference .reference-metrics-kpis,
+  .app-shell--reference .reference-status-grid,
+  .app-shell--reference .reference-comparison-grid,
+  .app-shell--reference .reference-info-steps,
+  .app-shell--reference .reference-service-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell--reference .reference-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell--reference .reference-tracking__context {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    text-align: start;
+  }
+
+  .app-shell--reference .reference-tracking__context span + span {
+    padding-block-start: 0.55rem;
+    border-block-start: 1px solid #b9dce8;
+    border-inline-start: 0;
+  }
+
+  .app-shell--reference .reference-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--reference .reference-info-callout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--reference .reference-info-callout .reference-primary-button {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 36rem) {
+  html[data-theme="light"] .app-shell--reference .site-header__layout,
+  html[data-theme="light"] .app-shell--reference .main-content,
+  html[data-theme="light"] .app-shell--reference .site-footer {
+    width: min(calc(100% - 1rem), 90rem);
+  }
+
+  html[data-theme="light"] .app-shell--reference .brand__name {
+    font-size: 0.94rem;
+  }
+
+  html[data-theme="light"] .app-shell--reference .brand__tagline {
+    font-size: 0.55rem;
+  }
+
+  html[data-theme="light"] .app-shell--reference .site-navigation a {
+    padding-inline: 0.42rem;
+    font-size: 0.64rem;
+  }
+
+  html[data-theme="light"] .app-shell--reference .main-content {
+    padding-block-start: 0.95rem;
+  }
+
+  .app-shell--reference .reference-page__heading h1 {
+    font-size: clamp(1.7rem, 9vw, 2.4rem);
+  }
+
+  .app-shell--reference .reference-page__description {
+    font-size: 0.78rem;
+  }
+
+  .app-shell--reference .reference-landing__copy h1 {
+    font-size: clamp(2.35rem, 13vw, 3.3rem);
+  }
+
+  .app-shell--reference .reference-landing__copy p {
+    font-size: 0.9rem;
+  }
+
+  .app-shell--reference .reference-proof-list,
+  .app-shell--reference .reference-process,
+  .app-shell--reference .reference-metrics-kpis,
+  .app-shell--reference .reference-status-grid,
+  .app-shell--reference .reference-comparison-grid,
+  .app-shell--reference .reference-info-steps,
+  .app-shell--reference .reference-service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--reference .reference-proof-list li {
+    justify-content: start;
+  }
+
+  .app-shell--reference .reference-process::before {
+    display: none;
+  }
+
+  .app-shell--reference .reference-process li {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    column-gap: 0.6rem;
+    text-align: start;
+  }
+
+  .app-shell--reference .reference-process li small {
+    grid-column: 2;
+  }
+
+  .app-shell--reference .reference-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--reference .reference-landing__form {
+    padding: 0.75rem;
+  }
+
+  .app-shell--reference .reference-status-card,
+  .app-shell--reference .reference-offer-card,
+  .app-shell--reference .reference-evidence-card {
+    min-block-size: 0;
+  }
+
+  .app-shell--reference .reference-metrics-table {
+    min-width: 35rem;
+  }
+
+  .app-shell--reference .reference-metrics-table--appendix {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .app-shell--reference .reference-metrics-table--appendix th,
+  .app-shell--reference .reference-metrics-table--appendix td {
+    overflow-wrap: anywhere;
+  }
+
+  .app-shell--reference .reference-info-callout {
+    gap: 0.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell--reference *,
+  .app-shell--reference *::before,
+  .app-shell--reference *::after {
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Task-state pages: keep the approved board while making missing and partial data explicit. */
+
+.app-shell--reference .reference-provenance {
+  margin-block: 0.05rem;
+}
+
+.app-shell--reference .reference-empty-state {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  min-block-size: 9rem;
+  padding: 1.25rem;
+  border: 1px dashed #c7b9aa;
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  color: var(--reference-muted);
+  text-align: center;
+}
+
+.app-shell--reference .reference-empty-state strong {
+  color: var(--reference-burgundy);
+  font-size: 0.95rem;
+}
+
+.app-shell--reference .reference-empty-state p {
+  max-width: 38rem;
+  font-size: 0.78rem;
+  line-height: 1.8;
+}
+
+.app-shell--reference .reference-page__error {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e1aaa2;
+  border-inline-start-width: 0.25rem;
+  border-radius: var(--reference-radius-sm);
+  background: var(--reference-red-soft);
+  color: var(--reference-red);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.app-shell--reference .reference-status-card__address {
+  margin-block-start: 0.18rem;
+  color: var(--reference-muted);
+  font-size: 0.68rem;
+}
+
+.app-shell--reference .reference-card-action--static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  pointer-events: none;
+}
+
+.app-shell--reference .reference-offer-card__option,
+.app-shell--reference .reference-offer-card__note {
+  color: var(--reference-muted);
+  font-size: 0.68rem;
+}
+
+.app-shell--reference .reference-offer-card__note {
+  margin-block-start: auto;
+  padding-block-start: 0.55rem;
+  border-block-start: 1px solid var(--reference-line-soft);
+  line-height: 1.7;
+}
+
+.app-shell--reference .reference-offer-detail dd {
+  display: grid;
+  justify-items: start;
+  gap: 0.18rem;
+}
+
+.app-shell--reference .reference-offer-detail__value--muted {
+  color: var(--reference-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.app-shell--reference .reference-offer-detail__evidence {
+  max-width: 12rem;
+  color: var(--reference-muted);
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: start;
+}
+
+.app-shell--reference .reference-evidence-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--reference-blue);
+  font-size: 0.64rem;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 0.12rem;
+}
+
+.app-shell--reference .reference-evidence-link:hover {
+  color: var(--reference-burgundy);
+}
+
+.app-shell--reference .reference-comparison-result {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--reference-line);
+  border-block-start: 0.25rem solid var(--reference-coral);
+  border-radius: var(--reference-radius);
+  background: var(--reference-paper);
+  box-shadow: var(--reference-shadow);
+}
+
+.app-shell--reference .reference-comparison-result h2,
+.app-shell--reference .reference-comparison-result h3 {
+  color: var(--reference-burgundy);
+}
+
+.app-shell--reference .reference-comparison-result h2 {
+  font-size: 0.98rem;
+}
+
+.app-shell--reference .reference-comparison-result h3 {
+  margin-block-end: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.app-shell--reference .reference-comparison-result p {
+  color: var(--reference-muted);
+  font-size: 0.75rem;
+  line-height: 1.8;
+}
+
+.app-shell--reference .reference-ranking,
+.app-shell--reference .reference-comparison-reasons {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.app-shell--reference .reference-ranking li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
+  align-items: start;
+  padding: 0.6rem;
+  border: 1px solid var(--reference-line-soft);
+  border-radius: var(--reference-radius-sm);
+  background: var(--reference-blue-soft);
+}
+
+.app-shell--reference .reference-ranking li > span {
+  display: inline-grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--reference-blue);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.app-shell--reference .reference-ranking strong {
+  color: var(--reference-burgundy);
+  font-size: 0.78rem;
+}
+
+.app-shell--reference .reference-ranking p {
+  margin-block-start: 0.15rem;
+}
+
+.app-shell--reference .reference-comparison-reasons {
+  padding-inline-start: 1rem;
+  list-style: disc;
+}
+
+.app-shell--reference .reference-comparison-reasons li {
+  color: var(--reference-copy);
+  font-size: 0.75rem;
+  line-height: 1.8;
+}

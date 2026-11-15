@@ -1,0 +1,19 @@
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+coverage/
+.vite-temp/
+.vitest-cache-landing/
+
+# Local assistant instructions and work notes
+AGENTS.md
+.agents/
+UX_REVIEW.md
+design/
+
+# Only README is published as Markdown
+*.md
+!README.md
+test-results-api/
