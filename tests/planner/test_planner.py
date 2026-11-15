@@ -192,6 +192,13 @@ def test_bad_custom_questions_are_invalid(questions, code):
     assert (result.status, result.error.code) == ("invalid", code)
 
 
+def test_too_many_custom_questions_tells_the_user_in_arabic():
+    result = plan("أبي أغير شاشة آيفون 15 برو", custom_questions=["تصلحونه قدامي؟", "عندكم توصيل؟"])
+    assert result.error.code == "too_many_custom_questions"
+    assert result.error.message_ar == "تقدر تضيف سؤال واحد بس للمحل."
+    assert result.error.field == "custom_questions"
+
+
 # -- max_businesses, bad input ------------------------------------------------------------
 
 

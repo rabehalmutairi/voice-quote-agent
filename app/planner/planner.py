@@ -341,7 +341,12 @@ def _clean_custom_questions(raw: object) -> tuple[list[str], PlanResult | None]:
         if item not in questions:
             questions.append(item)
     if len(questions) > MAX_CUSTOM_QUESTIONS:
-        return [], _invalid("too_many_custom_questions", f"at most {MAX_CUSTOM_QUESTIONS} custom questions per task")
+        return [], PlanResult(status=INVALID, error=PlanError(
+            "too_many_custom_questions",
+            f"at most {MAX_CUSTOM_QUESTIONS} custom questions per task",
+            "تقدر تضيف سؤال واحد بس للمحل.",  # shown to the user by the UI
+            "custom_questions",
+        ))
     return questions, None
 
 
