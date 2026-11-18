@@ -19,7 +19,7 @@ We add no second orchestrator, calling system, backend or schema family.
 | | **Compare Shops (قارن لي)**, the MVP | **Quick Call (اسأل عني)**, new |
 |---|---|---|
 | Businesses | up to 3 nearby, found by discovery | **1, chosen by the user** from discovery candidates |
-| Questions | the category template's typed fields (+ up to 2 user questions) | 1–2 questions the planner extracts from the request |
+| Questions | the category template's typed fields (+ 1 user question; lowered from 2 on 15 Nov after the first real voice test) | 1–2 questions the planner extracts from the request |
 | Result | evidence-backed `Quote`s + ranked `Comparison` | one evidence-backed answer (`Quote.answers`); `Comparison` is `side_by_side` with no ranking |
 | Categories | `electronics_repair`, `stock_check` (car repair stretch) | `general_inquiry` (any ordinary business question); a structured category may also be used for one business |
 

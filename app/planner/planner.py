@@ -1,7 +1,7 @@
 """Planner: a user's request -> a valid TaskSpec, follow-up questions, or a clear refusal.
 
 How it works:
-1. Check the inputs (text, up to 2 custom questions, area, max_businesses).
+1. Check the inputs (text, at most 1 custom question, area, max_businesses).
 2. Ask the injected `RequestParser` which category the request is and which slots it answers.
    This is the only step that needs language understanding (mock now, LLM later).
 3. From the category's template, work out which planner questions are still unanswered.
