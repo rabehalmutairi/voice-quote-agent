@@ -16,7 +16,7 @@ Weeks run Sunday–Thursday. Something exists only once it is merged to `main`.
 | **Thu 12 Nov** | Full integration checkpoint + **Gate C** | Every component that needs no API key is real; mocks remain only where a key is missing. Gate C decided (below). Quick Call go/no-go for the freeze ([ADR 002](decisions/002-two-mode-product.md)) |
 | **Sat 14 Nov** | **Feature freeze** | Bug fixes only. Real providers may still be activated and validated afterwards under the policy in §4 |
 | **Wed 18 Nov** | Internal submission-ready target | Final README, metrics, slides, demo and recorded fallback. If keys are still missing, we submit on mocks and **say so plainly**; we claim no metric we didn't measure |
-| **Thu 19 Nov** (provisional) | Expected submission, end of KSU Week 13 | Date to be confirmed by the AI track leader. Days between 18 Nov and the deadline go to evaluation and rehearsal, not features |
+| **Sat 21 Nov** | Final submission (confirmed 18 Nov; was provisionally Thu 19 Nov) | Days between 18 Nov and the deadline go to evaluation and rehearsal, not features |
 | **Thu 10 Dec** | Tuwaiq showcase (separate from the KSU submission) | Real-provider work and real-call evaluation that missed the submission is finished here |
 
 **Gates:**
