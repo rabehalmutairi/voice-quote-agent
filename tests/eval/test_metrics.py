@@ -23,7 +23,7 @@ def attempt():
             "expected_fields": {
                 "offers.0.price_sar": 1200,
                 "offers.1.price_sar": 500,
-                "fields.turnaround_minutes": [60, 120],
+                "offers.0.part_type": "original",  # required: same part type, then price
                 "offers.2.price_sar": 100,
             },
             "unsupported_fields": ["offers.1.price_sar"],
@@ -58,7 +58,7 @@ def test_metrics_cover_architecture_table_and_count_retries_by_attempt():
     assert report["reach"]["cold"] == (1, 2)
     assert report["completion"] == (1, 2)
     assert report["accuracy"]["price_sar"] == (2, 6)
-    assert report["accuracy"]["turnaround_minutes"] == (2, 2)
+    assert report["accuracy"]["part_type"] == (2, 2)
     assert report["critical_accuracy"] == (4, 8)
     assert report["hallucination"] == (2, 14)
     assert report["baseline_hallucination"] == (4, 8)

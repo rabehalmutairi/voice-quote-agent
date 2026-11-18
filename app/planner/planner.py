@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 DEFAULT_ENABLED_CATEGORIES = ("electronics_repair", "stock_check")
 
 AREA_KEY = "area"  # the planner question whose answer fills TaskSpec.area instead of slots
-MAX_CUSTOM_QUESTIONS = 2
+MAX_CUSTOM_QUESTIONS = 1  # a call asks the template's 3 questions + at most 1 of the user's
 MAX_REQUEST_CHARS = 1000
 MAX_ANSWER_CHARS = 200
 MAX_QUESTION_CHARS = 300
@@ -130,7 +130,7 @@ class Planner:
     ) -> PlanResult:
         """Turn a new request into a TaskSpec.
 
-        `custom_questions`: up to 2 questions the user wrote, kept word for word.
+        `custom_questions`: at most 1 question the user wrote, kept word for word.
         `area`: None (take it from the text or ask), a place name, or a ready
         TaskSpec `area` object (e.g. from a map pin in the UI).
         """
@@ -341,7 +341,12 @@ def _clean_custom_questions(raw: object) -> tuple[list[str], PlanResult | None]:
         if item not in questions:
             questions.append(item)
     if len(questions) > MAX_CUSTOM_QUESTIONS:
-        return [], _invalid("too_many_custom_questions", f"at most {MAX_CUSTOM_QUESTIONS} custom questions per task")
+        return [], PlanResult(status=INVALID, error=PlanError(
+            "too_many_custom_questions",
+            f"at most {MAX_CUSTOM_QUESTIONS} custom questions per task",
+            "تقدر تضيف سؤال واحد بس للمحل.",  # shown to the user by the UI
+            "custom_questions",
+        ))
     return questions, None
 
 

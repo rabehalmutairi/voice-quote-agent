@@ -69,7 +69,8 @@ def test_unusable_answers_do_not_enter_cache(sample, issue):
     elif issue == "failed_call":
         call["outcome"] = "no_answer"
     else:
-        quote["offers"][1].pop("price_sar")
+        for offer in quote["offers"]:
+            offer.pop("price_sar")  # required in every template
     assert not cache.remember(task, shop, call, quote)
     assert cache.get(task, shop) is None
 

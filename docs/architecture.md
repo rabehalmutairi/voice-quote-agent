@@ -29,7 +29,7 @@ in the demo is backed by a number.
 |---|---|---|
 | **Committed** | **Electronics repair quotes** (screens, batteries, charging ports) and **stock checks** ("عندكم آيفون 16؟", "MacBook Air M4؟": available, price, new or used) | — |
 | **Stretch** (only if Gate C passes) | **Car repair, standardized requests only** (brake pads, tires, lights) | Open-ended diagnosis ("my car makes a noise") |
-| **Always** | Asking questions, comparing answers, up to 2 user-written questions per task | **Any action for the user**: bookings, reservations, payments, sharing personal data. Hospitals, hotels |
+| **Always** | Asking questions, comparing answers, 1 user-written question per task | **Any action for the user**: bookings, reservations, payments, sharing personal data. Hospitals, hotels |
 
 - **Two modes on one pipeline** ([ADR 002](decisions/002-two-mode-product.md)): *Compare Shops*
   (this MVP) and *Quick Call*, one user-chosen business asked an ordinary question in any
@@ -178,7 +178,7 @@ What each component must do (current deliverables and dates are in the plan):
   hallucination rate vs ElevenLabs' built-in data collection. Also owns the per-category rules
   for what counts as a **usable quote**. *Done when* every fixture value has valid evidence and
   the mismatched fixture returns `cannot_compare`.
-- **R7 frontend + demo.** Request box (with up to 2 own questions) → follow-up questions → live
+- **R7 frontend + demo.** Request box (with 1 own question) → follow-up questions → live
   shop cards (searching → ringing → talking → done/failed) from SSE events. Every value shows
   its evidence quote (tap for the transcript turn); clear can't-compare state. Internal
   dashboard (reach, completion, cost, latency). Demo script, recorded fallback video, live call
@@ -223,7 +223,7 @@ files are the source of truth; conventions and the rules a schema can't check ar
 |---|---|
 | **Human reach rate** | calls with outcome `human_*` ÷ all attempts; pre-arranged and cold calls reported separately |
 | **Task completion** | `human_completed` ÷ calls that reached a person |
-| **Critical-field accuracy** | correct values ÷ labelled values for the template's required fields (electronics: price, part type, warranty, time; stock: availability, price), per field and overall |
+| **Critical-field accuracy** | correct values ÷ labelled values for the template's required fields (electronics: price, part type; stock: availability, price), per field and overall |
 | **Hallucination rate** | values not supported by the transcript ÷ all values returned; ours vs the ElevenLabs baseline |
 | **Answer faithfulness** | share of `summary_ar` answers two labellers judge faithful to the shop's words (code checks the quotes; only people can judge the summary) |
 | **Cost per successful task** | total cost ÷ tasks where at least 2 shops gave usable quotes |
@@ -280,7 +280,9 @@ files are the source of truth; conventions and the rules a schema can't check ar
   geocoding later (R5); not decided yet (R1, R5, R7).
 - Can Unifonic or a Saudi SIP provider carry a live two-way AI call with a Saudi caller ID (R4)?
 - Do `Quote.offers`, `fields` and `answers` fit real transcripts (R6, R3)?
-- Is the 150 s call limit enough with 2 custom questions (R2)?
+- ~~Is the 150 s call limit enough with 2 custom questions (R2)?~~ Answered 15 Nov: the first
+  test call took 136 s with 6 questions, so repairs now ask only the price (+ a part-type
+  follow-up) and at most 1 user question.
 
 ## 11. Glossary
 

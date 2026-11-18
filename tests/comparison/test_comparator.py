@@ -41,8 +41,16 @@ def script_quote(category, place_id):
     return quote(place_id, script["offers"], script["fields"])
 
 
-def compare(quotes, excluded=(), category="electronics_repair"):
-    result = run(R6Comparator().compare(task(category), TEMPLATES[category], copy.deepcopy(quotes), list(excluded)))
+def with_compare_on(category, *extra):
+    """A copy of a template that also compares on `extra` fields (tests the generic rules)."""
+    template = copy.deepcopy(TEMPLATES[category])
+    template["compare_on"] = template["compare_on"] + list(extra)
+    return template
+
+
+def compare(quotes, excluded=(), category="electronics_repair", template=None):
+    template = template or TEMPLATES[category]
+    result = run(R6Comparator().compare(task(category), template, copy.deepcopy(quotes), list(excluded)))
     assert contract_errors("comparison", result) == []
     return result
 
@@ -112,14 +120,14 @@ def test_most_shops_decide_the_basis_then_the_cheapest():
 
 def test_equal_price_longer_warranty_wins():
     quotes = [quote(SHOPS[0], [screen("commercial", 450, 14)]), quote(SHOPS[1], [screen("commercial", 450, 90)])]
-    result = compare(quotes)
+    result = compare(quotes, template=with_compare_on("electronics_repair", "warranty_days"))
     assert [r["place_id"] for r in result["ranking"]] == [SHOPS[1], SHOPS[0]]
     assert "then longer warranty" in result["basis"]
 
 
 def test_warranty_not_stated_ranks_after_stated():
     quotes = [quote(SHOPS[0], [screen("commercial", 450)]), quote(SHOPS[1], [screen("commercial", 450, 7)])]
-    result = compare(quotes)
+    result = compare(quotes, template=with_compare_on("electronics_repair", "warranty_days"))
     assert [r["place_id"] for r in result["ranking"]] == [SHOPS[1], SHOPS[0]]
     assert "warranty not stated" in result["ranking"][1]["reason"]
 
@@ -179,7 +187,7 @@ def test_car_repair_compares_brand_and_labor_together():
         quote(SHOPS[1], [brakes("aftermarket", 500, False)]),  # cheaper, but labor extra: not like for like
         quote(SHOPS[2], [brakes("aftermarket", 650, True)]),
     ]
-    result = compare(quotes, category="car_repair")
+    result = compare(quotes, category="car_repair", template=with_compare_on("car_repair", "labor_included"))
     assert result["status"] == "partial"
     assert result["basis"].startswith("aftermarket, labor included parts")
     assert [r["place_id"] for r in result["ranking"]] == [SHOPS[0], SHOPS[2]]

@@ -19,15 +19,13 @@ fields:
 offer_fields: [part_brand, price_sar, labor_included, warranty_days]
 quote_fields: [turnaround_minutes, availability]
 
-call_questions:
+call_questions:               # asked by the AGENT on the call, one at a time
+  # Just the price, in a few natural words. Part brand is not asked: the agent asks
+  # "وكالة؟" only if the shop didn't say it (prompts/voice_agent.txt). Labor, warranty,
+  # time and availability are not asked, but are still recorded if the shop mentions them.
   - { field: price_sar,          ask_ar: "كم سعر {{service}} لـ {{vehicle}}؟" }
-  - { field: part_brand,         ask_ar: "القطع وكالة ولا تجارية؟ وإذا عندكم النوعين، كم سعر كل وحدة؟" }
-  - { field: labor_included,     ask_ar: "السعر شامل التركيب؟" }
-  - { field: warranty_days,      ask_ar: "فيه ضمان؟ وكم مدته؟" }
-  - { field: turnaround_minutes, ask_ar: "كم ياخذ وقت الشغل تقريبًا؟" }
-  - { field: availability,       ask_ar: "القطعة متوفرة الحين ولا تحتاجون تطلبونها؟" }
 
-required_fields: [price_sar, part_brand, turnaround_minutes]
-compare_on: [part_brand, price_sar, labor_included]
+required_fields: [price_sar, part_brand]
+compare_on: [part_brand, price_sar]   # like-for-like: same part brand, then price
 asr_keywords: [وكالة, أصلي, تجاري, كفر, كفرات, إطار, لمبة, إضاءة, ضمان, تركيب]
 places_queries: { ar: [ورشة سيارات, صيانة سيارات], en: [car repair shop] }
