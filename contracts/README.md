@@ -40,7 +40,7 @@ Open questions about the contracts are tracked in [architecture §10](../docs/ar
 - **Timestamps** are RFC 3339 in UTC with a trailing `Z`. **Phones** are E.164 (`+9665…`). **IDs** are prefixed (`tsk_`, `call_`); `place_id` is Google's.
 - **Names** (`category`, slot keys, field names) are `snake_case`.
 - **Evidence-backed fields** (Quote): `value` is set only when `status` is `found`. `found`, `refused` and `unclear` must carry `evidence_quote`, `evidence_turn` and `confidence`; only `not_mentioned` has them all `null`. Numbers hold either an exact `value` or a `value_min`/`value_max` range (e.g. "ساعة لساعتين"), never both. A field's type (number, choice, text, yes/no) and allowed choices come from the category template, not from the schema.
-- **A Quote has `offers`** (one per option the shop quoted: part tier, variant, new or used), **`fields`** (values for the whole call) and **`answers`** (one per question the user wrote, same order as `custom_questions`, at most 2).
+- **A Quote has `offers`** (one per option the shop quoted: part tier, variant, new or used), **`fields`** (values for the whole call) and **`answers`** (one per question the user wrote, same order as `custom_questions`, at most 1).
 - **No personal data about the user** goes into a `CallJob` ([architecture §9](../docs/architecture.md#9-ethics-privacy-and-safety-non-negotiable)).
 
 ## Rules a schema cannot check
@@ -67,6 +67,6 @@ JSON Schema validates shape, not meaning. These rules are enforced in code, and 
 ## Known limits (deliberate)
 
 - v1 covers electronics repair, stock checks and (stretch) car repair as templates. Anything a template can't express is still open: raise it in a `contract-change` PR.
-- A call is capped at 150 s (`max_duration_s`). The planner allows 1 custom question (the schema still allows 2
-  until a `contract-change` PR lowers `maxItems`); repairs ask only the price, so calls stay well under the cap.
+- A call is capped at 150 s (`max_duration_s`). The planner and the schema allow 1 custom question;
+  repairs ask only the price, so calls stay well under the cap.
 - No `schema_version` field: four weeks, one team; `contract-change` PRs are enough.

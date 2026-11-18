@@ -21,9 +21,9 @@
     "phone_e164": { "type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$" },
     "custom_questions": {
       "type": "array",
-      "maxItems": 2,
+      "maxItems": 1,
       "items": { "type": "string", "minLength": 1 },
-      "description": "Questions the user wrote themselves, in Arabic, asked after the template's questions. At most 2 so a call stays under ~2.5 minutes."
+      "description": "Questions the user wrote themselves, in Arabic, asked after the template's questions. At most 1 so a call stays short (well under the 150 s cap)."
     },
     "outcome": {
       "enum": [
