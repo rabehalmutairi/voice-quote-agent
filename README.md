@@ -4,17 +4,31 @@ A voice agent that phones nearby shops at the same time, in Saudi Arabic (Englis
 get repair quotes or check stock. Every value it reports is backed by the shop's exact words,
 and it compares the shops or says why they can't be compared.
 
-## Status
+## Status (18 Nov 2026)
 
-- **Working and tested:** planner (request → task, follow-up questions, safety checks),
-  orchestrator (up to 3 calls at once, ordered live events, timeouts, cancellation), contract
-  validation, and a runnable end-to-end demo on **mocks**.
-- **Being built:** voice agent (R2), evaluation (R3), telephony (R4), backend + discovery (R5),
-  extraction + comparison (R6), web UI (R7).
-- **Blocked:** our ElevenLabs, Twilio, Google Places and LLM subscriptions haven't arrived, so
-  every external service is a mock for now. No real calls yet.
-- **Next (approved, not built):** *Quick Call*, asking one chosen business any ordinary question
-  ([ADR 002](docs/decisions/002-two-mode-product.md)); then backup shops for Compare Shops.
+**The full flow runs end to end on mocks**, in the terminal and in the web app: request →
+follow-up questions → task → up to 3 calls at once → quotes backed by the shop's words →
+comparison → live events in the UI. CI runs 726 Python tests and the web app's lint, unit
+tests and build on every PR.
+
+- **Merged, tested and used by the app:** planner (R1), orchestrator (R1), contracts and
+  templates (R1), backend API and live events (R5), web app (R7).
+- **Merged and tested, not connected to the app yet:** voice-agent configuration (R2),
+  evaluation tools (R3), Twilio + ElevenLabs call provider (R4), evidence-checked extractor
+  and like-for-like comparator (R6). The app still uses the mock calls, mock extractor and mock
+  comparator (`build_mock_stack` in `app/api/main.py`).
+- **Real voice tests so far:** an ElevenLabs test agent with a Saudi voice, called from the
+  browser (no phone line). The first call took 136 s with 6 questions; after
+  [#20](https://github.com/rabehalmutairi/voice-quote-agent/pull/20) (shorter calls) it took
+  54 s and finished correctly. When asked, the agent says it is an AI. These are a handful of
+  tests, **not an evaluation**: we have no labelled real calls and report no accuracy metrics.
+- **Blocked:** Twilio refused our Saudi number at sign-up, so no phone calls yet. There is no
+  LLM or Google Places access, so planning, extraction and discovery use mocks.
+- **Pending approvals:** the written AI-disclosure approval and the recording/transcription
+  (PDPL) sign-off from Tuwaiq.
+- **Not in this submission:** car repair (Gate C is no: no labelled calls), *Quick Call*
+  (designed in [ADR 002](docs/decisions/002-two-mode-product.md); the web app shows a
+  browser-only preview, with no backend), and backup shops. These move to the 10 Dec showcase.
 
 ## Quick start
 
@@ -27,6 +41,14 @@ pip install -r requirements-dev.txt
 python -m pytest                       # all tests (CI runs the same)
 python -m app.mocks.demo               # a full task on mocks: request -> 3 calls -> comparison
 python -m app.mocks.demo --scenario one_failed
+```
+
+Web app (Node 20.19+; CI uses 26), against the mock backend:
+
+```bash
+python -m uvicorn app.api.main:app --port 8002   # terminal 1
+cd web && npm ci && npx vite --port 5173         # terminal 2, then open http://localhost:5173
+npm run lint && npm test && npm run build        # what CI runs for web/
 ```
 
 Other scenarios: `all_failed`, `timeout`, `retry`, `provider_error`, `no_shops`.
@@ -50,8 +72,7 @@ to be complete; plug in what works.
 | **R6** Extraction + comparison | Ahmed | `app/extraction/`, `app/comparison/` | `contracts/quote.schema.json`, `comparison.schema.json`, `contracts/examples/quote.json`, `templates/*.yaml` (`fields`), [integration §5](docs/integration.md#5-r6-extractor-and-comparator) | [plan: R6](docs/mock-first-plan.md#r6-extraction--comparison) |
 | **R7** Frontend + demo | Saleh Aljarwan | `web/` | `contracts/examples/events/`, [integration §6](docs/integration.md#6-r7-the-event-stream) | [plan: R7](docs/mock-first-plan.md#r7-frontend--demo) |
 
-R2–R7 folders don't exist yet: create yours in your first PR. You may also add tests for your
-code in `tests/<your area>/` (e.g. `tests/telephony/`). **Only change your own folders.**
+Add tests for your code in `tests/<your area>/` (e.g. `tests/telephony/`). **Only change your own folders.**
 Need a change in another folder, a contract or a template? Ask its owner (contracts and templates: R1).
 
 ## Before you code (about 15 minutes)
@@ -93,10 +114,10 @@ code, and run `python -m pytest` before you finish.
 
 You must understand every line you push: your backup will ask in review.
 
-## Blocked until the API keys arrive
+## Blocked until phone and API access
 
-Real calls (Gates A and B), the speech benchmark, LLM planning and extraction, real Places
-searches, and evaluation on real calls. Details and fallbacks:
+Phone calls (Twilio), the speech benchmark on phone-quality audio, LLM planning and extraction,
+real Places searches, and evaluation on real calls. Details and fallbacks:
 [plan §3](docs/mock-first-plan.md#3-blocked-by-api-access).
 
 ## Where things live
@@ -115,5 +136,5 @@ searches, and evaluation on real calls. Details and fallbacks:
 ## Key dates
 
 Thu 5 Nov checkpoint · Fri 6 Nov first PRs · **Sat 7 Nov integrated mock MVP** · Thu 12 Nov full integration + Gate C ·
-**Sat 14 Nov feature freeze** · Wed 18 Nov internal ready · Thu 19 Nov expected submission
-(to be confirmed) · Thu 10 Dec Tuwaiq showcase. Full table: [plan §1](docs/mock-first-plan.md#1-milestones).
+**Sat 14 Nov feature freeze** · Wed 18 Nov internal ready · **Sat 21 Nov final submission** ·
+Thu 10 Dec Tuwaiq showcase. Full table: [plan §1](docs/mock-first-plan.md#1-milestones).
