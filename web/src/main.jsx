@@ -12,6 +12,7 @@ import "./styles/reference-final.css";
 import "./styles/reference-responsive.css";
 import "./styles/approved-board.css";
 import "./styles/landing-page.css";
+import "./styles/landing-interactive.css";
 import "./styles/light-mode.css";
 import "./styles/simple-experience.css";
 
