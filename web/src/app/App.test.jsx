@@ -44,8 +44,8 @@ describe("application shell", () => {
   it("renders the product landing page with a clear start action", () => {
     renderRoute();
 
-    expect(screen.getByRole("heading", { level: 1, name: /من وصف المشكلة/ })).toBeVisible();
-    expect(screen.getByText("معاينة محاكاة · ليست نتيجة اتصال حقيقي")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 1, name: /خلّ الجواب يجيك/ })).toBeVisible();
+    expect(screen.getByText(/ولا ينفّذ اتصالات حقيقية/)).toBeVisible();
     expect(screen.getByRole("link", { name: /دليل الحي.*الصفحة الرئيسية/ })).toHaveAttribute("href", "/");
     expect(within(screen.getByRole("navigation", { name: "التنقل الرئيسي" })).getByRole("link", { name: "ابدأ طلبك" })).toHaveAttribute("href", "/request");
   });

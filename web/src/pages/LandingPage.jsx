@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Icon } from "../components/ui/Icon";
 
 const JOURNEY = [
@@ -186,7 +186,7 @@ function JourneyDemo() {
           <h2>من كلمة منك إلى جواب واضح</h2>
         </div>
         <span className="journey-demo__count" aria-live="polite">
-          <b>{String(activeStep + 1).padStart(2, "0")}</b> / 05
+          <b>{String(activeStep + 1).padStart(2, "0")}</b> / {String(JOURNEY.length).padStart(2, "0")}
         </span>
       </div>
 
@@ -236,11 +236,11 @@ function EvidenceSection() {
   const evidence = EVIDENCE[activeEvidence];
 
   return (
-    <section className="story-evidence" aria-labelledby="story-evidence-title">
+    <section id="about" className="story-evidence" aria-labelledby="story-evidence-title">
       <div className="story-evidence__intro">
         <p className="story-eyebrow">كل معلومة لها مصدر</p>
         <h2 id="story-evidence-title">ما نكتفي بالسعر.<br /><span>نوريك وش قال المحل.</span></h2>
-        <p>اختر معلومة وشوف كيف تظهر مع العبارة اللي تثبتها. هذا مثال توضيحي ببيانات تجريبية.</p>
+        <p>اختر معلومة وشوف كيف تظهر مع العبارة اللي تثبتها. هذا مثال توضيحي ببيانات تجريبية، ولا يعني أنه الأرخص.</p>
       </div>
       <div className="evidence-card">
         <div className="evidence-card__tabs" role="group" aria-label="استكشف تفاصيل العرض">
@@ -272,6 +272,19 @@ function EvidenceSection() {
 }
 
 export function LandingPage() {
+  const location = useLocation();
+
+  // /how-it-works and /about redirect to /#how-it-works and /#about; client-side
+  // navigation does not scroll to a hash on its own.
+  useEffect(() => {
+    if (!location.hash) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash]);
+
   return (
     <div className="landing-page story-home" lang="ar-SA" dir="rtl">
       <section className="story-hero" aria-labelledby="story-title">
@@ -280,14 +293,15 @@ export function LandingPage() {
           <h1 id="story-title">بدل ما تدور وتسأل،<br /><span>خلّ الجواب يجيك.</span></h1>
           <p className="story-copy__lead">
             اكتب وش تحتاج. نسأل المحلات عنك، ثم نرتب ردودهم في مقارنة واضحة — ومع كل معلومة دليلها من كلام المحل.
+            قارن عروض الصيانة، أو اسأل محلاً تختاره.
           </p>
           <div className="story-copy__actions">
             <Link className="story-cta" to="/request">ابدأ طلبك <Icon name="arrow" /></Link>
-            <a className="story-demo-link" href="#journey">شوف كيف تشتغل <span aria-hidden="true">↓</span></a>
+            <a className="story-demo-link" href="#how-it-works">شوف كيف تشتغل <span aria-hidden="true">↓</span></a>
           </div>
           <p className="story-copy__note"><i /> العرض التفاعلي التالي يستخدم بيانات تجريبية، ولا ينفّذ اتصالات حقيقية.</p>
         </div>
-        <div id="journey" className="story-visual">
+        <div id="how-it-works" className="story-visual">
           <JourneyDemo />
         </div>
       </section>
