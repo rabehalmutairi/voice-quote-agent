@@ -872,7 +872,7 @@ export function ReferenceServiceOverviewPage() {
     <ReferenceScreen className="reference-screen--info reference-screen--about">
       <ReferencePageHeading
         title="لمحة عن الخدمة"
-        description="Voice Quote Agent يساعدك تقارن عروض الصيانة قبل ما تختار المحل."
+        description="وسيط (wasset.ai) يساعدك تقارن عروض الصيانة قبل ما تختار المحل."
         icon="⌂"
       />
       <div className="reference-service-grid">

@@ -7,7 +7,7 @@ const ANSWER_STATUS = { found: "إجابة موثقة", unclear: "إجابة غ�
 /** Copy only returned results; do not infer ranking or unsupported extracted values. */
 export function buildTaskSummary(task) {
   const shops = Object.values(task.shops ?? {});
-  const lines = ["Voice Quote Agent — بيانات محاكاة فقط", task.requestText ?? "", STATUS[task.comparison?.status] ?? (task.phase === "failed" ? "تعذر إكمال الطلب" : "نتيجة المهمة")];
+  const lines = ["وسيط · wasset.ai — بيانات محاكاة فقط", task.requestText ?? "", STATUS[task.comparison?.status] ?? (task.phase === "failed" ? "تعذر إكمال الطلب" : "نتيجة المهمة")];
   for (const item of task.comparison?.ranking ?? []) {
     const shop = shops.find((candidate) => candidate.placeId === item.placeId);
     if (shop?.quote) lines.push(`${item.rank}. ${shop.name}: ${item.reason}`);
