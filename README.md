@@ -136,7 +136,16 @@ use fake phone numbers, so nothing costs money.
 
 ## Team
 
-Built by a 7-person team at King Saud University · Tuwaiq Club (AI track): planning and
-orchestration, voice agent, speech and evaluation, telephony, backend and discovery,
-extraction and comparison, and the web app. Roles and owners are in the
-[team guide](docs/team-guide.md#roles-and-ownership).
+Built by a 7-person team at King Saud University · Tuwaiq Club (AI track).
+
+| Member | Role | Contributions |
+|---|---|---|
+| **Rabeh** ([GitHub](https://github.com/rabehalmutairi)) | Tech lead · planner and orchestrator | System architecture and data contracts, request planner, parallel call orchestrator, mock providers and end-to-end demo, integration of all components, CI, call-flow tuning after live voice tests, wasset.ai branding |
+| **Abdulmalik** ([GitHub](https://github.com/abdulmaliksd955)) | Voice agent | Saudi-dialect voice agent configuration and prompt, and its integration with the call provider |
+| **Feras** ([GitHub](https://github.com/FerasMad)) | Speech and evaluation | Saudi Arabic speech-recognition benchmark and call-evaluation metrics |
+| **Saleh Alrakban** ([GitHub](https://github.com/Salehalrakban)) | Telephony | Twilio + ElevenLabs call provider, call-outcome mapping, number allowlist, retry policy and Riyadh calling hours, telephony test plan |
+| **Omar** ([GitHub](https://github.com/EviLooo)) | Backend and discovery | Task API with live events (SSE), PostgreSQL storage, nearby-shop discovery |
+| **Ahmed** ([GitHub](https://github.com/Ahmad-WA)) | Extraction and comparison | Evidence checker, LLM quote extractor, like-for-like comparator |
+| **Saleh Aljarwan** ([GitHub](https://github.com/CsSaleh17)) | Frontend and demo | Arabic web app, live call tracking, comparison and evidence views, interactive landing page |
+
+How the team works (ownership, workflow, reviews): [team guide](docs/team-guide.md).
