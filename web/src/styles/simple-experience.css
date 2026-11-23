@@ -264,3 +264,7 @@ html[data-theme] .app-shell .reference-comparison-result { border-block-start-co
   html[data-theme] .app-shell .main-content { padding-block: 1.5rem 2rem; }
   html[data-theme] .app-shell .site-footer { align-items: start; gap: .5rem; }
 }
+
+/* wasset.ai brand: the logo-kit icon replaces the old phone glyph */
+html[data-theme] .app-shell .brand-mark { background: transparent; box-shadow: none; border-radius: 50%; overflow: hidden; }
+html[data-theme] .app-shell .brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }

@@ -46,7 +46,7 @@ describe("application shell", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: /خلّ الجواب يجيك/ })).toBeVisible();
     expect(screen.getByText(/ولا ينفّذ اتصالات حقيقية/)).toBeVisible();
-    expect(screen.getByRole("link", { name: /دليل الحي.*الصفحة الرئيسية/ })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /وسيط.*الصفحة الرئيسية/ })).toHaveAttribute("href", "/");
     expect(within(screen.getByRole("navigation", { name: "التنقل الرئيسي" })).getByRole("link", { name: "ابدأ طلبك" })).toHaveAttribute("href", "/request");
   });
 

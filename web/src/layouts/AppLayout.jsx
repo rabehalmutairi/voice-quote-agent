@@ -61,16 +61,13 @@ function AppShell() {
         <a className="skip-link" href="#main-content">تخطي إلى المحتوى الرئيسي</a>
         <header className="site-header">
           <div className="site-header__layout">
-            <Link className="brand tw-focus-ring" to="/" aria-label="دليل الحي · Voice Quote Agent، الصفحة الرئيسية">
+            <Link className="brand tw-focus-ring" to="/" aria-label="وسيط · wasset.ai، الصفحة الرئيسية">
               <span className="brand-mark" aria-hidden="true">
-                <svg viewBox="0 0 44 44" focusable="false">
-                  <path d="M14.5 11.5c-1.7 0-3.1 1.5-3.1 3.3 0 10.2 7.6 17.8 17.8 17.8 1.8 0 3.3-1.4 3.3-3.1v-3.2c0-.7-.4-1.3-1-1.6l-4.2-2.1c-.7-.3-1.5-.2-2 .4l-1.7 2.1a13 13 0 0 1-4.7-4.7l2.1-1.7c.6-.5.7-1.3.4-2l-2.1-4.2c-.3-.6-.9-1-1.6-1h-3.2Z" />
-                  <path d="M28.5 10.5c3.5 1 5.9 3.4 6.9 6.9M30.6 5.2c5.9 1.5 9.7 5.3 11.2 11.2" />
-                </svg>
+                <img src="/brand/wasset-icon-192.png" alt="" width="44" height="44" />
               </span>
               <span className="brand__copy">
-                <span className="brand__name">دليل الحي</span>
-                <span className="brand__tagline" lang="en" dir="ltr">Voice Quote Agent</span>
+                <span className="brand__name">وسيط</span>
+                <span className="brand__tagline" lang="en" dir="ltr">wasset.ai</span>
               </span>
             </Link>
             <nav className="site-navigation" aria-label="التنقل الرئيسي">
