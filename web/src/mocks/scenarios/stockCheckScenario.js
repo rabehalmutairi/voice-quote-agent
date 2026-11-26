@@ -37,28 +37,28 @@ export const stockCheckScenario = {
   },
   events: [
     {
-      delayMs: 10,
+      delayMs: 10, demoDelayMs: 300,
       event: event(1, "task.created", {
         requestText: stockAvailabilityFixture.task_spec.request_text,
       }),
     },
-    { delayMs: 20, event: event(2, "business.found", { business }) },
+    { delayMs: 20, demoDelayMs: 900, event: event(2, "business.found", { business }) },
     {
-      delayMs: 35,
+      delayMs: 35, demoDelayMs: 1800,
       event: event(3, "call.started", {
         callId: "call_fixture_stock",
         placeId: business.placeId,
       }),
     },
     {
-      delayMs: 50,
+      delayMs: 50, demoDelayMs: 3500,
       event: event(4, "call.talking", {
         callId: "call_fixture_stock",
         placeId: business.placeId,
       }),
     },
     {
-      delayMs: 75,
+      delayMs: 75, demoDelayMs: 6000,
       event: event(5, "call.ended", {
         callId: "call_fixture_stock",
         placeId: business.placeId,
@@ -67,7 +67,7 @@ export const stockCheckScenario = {
       }),
     },
     {
-      delayMs: 90,
+      delayMs: 90, demoDelayMs: 6800,
       event: event(6, "quote.ready", {
         callId: "call_fixture_stock",
         placeId: business.placeId,
@@ -76,7 +76,7 @@ export const stockCheckScenario = {
       }),
     },
     {
-      delayMs: 110,
+      delayMs: 110, demoDelayMs: 7800,
       event: event(7, "comparison.ready", {
         comparison: {
           status: "ranked",

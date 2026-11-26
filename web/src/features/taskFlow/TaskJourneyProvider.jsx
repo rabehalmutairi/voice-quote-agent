@@ -21,13 +21,16 @@ const FIXTURE_SCENARIOS = {
 
 function prepareResultScreens() { return import("../../pages/ReferencePages"); }
 
+// The public demo plays calls at a realistic pace (~8 s); tests keep the fast fixture timing.
+const PACED_DEMO = import.meta.env.MODE !== "test";
+
 function TaskJourneySession({ scenarioKey, onScenarioChange, children, compareDraft, setCompareDraft, quickDraft, setQuickDraft }) {
   const transport = useMemo(
     () => createMockTransport(FIXTURE_SCENARIOS[scenarioKey] ?? foundationScenario),
     [scenarioKey],
   );
   const demoFlow = useTaskFlow(transport);
-  const productTransport = useMemo(() => frontendConfig.transportMode === "api" ? createApiTransport() : createMockTransport(), []);
+  const productTransport = useMemo(() => frontendConfig.transportMode === "api" ? createApiTransport() : createMockTransport(foundationScenario, { paced: PACED_DEMO }), []);
   const productFlow = useTaskFlow(productTransport, { beforeCreate: productTransport.mode === "api" ? prepareResultScreens : undefined });
   const [compareSource, setCompareSource] = useState("product");
   const flow = compareSource === "demo" ? demoFlow : productFlow;
