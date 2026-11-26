@@ -70,8 +70,10 @@ function getTaskRequestDetails(request, scenario) {
 /**
  * Development-only transport. It owns one active fixture task and exposes the same
  * lifecycle shape that the future HTTP/SSE transport must implement.
+ * With `paced: true` events follow each scenario's `demoDelayMs` (a few seconds,
+ * like real calls) instead of the fast `delayMs` used by tests.
  */
-export function createMockTransport(inputScenario = foundationScenario) {
+export function createMockTransport(inputScenario = foundationScenario, { paced = false } = {}) {
   let scenario = assertMockScenario(inputScenario);
   let activeSnapshot = null;
   let reducerState = initialTaskState;
@@ -185,8 +187,15 @@ export function createMockTransport(inputScenario = foundationScenario) {
         clearScheduledEvents();
       };
 
+      const timeline = scenario.events
+        .map(({ delayMs, demoDelayMs, event }) => ({
+          event,
+          delayMs: paced && demoDelayMs !== undefined ? demoDelayMs : delayMs,
+        }))
+        .filter(({ delayMs }) => delayMs !== null);
+
       scheduledTimers = new Set(
-        scenario.events.map(({ delayMs, event }) => {
+        timeline.map(({ delayMs, event }) => {
           const timer = setTimeout(() => {
             scheduledTimers.delete(timer);
             if (!active) {

@@ -75,9 +75,9 @@ export const foundationScenario = {
     error: undefined,
   },
   events: [
-    { delayMs: 10, event: event(1, "task.created", { requestText: "أبي أغير شاشة آيفون 15 برو" }) },
+    { delayMs: 10, demoDelayMs: 300, event: event(1, "task.created", { requestText: "أبي أغير شاشة آيفون 15 برو" }) },
     {
-      delayMs: 20,
+      delayMs: 20, demoDelayMs: 700,
       event: event(2, "business.found", {
         business: {
           placeId: "place_1",
@@ -92,7 +92,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 30,
+      delayMs: 30, demoDelayMs: 1000,
       event: event(3, "business.found", {
         business: {
           placeId: "place_2",
@@ -107,7 +107,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 40,
+      delayMs: 40, demoDelayMs: 1300,
       event: event(4, "business.found", {
         business: {
           placeId: "place_3",
@@ -121,14 +121,14 @@ export const foundationScenario = {
         },
       }),
     },
-    { delayMs: 50, event: event(5, "call.started", { callId: "call_1", placeId: "place_1" }) },
-    { delayMs: 60, event: event(6, "call.started", { callId: "call_2", placeId: "place_2" }) },
-    { delayMs: 70, event: event(7, "call.talking", { callId: "call_1", placeId: "place_1" }) },
-    { delayMs: 80, event: event(8, "call.talking", { callId: "call_2", placeId: "place_2" }) },
-    { delayMs: 85, event: event(9, "call.started", { callId: "call_3", placeId: "place_3" }) },
-    { delayMs: 95, event: event(10, "call.talking", { callId: "call_3", placeId: "place_3" }) },
+    { delayMs: 50, demoDelayMs: 1800, event: event(5, "call.started", { callId: "call_1", placeId: "place_1" }) },
+    { delayMs: 60, demoDelayMs: 2400, event: event(6, "call.started", { callId: "call_2", placeId: "place_2" }) },
+    { delayMs: 70, demoDelayMs: 3200, event: event(7, "call.talking", { callId: "call_1", placeId: "place_1" }) },
+    { delayMs: 80, demoDelayMs: 3900, event: event(8, "call.talking", { callId: "call_2", placeId: "place_2" }) },
+    { delayMs: 85, demoDelayMs: 4300, event: event(9, "call.started", { callId: "call_3", placeId: "place_3" }) },
+    { delayMs: 95, demoDelayMs: null, event: event(10, "call.talking", { callId: "call_3", placeId: "place_3" }) },
     {
-      delayMs: 110,
+      delayMs: 110, demoDelayMs: 5600,
       event: event(11, "call.ended", {
         callId: "call_2",
         placeId: "place_2",
@@ -137,7 +137,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 125,
+      delayMs: 125, demoDelayMs: 6200,
       event: event(12, "quote.ready", {
         callId: "call_2",
         placeId: "place_2",
@@ -146,7 +146,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 135,
+      delayMs: 135, demoDelayMs: 6700,
       event: event(13, "call.failed", {
         callId: "call_3",
         placeId: "place_3",
@@ -155,7 +155,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 145,
+      delayMs: 145, demoDelayMs: 7000,
       event: event(14, "call.ended", {
         callId: "call_1",
         placeId: "place_1",
@@ -164,7 +164,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 160,
+      delayMs: 160, demoDelayMs: 7500,
       event: event(15, "quote.ready", {
         callId: "call_1",
         placeId: "place_1",
@@ -173,7 +173,7 @@ export const foundationScenario = {
       }),
     },
     {
-      delayMs: 180,
+      delayMs: 180, demoDelayMs: 8200,
       event: event(16, "comparison.ready", {
         comparison: {
           status: "partial",

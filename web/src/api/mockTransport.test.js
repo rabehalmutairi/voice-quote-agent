@@ -110,6 +110,33 @@ describe("mock task transport", () => {
     });
   });
 
+  it("paces the demo like real calls: about 8 seconds, with shops in different states", async () => {
+    const transport = createMockTransport(foundationScenario, { paced: true });
+    const created = await transport.createTask("طلب صالح");
+    await transport.startTask(created.taskId);
+    const received = [];
+    transport.subscribe(created.taskId, (event) => received.push(event));
+
+    await vi.advanceTimersByTimeAsync(500);
+    expect(received.map((event) => event.type)).toEqual(["task.created"]);
+
+    await vi.advanceTimersByTimeAsync(3000); // 3.5 s: one shop picked up, one ringing, one waiting
+    const mid = await transport.getTask(created.taskId);
+    expect(mid.shops.map((shop) => shop.status)).toEqual(["talking", "calling", "discovered"]);
+
+    await vi.advanceTimersByTimeAsync(4000); // 7.5 s: not finished yet
+    expect((await transport.getTask(created.taskId)).phase).not.toBe("partial");
+
+    await vi.advanceTimersByTimeAsync(1000); // 8.5 s: done
+    const done = await transport.getTask(created.taskId);
+    expect(done.phase).toBe("partial");
+    expect(done.shops.find((shop) => shop.placeId === "place_3").status).toBe("failed");
+    // The shop that never answers must not show "talking" first.
+    expect(received.some(
+      (event) => event.type === "call.talking" && event.data.callId === "call_3",
+    )).toBe(false);
+  });
+
   it("models overlapping calls before earlier calls finish", async () => {
     const transport = createMockTransport(foundationScenario);
     const created = await transport.createTask("طلب صالح");

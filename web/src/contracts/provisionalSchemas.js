@@ -453,6 +453,8 @@ export const mockScenarioSchema = z.object({
   events: z.array(
     z.object({
       delayMs: z.number().finite().nonnegative(),
+      // Paced demo timing (createMockTransport with paced: true); null skips the event.
+      demoDelayMs: z.number().finite().nonnegative().nullable().optional(),
       event: knownEventSchema,
     }),
   ).max(50),
